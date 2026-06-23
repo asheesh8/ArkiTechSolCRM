@@ -31,6 +31,11 @@ enum CallOutcome {
   CLOSED
 }
 
+enum LeadExclusionReason {
+  ARCHIVED
+  DECLINED
+}
+
 model User {
   id           String     @id @default(cuid())
   name         String
@@ -113,4 +118,14 @@ model Audit {
 
   @@index([leadId])
   @@index([url])
+}
+
+model LeadExclusion {
+  id            String              @id @default(cuid())
+  googlePlaceId String              @unique
+  businessName  String
+  reason        LeadExclusionReason
+  createdAt     DateTime            @default(now())
+
+  @@index([reason])
 }

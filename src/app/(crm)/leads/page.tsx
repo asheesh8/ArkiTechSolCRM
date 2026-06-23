@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Gauge, Save } from "lucide-react";
+import { Archive, Ban, ExternalLink, Gauge, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/field";
@@ -53,6 +53,36 @@ export default function LeadsPage() {
     setMessage(res.ok ? `Performance score: ${data.audit.performance ?? "--"}` : data.error ?? "Audit failed");
   }
 
+  async function hideLead(lead: any, reason: "ARCHIVED" | "DECLINED") {
+    if (!lead.googlePlaceId) {
+      setLeads((current) => current.filter((item) => item !== lead));
+      setMessage(`${lead.businessName} hidden for this search.`);
+      return;
+    }
+
+    const res = await fetch("/api/leads/exclusions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        googlePlaceId: lead.googlePlaceId,
+        businessName: lead.businessName,
+        reason,
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      return setMessage(data.error ?? "Could not hide this business");
+    }
+
+    setLeads((current) => current.filter((item) => item.googlePlaceId !== lead.googlePlaceId));
+    setMessage(
+      reason === "ARCHIVED"
+        ? `${lead.businessName} archived and will not appear in search again.`
+        : `${lead.businessName} declined and will not appear in search again.`,
+    );
+  }
+
   return (
     <div className="space-y-6">
       <section>
@@ -99,6 +129,8 @@ export default function LeadsPage() {
                   <Button variant="outline" onClick={() => runPageSpeed(lead)}><Gauge className="h-4 w-4" /> Run PageSpeed</Button>
                   <Button onClick={() => saveLead(lead)}><Save className="h-4 w-4" /> Save to CRM</Button>
                   {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank"><Button variant="secondary"><ExternalLink className="h-4 w-4" /> Maps</Button></a> : null}
+                  <Button variant="outline" onClick={() => hideLead(lead, "ARCHIVED")}><Archive className="h-4 w-4" /> Archive</Button>
+                  <Button variant="ghost" onClick={() => hideLead(lead, "DECLINED")}><Ban className="h-4 w-4" /> Decline</Button>
                 </div>
               </CardContent>
             </Card>

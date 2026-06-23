@@ -19,6 +19,8 @@ export const callOutcomes = [
   "CLOSED",
 ] as const;
 
+export const leadExclusionReasons = ["ARCHIVED", "DECLINED"] as const;
+
 export const leadSearchSchema = z.object({
   city: z.string().min(1, "City is required"),
   state: z.string().min(2, "State is required"),
@@ -68,4 +70,10 @@ export const pageSpeedSchema = z.object({
   leadId: z.string().optional().nullable(),
   strategy: z.enum(["mobile", "desktop"]).default("mobile"),
   save: z.boolean().optional(),
+});
+
+export const leadExclusionSchema = z.object({
+  googlePlaceId: z.string().min(1),
+  businessName: z.string().min(1),
+  reason: z.enum(leadExclusionReasons),
 });
