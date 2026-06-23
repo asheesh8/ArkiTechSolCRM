@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { CsvImportCard } from "@/components/crm/csv-import-card";
 import { LeadTable } from "@/components/crm/lead-table";
 import { ManualClientForm } from "@/components/crm/manual-client-form";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +33,11 @@ export default function ClientsPage() {
     setFilters((current) => ({ ...current, status: "" }));
   }
 
+  function addImportedLeads(importedLeads: any[]) {
+    setLeads((current) => [...importedLeads, ...current]);
+    setFilters((current) => ({ ...current, status: "" }));
+  }
+
   return (
     <div className="space-y-6">
       <section>
@@ -40,6 +46,7 @@ export default function ClientsPage() {
       </section>
 
       <ManualClientForm onCreated={addCreatedLead} />
+      <CsvImportCard onImported={addImportedLeads} />
 
       <Card>
         <CardContent className="grid gap-3 pt-5 md:grid-cols-4">
