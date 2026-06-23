@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { demoLeads } from "@/lib/demo-data";
+import { getCurrentUser } from "@/lib/auth";
 import { leadCreateSchema } from "@/lib/schemas";
 
 export async function GET(request: NextRequest) {
@@ -37,11 +38,25 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Please sign in before saving leads." }, { status: 401 });
+    }
+
     const payload = leadCreateSchema.parse(await request.json());
+    const notes = payload.notes?.includes("Saved from scraper")
+      ? payload.notes
+      : [payload.notes, "Saved from scraper"].filter(Boolean).join("\n");
+    const data = {
+      ...payload,
+      notes,
+      assignedToId: payload.assignedToId ?? user.id,
+      status: payload.status ?? "SAVED",
+    };
     const lead = await prisma.lead.upsert({
       where: payload.googlePlaceId ? { googlePlaceId: payload.googlePlaceId } : { id: "__missing__" },
-      update: { ...payload, status: payload.status ?? "SAVED" },
-      create: { ...payload, status: payload.status ?? "SAVED" },
+      update: data,
+      create: data,
     });
     return NextResponse.json({ lead }, { status: 201 });
   } catch (error) {

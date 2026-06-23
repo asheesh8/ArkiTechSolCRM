@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+const optionalUrl = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  },
+  z.string().url().nullable().optional(),
+);
+
 export const leadStatuses = [
   "NEW",
   "SAVED",
@@ -37,12 +47,12 @@ export const leadCreateSchema = z.object({
   category: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable().or(z.literal("")),
-  website: z.string().url().optional().nullable().or(z.literal("")),
+  website: optionalUrl,
   address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
   googlePlaceId: z.string().optional().nullable(),
-  googleMapsUrl: z.string().url().optional().nullable().or(z.literal("")),
+  googleMapsUrl: optionalUrl,
   googleRating: z.coerce.number().optional().nullable(),
   googleReviewCount: z.coerce.number().int().optional().nullable(),
   status: z.enum(leadStatuses).default("SAVED"),

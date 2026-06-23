@@ -54,13 +54,25 @@ export default function LeadsPage() {
   }
 
   async function saveLead(lead: any) {
+    const category = lead.category?.includes("Saved from scraper")
+      ? lead.category
+      : `${lead.category ?? "Local Business"} · Saved from scraper`;
     const res = await fetch("/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...lead, status: "SAVED" }),
+      body: JSON.stringify({
+        ...lead,
+        category,
+        notes: "Saved from scraper",
+        status: "SAVED",
+      }),
     });
     const data = await res.json();
-    setMessage(res.ok ? `${lead.businessName} saved to CRM` : data.error ?? "Could not save lead");
+    if (!res.ok) {
+      return setMessage(data.error ?? "Could not save lead");
+    }
+    setLeads((current) => current.filter((item) => item.googlePlaceId !== lead.googlePlaceId));
+    setMessage(`${lead.businessName} saved to CRM from scraper`);
   }
 
   async function runPageSpeed(lead: any) {
@@ -165,7 +177,7 @@ export default function LeadsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-semibold">{lead.businessName}</h3>
-                    <p className="mt-1 text-sm text-zinc-500">{lead.category} · {lead.address}</p>
+                    <p className="mt-1 text-sm text-zinc-500">{lead.category ?? "Local Business"} · {lead.address}</p>
                     <p className="mt-3 text-sm">Rating {lead.googleRating ?? "--"} · {lead.googleReviewCount ?? 0} reviews</p>
                     <p className="mt-1 text-sm">{lead.phone ?? "No phone listed"}</p>
                   </div>
