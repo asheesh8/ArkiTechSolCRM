@@ -6,6 +6,7 @@ import { BarChart3, Building2, Gauge, LayoutDashboard, Search, Settings, Sparkle
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
+import { ScrapeQuotaWidget } from "@/components/crm/scrape-quota-widget";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -74,6 +75,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
               <h1 className="text-lg font-semibold">Local business growth desk</h1>
             </div>
             <div className="flex items-center gap-2">
+              <ScrapeQuotaWidget />
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-medium">{user.name}</p>
                 <p className="text-xs text-zinc-500">{user.role}</p>

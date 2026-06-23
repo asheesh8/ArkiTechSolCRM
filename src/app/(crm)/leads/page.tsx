@@ -28,6 +28,7 @@ export default function LeadsPage() {
     setLoading(false);
     if (!res.ok) return setMessage(data.error ?? "Search failed");
     setLeads(data.leads ?? []);
+    window.dispatchEvent(new Event("locallead:scrape-usage"));
     setMessage(data.warning ?? `${data.leads?.length ?? 0} leads found`);
   }
 
