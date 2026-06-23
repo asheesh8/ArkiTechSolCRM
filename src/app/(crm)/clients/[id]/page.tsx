@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Edit3, ExternalLink, PhoneCall, Save, X } from "lucide-react";
+import { Activity, Building2, CalendarClock, Edit3, ExternalLink, Globe2, Mail, MapPin, Phone, PhoneCall, Save, Star, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,16 +84,57 @@ export default function ClientDetailPage() {
 
   if (!lead) return <div className="h-96 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />;
 
+  const initials = String(lead.businessName ?? "LL")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+  const locationLabel = [lead.city, lead.state].filter(Boolean).join(", ") || "No market listed";
+  const latestNote = lead.callNotes?.[0];
+
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-3"><h2 className="text-2xl font-semibold tracking-tight">{lead.businessName}</h2><Badge value={lead.status} /></div>
-          <p className="mt-1 text-sm text-zinc-500">{lead.category ?? "Uncategorized"} · {[lead.city, lead.state].filter(Boolean).join(", ")}</p>
+      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="border-b border-zinc-200 bg-zinc-50 px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-lg font-semibold text-[var(--accent-foreground)]">
+                {initials}
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-2xl font-semibold tracking-tight">{lead.businessName}</h2>
+                  <Badge value={lead.status} />
+                </div>
+                <p className="mt-1 text-sm text-zinc-500">{lead.category ?? "Uncategorized"} · {locationLabel}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {lead.phone ? <a href={`tel:${lead.phone}`}><Button variant="outline"><Phone className="h-4 w-4" /> Call</Button></a> : null}
+              {lead.email ? <a href={`mailto:${lead.email}`}><Button variant="outline"><Mail className="h-4 w-4" /> Email</Button></a> : null}
+              {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank"><Button variant="outline"><ExternalLink className="h-4 w-4" /> Google profile</Button></a> : null}
+              {lead.website ? <a href={lead.website} target="_blank"><Button><Globe2 className="h-4 w-4" /> Website</Button></a> : null}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank"><Button variant="outline"><ExternalLink className="h-4 w-4" /> Google reviews</Button></a> : null}
-          {lead.website ? <a href={lead.website} target="_blank"><Button><ExternalLink className="h-4 w-4" /> Website</Button></a> : null}
+        <div className="grid gap-0 divide-y divide-zinc-200 dark:divide-zinc-800 md:grid-cols-4 md:divide-x md:divide-y-0">
+          <div className="p-5">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500"><Phone className="h-4 w-4" /> Phone</div>
+            <p className="mt-2 truncate text-sm font-medium">{lead.phone ?? "No phone listed"}</p>
+          </div>
+          <div className="p-5">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500"><MapPin className="h-4 w-4" /> Address</div>
+            <p className="mt-2 truncate text-sm font-medium">{lead.address ?? "No address listed"}</p>
+          </div>
+          <div className="p-5">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500"><Star className="h-4 w-4" /> Google rating</div>
+            <p className="mt-2 text-sm font-medium">{lead.googleRating ?? "--"} <span className="font-normal text-zinc-500">from {lead.googleReviewCount ?? 0} reviews</span></p>
+          </div>
+          <div className="p-5">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500"><CalendarClock className="h-4 w-4" /> Last touch</div>
+            <p className="mt-2 truncate text-sm font-medium">{latestNote ? new Date(latestNote.createdAt).toLocaleDateString() : "No notes yet"}</p>
+          </div>
         </div>
       </section>
 
@@ -109,7 +150,15 @@ export default function ClientDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
-                <CardTitle>Business Profile</CardTitle>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+                    <Building2 className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <CardTitle>Business Profile</CardTitle>
+                    <p className="text-sm text-zinc-500">Contact details, Google profile data, and internal context.</p>
+                  </div>
+                </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setEditing((value) => !value)}>
                   {editing ? <X className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
                   {editing ? "Cancel" : "Edit"}
@@ -183,11 +232,26 @@ export default function ClientDetailPage() {
                 </form>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <p><span className="text-sm text-zinc-500">Phone</span><br />{lead.phone ?? "No phone listed"}</p>
-                  <p><span className="text-sm text-zinc-500">Email</span><br />{lead.email ?? "No email listed"}</p>
-                  <p><span className="text-sm text-zinc-500">Address</span><br />{lead.address ?? "No address listed"}</p>
-                  <p><span className="text-sm text-zinc-500">Rating</span><br />{lead.googleRating ?? "--"} from {lead.googleReviewCount ?? 0} reviews</p>
-                  <p className="md:col-span-2"><span className="text-sm text-zinc-500">Internal notes</span><br />{lead.notes ?? "No internal notes"}</p>
+                  <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                    <p className="flex items-center gap-2 text-sm text-zinc-500"><Phone className="h-4 w-4" /> Phone</p>
+                    <p className="mt-2 font-medium">{lead.phone ?? "No phone listed"}</p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                    <p className="flex items-center gap-2 text-sm text-zinc-500"><Mail className="h-4 w-4" /> Email</p>
+                    <p className="mt-2 font-medium">{lead.email ?? "No email listed"}</p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                    <p className="flex items-center gap-2 text-sm text-zinc-500"><MapPin className="h-4 w-4" /> Address</p>
+                    <p className="mt-2 font-medium">{lead.address ?? "No address listed"}</p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                    <p className="flex items-center gap-2 text-sm text-zinc-500"><Star className="h-4 w-4" /> Google proof</p>
+                    <p className="mt-2 font-medium">{lead.googleRating ?? "--"} <span className="font-normal text-zinc-500">from {lead.googleReviewCount ?? 0} reviews</span></p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 md:col-span-2">
+                    <p className="text-sm text-zinc-500">Internal notes</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{lead.notes ?? "No internal notes"}</p>
+                  </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>Call status</Label>
                     <Select value={lead.status} onChange={(event) => updateStatus(event.target.value)}>
@@ -220,9 +284,39 @@ export default function ClientDetailPage() {
               )) : <p className="text-sm text-zinc-500">No notes yet.</p>}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+                  <Activity className="h-4 w-4" />
+                </span>
+                <div>
+                  <CardTitle>Audit History</CardTitle>
+                  <p className="text-sm text-zinc-500">Saved PageSpeed runs for this business.</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(lead.audits ?? []).length ? lead.audits.map((audit: any) => (
+                <div key={audit.id} className="grid gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800 md:grid-cols-[1fr_auto] md:items-center">
+                  <div>
+                    <p className="font-medium">{audit.url}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{audit.strategy ?? "mobile"} · {new Date(audit.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                    <div className="rounded-md bg-zinc-50 px-3 py-2 dark:bg-zinc-900"><p className="text-zinc-500">Perf</p><p className="font-semibold">{audit.performance ?? "--"}</p></div>
+                    <div className="rounded-md bg-zinc-50 px-3 py-2 dark:bg-zinc-900"><p className="text-zinc-500">A11y</p><p className="font-semibold">{audit.accessibility ?? "--"}</p></div>
+                    <div className="rounded-md bg-zinc-50 px-3 py-2 dark:bg-zinc-900"><p className="text-zinc-500">SEO</p><p className="font-semibold">{audit.seo ?? "--"}</p></div>
+                    <div className="rounded-md bg-zinc-50 px-3 py-2 dark:bg-zinc-900"><p className="text-zinc-500">Best</p><p className="font-semibold">{audit.bestPractices ?? "--"}</p></div>
+                  </div>
+                </div>
+              )) : <p className="text-sm text-zinc-500">No audits saved yet. Run PageSpeed from the audit page or scraper.</p>}
+            </CardContent>
+          </Card>
         </div>
 
-        <Card>
+        <Card className="xl:sticky xl:top-6 xl:self-start">
           <CardHeader><CardTitle>Add Call Note</CardTitle></CardHeader>
           <CardContent>
             <form action={addNote} className="space-y-4">
