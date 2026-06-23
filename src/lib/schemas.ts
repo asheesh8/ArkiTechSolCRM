@@ -32,8 +32,9 @@ export const callOutcomes = [
 export const leadExclusionReasons = ["ARCHIVED", "DECLINED"] as const;
 
 export const leadSearchSchema = z.object({
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(2, "State is required"),
+  location: z.string().min(1, "Enter a town, state, or ZIP before searching"),
+  city: z.string().optional(),
+  state: z.string().optional(),
   zip: z.string().optional(),
   category: z.string().min(1, "Industry is required"),
   maxReviewCount: z.coerce.number().int().nonnegative().optional(),

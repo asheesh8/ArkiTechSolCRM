@@ -10,31 +10,39 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [leads, setLeads] = useState<any[]>([]);
-  const [location, setLocation] = useState("Raleigh, NC 27601");
-  const [city, setCity] = useState("Raleigh");
-  const [state, setState] = useState("NC");
-  const [zip, setZip] = useState("27601");
+  const [location, setLocation] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zip, setZip] = useState("");
 
   function parseLocation(value: string) {
     setLocation(value);
     const zipMatch = value.match(/\b\d{5}(?:-\d{4})?\b/);
     const withoutZip = value.replace(/\b\d{5}(?:-\d{4})?\b/, "").trim();
-    const stateMatch = withoutZip.match(/\b([A-Za-z]{2})\b\s*$/);
-    const nextState = stateMatch?.[1]?.toUpperCase() ?? state;
+    const stateMatch = withoutZip.match(/(?:,|\s)\s*([A-Za-z]{2})\s*$/);
+    const nextState = stateMatch?.[1]?.toUpperCase() ?? "";
     const nextCity = withoutZip
-      .replace(/\b[A-Za-z]{2}\b\s*$/, "")
+      .replace(/(?:,|\s)\s*[A-Za-z]{2}\s*$/, "")
       .replace(/,+$/, "")
       .trim();
 
-    if (nextCity) setCity(nextCity);
-    if (nextState) setState(nextState);
-    if (zipMatch?.[0]) setZip(zipMatch[0]);
+    setCity(nextCity);
+    setState(nextState);
+    setZip(zipMatch?.[0] ?? "");
   }
 
   async function search(formData: FormData) {
     setLoading(true);
     setMessage("");
+    const locationValue = String(formData.get("location") ?? "").trim();
+    if (!locationValue) {
+      setLoading(false);
+      setLeads([]);
+      setMessage("Type a town, state, ZIP, or area before searching.");
+      return;
+    }
     const payload = {
+      location: locationValue,
       city: formData.get("city"),
       state: formData.get("state"),
       zip: formData.get("zip"),
@@ -135,11 +143,13 @@ export default function LeadsPage() {
               <div className="relative">
                 <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <Input
+                  name="location"
                   list="location-suggestions"
                   value={location}
                   onChange={(event) => parseLocation(event.target.value)}
                   className="pl-9"
-                  placeholder="Raleigh NC 27601"
+                  placeholder="Type a city, state, ZIP, or area"
+                  required
                 />
               </div>
               <datalist id="location-suggestions">
@@ -152,8 +162,8 @@ export default function LeadsPage() {
               </datalist>
             </div>
             <div className="grid grid-cols-[1fr_88px] gap-3 xl:col-span-2">
-              <div className="space-y-2"><Label>City</Label><Input name="city" value={city} onChange={(event) => setCity(event.target.value)} required /></div>
-              <div className="space-y-2"><Label>State</Label><Input name="state" value={state} onChange={(event) => setState(event.target.value.toUpperCase())} required /></div>
+              <div className="space-y-2"><Label>Auto-filled city</Label><Input name="city" value={city} onChange={(event) => setCity(event.target.value)} placeholder="Optional" /></div>
+              <div className="space-y-2"><Label>State</Label><Input name="state" value={state} onChange={(event) => setState(event.target.value.toUpperCase())} placeholder="NC" /></div>
             </div>
             <input type="hidden" name="zip" value={zip} />
             <div className="space-y-2"><Label>Industry</Label><Input name="category" defaultValue="dentist" required /></div>
@@ -195,7 +205,7 @@ export default function LeadsPage() {
           ))
         ) : (
           <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-800 xl:col-span-2">
-            Search for a city and industry to populate lead cards.
+            Enter a location and industry to populate lead cards.
           </div>
         )}
       </section>
