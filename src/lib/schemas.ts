@@ -29,6 +29,8 @@ export const callOutcomes = [
   "CLOSED",
 ] as const;
 
+export const noteTypes = ["GENERAL", "FOLLOW_UP", "MEETING"] as const;
+
 export const leadExclusionReasons = ["ARCHIVED", "DECLINED"] as const;
 
 export const leadSearchSchema = z.object({
@@ -73,6 +75,7 @@ export const leadUpdateSchema = leadCreateSchema.partial().extend({
 export const noteCreateSchema = z.object({
   userId: z.string().optional(),
   note: z.string().min(1, "Add a note before saving"),
+  noteType: z.enum(noteTypes).default("GENERAL"),
   callOutcome: z.enum(callOutcomes),
   followUpDate: z.string().datetime().optional().nullable().or(z.literal("")),
 });

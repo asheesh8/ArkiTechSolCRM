@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { ScoreCard } from "@/components/crm/score-card";
-import { callOutcomes, leadStatuses } from "@/lib/schemas";
+import { callOutcomes, leadStatuses, noteTypes } from "@/lib/schemas";
 import { formatStatus } from "@/lib/utils";
 
 export default function ClientDetailPage() {
@@ -65,15 +65,20 @@ export default function ClientDetailPage() {
   }
 
   async function addNote(formData: FormData) {
+    const callOutcome = String(formData.get("callOutcome"));
     const payload = {
       note: formData.get("note"),
-      callOutcome: formData.get("callOutcome"),
+      noteType: formData.get("noteType"),
+      callOutcome,
       followUpDate: formData.get("followUpDate") ? new Date(String(formData.get("followUpDate"))).toISOString() : "",
     };
     const res = await fetch(`/api/leads/${id}/notes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok) return setMessage(data.error ?? "Could not save note");
-    setLead({ ...lead, callNotes: [data.note, ...(lead.callNotes ?? [])], status: payload.callOutcome });
+    const status = callOutcome === "MEETING_BOOKED" || callOutcome === "FOLLOW_UP" || callOutcome === "CLOSED" || callOutcome === "NOT_INTERESTED"
+      ? callOutcome
+      : "CALLED";
+    setLead({ ...lead, callNotes: [data.note, ...(lead.callNotes ?? [])], status });
     setMessage("Call note saved");
   }
 
@@ -200,7 +205,15 @@ export default function ClientDetailPage() {
             <CardContent className="space-y-4">
               {(lead.callNotes ?? []).length ? lead.callNotes.map((note: any) => (
                 <div key={note.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-                  <div className="flex items-center justify-between gap-3"><Badge value={note.callOutcome} /><span className="text-xs text-zinc-500">{new Date(note.createdAt).toLocaleString()}</span></div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                        {formatStatus(note.noteType ?? "GENERAL")} note
+                      </span>
+                      <Badge value={note.callOutcome} />
+                    </div>
+                    <span className="text-xs text-zinc-500">{new Date(note.createdAt).toLocaleString()}</span>
+                  </div>
                   <p className="mt-3 text-sm leading-6">{note.note}</p>
                   {note.followUpDate ? <p className="mt-2 text-xs text-amber-600">Follow up {new Date(note.followUpDate).toLocaleDateString()}</p> : null}
                 </div>
@@ -213,7 +226,20 @@ export default function ClientDetailPage() {
           <CardHeader><CardTitle>Add Call Note</CardTitle></CardHeader>
           <CardContent>
             <form action={addNote} className="space-y-4">
-              <div className="space-y-2"><Label>Outcome</Label><Select name="callOutcome" defaultValue="FOLLOW_UP">{callOutcomes.map((outcome) => <option key={outcome} value={outcome}>{formatStatus(outcome)}</option>)}</Select></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Note type</Label>
+                  <Select name="noteType" defaultValue="GENERAL">
+                    {noteTypes.map((type) => <option key={type} value={type}>{formatStatus(type)} note</option>)}
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Outcome</Label>
+                  <Select name="callOutcome" defaultValue="FOLLOW_UP">
+                    {callOutcomes.map((outcome) => <option key={outcome} value={outcome}>{formatStatus(outcome)}</option>)}
+                  </Select>
+                </div>
+              </div>
               <div className="space-y-2"><Label>Follow-up date</Label><Input name="followUpDate" type="datetime-local" /></div>
               <div className="space-y-2"><Label>Note</Label><Textarea name="note" placeholder="What happened on the call?" required /></div>
               <Button className="w-full"><PhoneCall className="h-4 w-4" /> Save note</Button>

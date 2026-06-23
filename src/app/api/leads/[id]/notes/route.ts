@@ -20,6 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         leadId: id,
         userId: currentUser.id,
         note: payload.note,
+        noteType: payload.noteType,
         callOutcome: payload.callOutcome,
         followUpDate: payload.followUpDate ? new Date(payload.followUpDate) : null,
       },

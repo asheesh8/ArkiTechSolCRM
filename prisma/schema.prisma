@@ -31,6 +31,12 @@ enum CallOutcome {
   CLOSED
 }
 
+enum NoteType {
+  GENERAL
+  FOLLOW_UP
+  MEETING
+}
+
 enum LeadExclusionReason {
   ARCHIVED
   DECLINED
@@ -88,6 +94,7 @@ model CallNote {
   leadId       String
   userId       String
   note         String
+  noteType     NoteType     @default(GENERAL)
   callOutcome  CallOutcome
   followUpDate DateTime?
   createdAt    DateTime     @default(now())
@@ -96,6 +103,7 @@ model CallNote {
 
   @@index([leadId])
   @@index([userId])
+  @@index([noteType])
   @@index([followUpDate])
 }
 
