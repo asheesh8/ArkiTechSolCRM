@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  MEMBER
+}
+
+enum LeadStatus {
+  NEW
+  SAVED
+  CALLED
+  MEETING_BOOKED
+  NOT_INTERESTED
+  FOLLOW_UP
+  CLOSED
+}
+
+enum CallOutcome {
+  NO_ANSWER
+  LEFT_VOICEMAIL
+  NOT_INTERESTED
+  FOLLOW_UP
+  MEETING_BOOKED
+  CLOSED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String?
+  role         Role       @default(MEMBER)
+  leads        Lead[]     @relation("AssignedLeads")
+  callNotes    CallNote[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Lead {
+  id                         String      @id @default(cuid())
+  businessName               String
+  category                   String?
+  phone                      String?
+  email                      String?
+  website                    String?
+  address                    String?
+  city                       String?
+  state                      String?
+  googlePlaceId              String?     @unique
+  googleMapsUrl              String?
+  googleRating               Float?
+  googleReviewCount          Int?
+  status                     LeadStatus  @default(NEW)
+  websiteScore               Int?
+  pageSpeedPerformance       Int?
+  pageSpeedAccessibility     Int?
+  pageSpeedSEO               Int?
+  pageSpeedBestPractices     Int?
+  notes                      String?
+  assignedToId               String?
+  assignedTo                 User?       @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
+  callNotes                  CallNote[]
+  audits                     Audit[]
+  createdAt                  DateTime    @default(now())
+  updatedAt                  DateTime    @updatedAt
+
+  @@index([status])
+  @@index([city, state])
+  @@index([category])
+  @@index([assignedToId])
+}
+
+model CallNote {
+  id           String       @id @default(cuid())
+  leadId       String
+  userId       String
+  note         String
+  callOutcome  CallOutcome
+  followUpDate DateTime?
+  createdAt    DateTime     @default(now())
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([userId])
+  @@index([followUpDate])
+}
+
+model Audit {
+  id                       String   @id @default(cuid())
+  leadId                   String?
+  url                      String
+  strategy                 String   @default("mobile")
+  performance              Int?
+  accessibility            Int?
+  seo                      Int?
+  bestPractices            Int?
+  firstContentfulPaint     String?
+  largestContentfulPaint   String?
+  speedIndex               String?
+  totalBlockingTime        String?
+  cumulativeLayoutShift    String?
+  opportunities            Json?
+  createdAt                DateTime @default(now())
+  lead                     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([leadId])
+  @@index([url])
+}

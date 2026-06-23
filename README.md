@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LocalLead CRM
 
-## Getting Started
+A full-stack local-business CRM for Ashish and Terri to find prospects, audit websites, track calls, add notes, and book meetings.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router with TypeScript
+- Tailwind CSS with shadcn/ui-style local components
+- Prisma ORM and PostgreSQL
+- Simple email/password auth using hashed passwords and an HTTP-only cookie
+- Google Places API via official Text Search
+- Google PageSpeed Insights API
+
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Update `.env` with PostgreSQL and Google API keys:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/locallead_crm?schema=public"
+GOOGLE_PLACES_API_KEY="..."
+GOOGLE_PAGESPEED_API_KEY="..."
+NEXTAUTH_SECRET="replace-me-with-a-long-random-string"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+4. Run migrations and seed demo users/leads:
+
+```bash
+npx prisma migrate dev
+npm run prisma:seed
+```
+
+5. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Seed login credentials:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `ashish@locallead.test` / `locallead123`
+- `terri@locallead.test` / `locallead123`
 
-## Learn More
+## Main Routes
 
-To learn more about Next.js, take a look at the following resources:
+- `/dashboard` - total leads, calls today, meetings, follow-ups, close rate, and pipeline cards
+- `/leads` - Google Places lead finder with official API usage and save-to-CRM actions
+- `/clients` - searchable CRM table with quick status updates
+- `/clients/[id]` - business profile, notes timeline, call outcomes, follow-up dates, audit history
+- `/audits` - standalone Google PageSpeed Insights audit view
+- `/settings` - environment configuration checklist
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Routes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/leads/search`
+- `GET /api/leads`
+- `POST /api/leads`
+- `GET /api/leads/[id]`
+- `PATCH /api/leads/[id]`
+- `POST /api/leads/[id]/notes`
+- `POST /api/pagespeed`
+- `GET /api/dashboard/stats`
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+If Google keys or PostgreSQL are not configured, read-only screens use demo fallback data so the interface remains explorable locally. Mutations require a configured database.
