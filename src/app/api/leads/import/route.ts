@@ -71,6 +71,40 @@ function cleanValue(value: string | undefined) {
   return trimmed ? trimmed : undefined;
 }
 
+function normalizeText(value?: string | null) {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizePhone(value?: string | null) {
+  return (value ?? "").replace(/\D/g, "");
+}
+
+function normalizeUrl(value?: string | null) {
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
+}
+
+function getDuplicateKey(input: {
+  businessName?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  city?: string | null;
+  state?: string | null;
+  googlePlaceId?: string | null;
+}) {
+  if (input.googlePlaceId) return `place:${input.googlePlaceId}`;
+  const website = normalizeUrl(input.website);
+  if (website) return `website:${website}`;
+  const phone = normalizePhone(input.phone);
+  const businessName = normalizeText(input.businessName);
+  if (phone && businessName) return `phone-name:${phone}:${businessName}`;
+  return `name-location:${businessName}:${normalizeText(input.city)}:${normalizeText(input.state)}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -110,7 +144,8 @@ export async function POST(request: NextRequest) {
     }
 
     const created = [];
-    const skipped = [];
+    const skipped: { row: number; reason: string }[] = [];
+    const seenImportKeys = new Set<string>();
 
     for (const [index, row] of bodyRows.entries()) {
       const rowNumber = index + 2;
@@ -139,11 +174,49 @@ export async function POST(request: NextRequest) {
         googleReviewCount: raw.googleReviewCount,
       });
 
-      const lead = await prisma.lead.upsert({
-        where: payload.googlePlaceId ? { googlePlaceId: payload.googlePlaceId } : { id: `csv-missing-${rowNumber}` },
-        update: payload,
-        create: payload,
+      const duplicateKey = getDuplicateKey(payload);
+      if (seenImportKeys.has(duplicateKey)) {
+        skipped.push({ row: rowNumber, reason: "Duplicate inside this CSV" });
+        continue;
+      }
+      seenImportKeys.add(duplicateKey);
+
+      const phoneDigits = normalizePhone(payload.phone);
+      const website = normalizeUrl(payload.website);
+      const existingLead = await prisma.lead.findFirst({
+        where: {
+          OR: [
+            ...(payload.googlePlaceId ? [{ googlePlaceId: payload.googlePlaceId }] : []),
+            ...(website
+              ? [
+                  { website: { contains: website, mode: "insensitive" as const } },
+                  { website: { contains: `www.${website}`, mode: "insensitive" as const } },
+                ]
+              : []),
+            ...(phoneDigits
+              ? [
+                  {
+                    businessName: { equals: payload.businessName, mode: "insensitive" as const },
+                    phone: { contains: phoneDigits },
+                  },
+                ]
+              : []),
+            {
+              businessName: { equals: payload.businessName, mode: "insensitive" as const },
+              city: payload.city ? { equals: payload.city, mode: "insensitive" as const } : undefined,
+              state: payload.state ? { equals: payload.state, mode: "insensitive" as const } : undefined,
+            },
+          ],
+        },
+        select: { id: true, businessName: true },
       });
+
+      if (existingLead) {
+        skipped.push({ row: rowNumber, reason: `Duplicate of ${existingLead.businessName}` });
+        continue;
+      }
+
+      const lead = await prisma.lead.create({ data: payload });
       created.push(lead);
     }
 
