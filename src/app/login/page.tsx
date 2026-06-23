@@ -9,10 +9,10 @@ export default async function LoginPage() {
   if (user) redirect("/dashboard");
 
   return (
-    <main className="grid min-h-screen bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50 lg:grid-cols-[1.1fr_0.9fr]">
+    <main className="grid min-h-screen bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50 lg:grid-cols-[1.1fr_0.9fr]">
       <section className="hidden border-r border-zinc-200 bg-white px-10 py-10 dark:border-zinc-800 dark:bg-zinc-950 lg:flex lg:flex-col lg:justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">
+          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)]">
             <Sparkles className="h-5 w-5" />
           </span>
           <div>
@@ -52,7 +52,7 @@ export default async function LoginPage() {
       <section className="flex items-center justify-center px-4 py-10 sm:px-6">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)]">
               <Sparkles className="h-5 w-5" />
             </span>
             <div>
