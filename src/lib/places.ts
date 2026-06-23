@@ -27,8 +27,8 @@ export async function searchGooglePlaces(input: SearchInput) {
     throw new Error("GOOGLE_PLACES_API_KEY is not configured.");
   }
 
-  const locationQuery = input.location || [input.city, input.state, input.zip].filter(Boolean).join(" ");
-  const query = `${input.category} near ${locationQuery}`;
+  const locationQuery = (input.location || [input.city, input.state, input.zip].filter(Boolean).join(" ")).trim();
+  const query = `${input.category} businesses in ${locationQuery}, United States`;
   const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {

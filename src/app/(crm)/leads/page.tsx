@@ -6,6 +6,59 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/field";
 
+const stateNames: Record<string, string> = {
+  alabama: "AL",
+  alaska: "AK",
+  arizona: "AZ",
+  arkansas: "AR",
+  california: "CA",
+  colorado: "CO",
+  connecticut: "CT",
+  delaware: "DE",
+  florida: "FL",
+  georgia: "GA",
+  hawaii: "HI",
+  idaho: "ID",
+  illinois: "IL",
+  indiana: "IN",
+  iowa: "IA",
+  kansas: "KS",
+  kentucky: "KY",
+  louisiana: "LA",
+  maine: "ME",
+  maryland: "MD",
+  massachusetts: "MA",
+  michigan: "MI",
+  minnesota: "MN",
+  mississippi: "MS",
+  missouri: "MO",
+  montana: "MT",
+  nebraska: "NE",
+  nevada: "NV",
+  "new hampshire": "NH",
+  "new jersey": "NJ",
+  "new mexico": "NM",
+  "new york": "NY",
+  "north carolina": "NC",
+  "north dakota": "ND",
+  ohio: "OH",
+  oklahoma: "OK",
+  oregon: "OR",
+  pennsylvania: "PA",
+  "rhode island": "RI",
+  "south carolina": "SC",
+  "south dakota": "SD",
+  tennessee: "TN",
+  texas: "TX",
+  utah: "UT",
+  vermont: "VT",
+  virginia: "VA",
+  washington: "WA",
+  "west virginia": "WV",
+  wisconsin: "WI",
+  wyoming: "WY",
+};
+
 export default function LeadsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -19,9 +72,14 @@ export default function LeadsPage() {
     setLocation(value);
     const zipMatch = value.match(/\b\d{5}(?:-\d{4})?\b/);
     const withoutZip = value.replace(/\b\d{5}(?:-\d{4})?\b/, "").trim();
+    const lower = withoutZip.toLowerCase().replace(/,+$/, "").trim();
+    const fullState = Object.entries(stateNames)
+      .sort(([a], [b]) => b.length - a.length)
+      .find(([name]) => lower.endsWith(name));
     const stateMatch = withoutZip.match(/(?:,|\s)\s*([A-Za-z]{2})\s*$/);
-    const nextState = stateMatch?.[1]?.toUpperCase() ?? "";
+    const nextState = fullState?.[1] ?? stateMatch?.[1]?.toUpperCase() ?? "";
     const nextCity = withoutZip
+      .replace(new RegExp(`(?:,|\\s)\\s*${fullState?.[0] ?? ""}\\s*$`, "i"), "")
       .replace(/(?:,|\s)\s*[A-Za-z]{2}\s*$/, "")
       .replace(/,+$/, "")
       .trim();
@@ -148,18 +206,19 @@ export default function LeadsPage() {
                   value={location}
                   onChange={(event) => parseLocation(event.target.value)}
                   className="pl-9"
-                  placeholder="Type a city, state, ZIP, or area"
+                  placeholder="Try 90210, Miami FL, Brooklyn NY, or Greenville SC"
                   required
                 />
               </div>
               <datalist id="location-suggestions">
-                <option value="Raleigh, NC 27601" />
-                <option value="Durham, NC 27701" />
-                <option value="Chapel Hill, NC 27514" />
-                <option value="Cary, NC 27511" />
-                <option value="Apex, NC 27502" />
-                <option value="Charlotte, NC 28202" />
+                <option value="90210" />
+                <option value="Miami FL" />
+                <option value="Brooklyn NY" />
+                <option value="Chicago IL 60601" />
+                <option value="Austin Texas" />
+                <option value="Seattle WA" />
               </datalist>
+              <p className="text-xs text-zinc-500">Search any US city, full state name, abbreviation, ZIP code, or area.</p>
             </div>
             <div className="grid grid-cols-[1fr_88px] gap-3 xl:col-span-2">
               <div className="space-y-2"><Label>Auto-filled city</Label><Input name="city" value={city} onChange={(event) => setCity(event.target.value)} placeholder="Optional" /></div>
