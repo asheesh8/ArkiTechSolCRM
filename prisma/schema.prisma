@@ -22,6 +22,12 @@ enum LeadStatus {
   CLOSED
 }
 
+enum LeadPriority {
+  STANDARD
+  PRIORITY
+  FAVORITE
+}
+
 enum CallOutcome {
   NO_ANSWER
   LEFT_VOICEMAIL
@@ -70,6 +76,7 @@ model Lead {
   googleRating               Float?
   googleReviewCount          Int?
   status                     LeadStatus  @default(NEW)
+  priority                   LeadPriority @default(STANDARD)
   websiteScore               Int?
   pageSpeedPerformance       Int?
   pageSpeedAccessibility     Int?
@@ -84,6 +91,7 @@ model Lead {
   updatedAt                  DateTime    @updatedAt
 
   @@index([status])
+  @@index([priority])
   @@index([city, state])
   @@index([category])
   @@index([assignedToId])

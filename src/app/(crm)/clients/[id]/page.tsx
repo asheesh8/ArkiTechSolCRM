@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { ScoreCard } from "@/components/crm/score-card";
-import { callOutcomes, leadStatuses, noteTypes } from "@/lib/schemas";
+import { callOutcomes, leadPriorities, leadStatuses, noteTypes } from "@/lib/schemas";
 import { formatStatus } from "@/lib/utils";
 
 export default function ClientDetailPage() {
@@ -29,6 +29,11 @@ export default function ClientDetailPage() {
     await fetch(`/api/leads/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
   }
 
+  async function updatePriority(priority: string) {
+    setLead({ ...lead, priority });
+    await fetch(`/api/leads/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ priority }) });
+  }
+
   async function saveProfile(formData: FormData) {
     setSavingProfile(true);
     setMessage("");
@@ -46,6 +51,7 @@ export default function ClientDetailPage() {
       googleReviewCount: formData.get("googleReviewCount") || null,
       notes: formData.get("notes") || null,
       status: formData.get("status"),
+      priority: formData.get("priority"),
     };
     const res = await fetch(`/api/leads/${id}`, {
       method: "PATCH",
@@ -106,6 +112,10 @@ export default function ClientDetailPage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-2xl font-semibold tracking-tight">{lead.businessName}</h2>
                   <Badge value={lead.status} />
+                  <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:ring-amber-900">
+                    <Star className="mr-1 h-3 w-3" />
+                    {formatStatus(lead.priority ?? "STANDARD")}
+                  </span>
                 </div>
                 <p className="mt-1 text-sm text-zinc-500">{lead.category ?? "Uncategorized"} · {locationLabel}</p>
               </div>
@@ -183,6 +193,12 @@ export default function ClientDetailPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label>Priority</Label>
+                    <Select name="priority" defaultValue={lead.priority ?? "STANDARD"}>
+                      {leadPriorities.map((priority) => <option key={priority} value={priority}>{formatStatus(priority)}</option>)}
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>Phone</Label>
                     <Input name="phone" defaultValue={lead.phone ?? ""} />
                   </div>
@@ -256,6 +272,12 @@ export default function ClientDetailPage() {
                     <Label>Call status</Label>
                     <Select value={lead.status} onChange={(event) => updateStatus(event.target.value)}>
                       {leadStatuses.map((status) => <option key={status} value={status}>{formatStatus(status)}</option>)}
+                    </Select>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Priority</Label>
+                    <Select value={lead.priority ?? "STANDARD"} onChange={(event) => updatePriority(event.target.value)}>
+                      {leadPriorities.map((priority) => <option key={priority} value={priority}>{formatStatus(priority)}</option>)}
                     </Select>
                   </div>
                   {message ? <p className="text-sm text-zinc-500 md:col-span-2">{message}</p> : null}

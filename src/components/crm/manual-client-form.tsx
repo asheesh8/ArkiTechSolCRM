@@ -5,7 +5,7 @@ import { Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
-import { leadStatuses } from "@/lib/schemas";
+import { leadPriorities, leadStatuses } from "@/lib/schemas";
 import { formatStatus } from "@/lib/utils";
 
 type ManualClientFormProps = {
@@ -35,6 +35,7 @@ export function ManualClientForm({ onCreated, compact = false }: ManualClientFor
       city: formData.get("city") || null,
       state: formData.get("state") || null,
       status: formData.get("status") || "SAVED",
+      priority: formData.get("priority") || "STANDARD",
       notes: notes ? `${notes}\nManually onboarded` : "Manually onboarded",
     };
 
@@ -84,6 +85,16 @@ export function ManualClientForm({ onCreated, compact = false }: ManualClientFor
               {leadStatuses.map((status) => (
                 <option key={status} value={status}>
                   {formatStatus(status)}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Priority</Label>
+            <Select name="priority" defaultValue="STANDARD">
+              {leadPriorities.map((priority) => (
+                <option key={priority} value={priority}>
+                  {formatStatus(priority)}
                 </option>
               ))}
             </Select>

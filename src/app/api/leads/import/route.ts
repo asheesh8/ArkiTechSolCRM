@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { leadCreateSchema, leadStatuses } from "@/lib/schemas";
+import { leadCreateSchema, leadPriorities, leadStatuses } from "@/lib/schemas";
 
 const requiredHeaders = ["businessName"];
 const allowedHeaders = [
@@ -18,6 +18,7 @@ const allowedHeaders = [
   "googleRating",
   "googleReviewCount",
   "status",
+  "priority",
   "notes",
 ];
 
@@ -262,6 +263,7 @@ export async function POST(request: NextRequest) {
       }
 
       const status = raw.status && leadStatuses.includes(raw.status as any) ? raw.status : "SAVED";
+      const priority = raw.priority && leadPriorities.includes(raw.priority as any) ? raw.priority : "STANDARD";
       const category = raw.category?.includes("CSV import")
         ? raw.category
         : `${raw.category ?? "CSV Lead"} · CSV import`;
@@ -272,6 +274,7 @@ export async function POST(request: NextRequest) {
         businessName,
         category,
         status,
+        priority,
         notes,
         assignedToId: user.id,
         googleRating: raw.googleRating,

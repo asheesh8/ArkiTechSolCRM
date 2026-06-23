@@ -6,11 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
 import { formatStatus } from "@/lib/utils";
-import { leadStatuses } from "@/lib/schemas";
+import { leadPriorities, leadStatuses } from "@/lib/schemas";
 
 type Lead = any;
 
-export function LeadTable({ leads, onStatus }: { leads: Lead[]; onStatus?: (id: string, status: string) => void }) {
+export function LeadTable({
+  leads,
+  onStatus,
+  onPriority,
+}: {
+  leads: Lead[];
+  onStatus?: (id: string, status: string) => void;
+  onPriority?: (id: string, priority: string) => void;
+}) {
   if (!leads.length) {
     return (
       <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-800">
@@ -23,7 +31,7 @@ export function LeadTable({ leads, onStatus }: { leads: Lead[]; onStatus?: (id: 
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1040px] text-sm">
           <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900/70">
             <tr>
               <th className="px-4 py-3">Business</th>
@@ -31,6 +39,7 @@ export function LeadTable({ leads, onStatus }: { leads: Lead[]; onStatus?: (id: 
               <th className="px-4 py-3">Rating</th>
               <th className="px-4 py-3">Website</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Priority</th>
               <th className="px-4 py-3">Owner</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -73,6 +82,19 @@ export function LeadTable({ leads, onStatus }: { leads: Lead[]; onStatus?: (id: 
                     </Select>
                   ) : (
                     <Badge value={lead.status} />
+                  )}
+                </td>
+                <td className="px-4 py-4">
+                  {onPriority ? (
+                    <Select defaultValue={lead.priority ?? "STANDARD"} onChange={(event) => onPriority(lead.id, event.target.value)}>
+                      {leadPriorities.map((priority) => (
+                        <option key={priority} value={priority}>
+                          {formatStatus(priority)}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Badge value={lead.priority ?? "STANDARD"} />
                   )}
                 </td>
                 <td className="px-4 py-4">{lead.assignedTo?.name ?? (lead.assignedToId === "demo-terri" ? "Terri" : "Ashish")}</td>

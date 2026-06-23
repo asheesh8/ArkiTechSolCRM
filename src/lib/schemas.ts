@@ -20,6 +20,8 @@ export const leadStatuses = [
   "CLOSED",
 ] as const;
 
+export const leadPriorities = ["STANDARD", "PRIORITY", "FAVORITE"] as const;
+
 export const callOutcomes = [
   "NO_ANSWER",
   "LEFT_VOICEMAIL",
@@ -59,6 +61,7 @@ export const leadCreateSchema = z.object({
   googleRating: z.coerce.number().optional().nullable(),
   googleReviewCount: z.coerce.number().int().optional().nullable(),
   status: z.enum(leadStatuses).default("SAVED"),
+  priority: z.enum(leadPriorities).default("STANDARD"),
   websiteScore: z.coerce.number().int().optional().nullable(),
   pageSpeedPerformance: z.coerce.number().int().optional().nullable(),
   pageSpeedAccessibility: z.coerce.number().int().optional().nullable(),

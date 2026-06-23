@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const search = params.get("search") ?? undefined;
   const status = params.get("status") ?? undefined;
+  const priority = params.get("priority") ?? undefined;
   const city = params.get("city") ?? undefined;
   const category = params.get("category") ?? undefined;
 
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
     const leads = await prisma.lead.findMany({
       where: {
         ...(status ? { status: status as any } : {}),
+        ...(priority ? { priority: priority as any } : {}),
         ...(city ? { city: { contains: city, mode: "insensitive" } } : {}),
         ...(category ? { category: { contains: category, mode: "insensitive" } } : {}),
         ...(search
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
           : {}),
       },
       include: { assignedTo: { select: { id: true, name: true, email: true } }, _count: { select: { callNotes: true, audits: true } } },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ priority: "desc" }, { updatedAt: "desc" }],
     });
     return NextResponse.json({ leads });
   } catch {
