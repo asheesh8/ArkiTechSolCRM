@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { LeadTable } from "@/components/crm/lead-table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/field";
@@ -8,9 +9,11 @@ import { leadStatuses } from "@/lib/schemas";
 import { formatStatus } from "@/lib/utils";
 
 export default function ClientsPage() {
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get("status") ?? "";
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ search: "", status: "", city: "", category: "" });
+  const [filters, setFilters] = useState({ search: "", status: initialStatus, city: "", category: "" });
 
   useEffect(() => {
     const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value));

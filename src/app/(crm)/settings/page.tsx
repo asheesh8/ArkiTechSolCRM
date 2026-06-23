@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ThemeCustomizer } from "@/components/crm/theme-customizer";
 
 const env = ["DATABASE_URL", "GOOGLE_PLACES_API_KEY", "GOOGLE_PAGESPEED_API_KEY", "NEXTAUTH_SECRET", "NEXTAUTH_URL"];
 
@@ -18,6 +19,14 @@ export default function SettingsPage() {
               <p className="mt-2 text-xs text-zinc-500">{process.env[key] ? "Configured" : "Add this in .env before using live integrations."}</p>
             </div>
           ))}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Dark Mode Colors</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ThemeCustomizer />
         </CardContent>
       </Card>
     </div>
