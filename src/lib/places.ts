@@ -1,6 +1,7 @@
 type SearchInput = {
   city: string;
   state: string;
+  zip?: string;
   category: string;
   maxReviewCount?: number;
   minimumRating?: number;
@@ -17,7 +18,7 @@ export async function searchGooglePlaces(input: SearchInput) {
     throw new Error("GOOGLE_PLACES_API_KEY is not configured.");
   }
 
-  const query = `${input.category} in ${input.city}, ${input.state}`;
+  const query = `${input.category} in ${input.city}, ${input.state}${input.zip ? ` ${input.zip}` : ""}`;
   const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {

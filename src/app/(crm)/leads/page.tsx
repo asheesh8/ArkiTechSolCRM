@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, Ban, ExternalLink, Gauge, Save } from "lucide-react";
+import { Archive, Ban, ExternalLink, Gauge, MapPin, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/field";
@@ -10,6 +10,26 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [leads, setLeads] = useState<any[]>([]);
+  const [location, setLocation] = useState("Raleigh, NC 27601");
+  const [city, setCity] = useState("Raleigh");
+  const [state, setState] = useState("NC");
+  const [zip, setZip] = useState("27601");
+
+  function parseLocation(value: string) {
+    setLocation(value);
+    const zipMatch = value.match(/\b\d{5}(?:-\d{4})?\b/);
+    const withoutZip = value.replace(/\b\d{5}(?:-\d{4})?\b/, "").trim();
+    const stateMatch = withoutZip.match(/\b([A-Za-z]{2})\b\s*$/);
+    const nextState = stateMatch?.[1]?.toUpperCase() ?? state;
+    const nextCity = withoutZip
+      .replace(/\b[A-Za-z]{2}\b\s*$/, "")
+      .replace(/,+$/, "")
+      .trim();
+
+    if (nextCity) setCity(nextCity);
+    if (nextState) setState(nextState);
+    if (zipMatch?.[0]) setZip(zipMatch[0]);
+  }
 
   async function search(formData: FormData) {
     setLoading(true);
@@ -17,6 +37,7 @@ export default function LeadsPage() {
     const payload = {
       city: formData.get("city"),
       state: formData.get("state"),
+      zip: formData.get("zip"),
       category: formData.get("category"),
       maxReviewCount: formData.get("maxReviewCount") || undefined,
       minimumRating: formData.get("minimumRating") || undefined,
@@ -97,8 +118,32 @@ export default function LeadsPage() {
         </CardHeader>
         <CardContent>
           <form action={search} className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-            <div className="space-y-2"><Label>City</Label><Input name="city" defaultValue="Raleigh" required /></div>
-            <div className="space-y-2"><Label>State</Label><Input name="state" defaultValue="NC" required /></div>
+            <div className="space-y-2 md:col-span-2 xl:col-span-2">
+              <Label>Town, state, ZIP</Label>
+              <div className="relative">
+                <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Input
+                  list="location-suggestions"
+                  value={location}
+                  onChange={(event) => parseLocation(event.target.value)}
+                  className="pl-9"
+                  placeholder="Raleigh NC 27601"
+                />
+              </div>
+              <datalist id="location-suggestions">
+                <option value="Raleigh, NC 27601" />
+                <option value="Durham, NC 27701" />
+                <option value="Chapel Hill, NC 27514" />
+                <option value="Cary, NC 27511" />
+                <option value="Apex, NC 27502" />
+                <option value="Charlotte, NC 28202" />
+              </datalist>
+            </div>
+            <div className="grid grid-cols-[1fr_88px] gap-3 xl:col-span-2">
+              <div className="space-y-2"><Label>City</Label><Input name="city" value={city} onChange={(event) => setCity(event.target.value)} required /></div>
+              <div className="space-y-2"><Label>State</Label><Input name="state" value={state} onChange={(event) => setState(event.target.value.toUpperCase())} required /></div>
+            </div>
+            <input type="hidden" name="zip" value={zip} />
             <div className="space-y-2"><Label>Industry</Label><Input name="category" defaultValue="dentist" required /></div>
             <div className="space-y-2"><Label>Max reviews</Label><Input name="maxReviewCount" type="number" placeholder="50" /></div>
             <div className="space-y-2"><Label>Min rating</Label><Input name="minimumRating" type="number" step="0.1" placeholder="4.0" /></div>
@@ -131,7 +176,7 @@ export default function LeadsPage() {
                   <Button onClick={() => saveLead(lead)}><Save className="h-4 w-4" /> Save to CRM</Button>
                   {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank"><Button variant="secondary"><ExternalLink className="h-4 w-4" /> Maps</Button></a> : null}
                   <Button variant="outline" onClick={() => hideLead(lead, "ARCHIVED")}><Archive className="h-4 w-4" /> Archive</Button>
-                  <Button variant="ghost" onClick={() => hideLead(lead, "DECLINED")}><Ban className="h-4 w-4" /> Decline</Button>
+                  <Button variant="danger" onClick={() => hideLead(lead, "DECLINED")}><Ban className="h-4 w-4" /> Decline</Button>
                 </div>
               </CardContent>
             </Card>
