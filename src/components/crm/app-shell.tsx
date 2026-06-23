@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BarChart3, Building2, Gauge, LayoutDashboard, Search, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
+import { LogoutButton } from "@/components/crm/logout-button";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -14,7 +15,13 @@ const nav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+type ShellUser = {
+  name: string;
+  email: string;
+  role: string;
+};
+
+export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser }) {
   const pathname = usePathname();
 
   return (
@@ -67,7 +74,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <h1 className="text-lg font-semibold">Local business growth desk</h1>
             </div>
             <div className="flex items-center gap-2">
+              <div className="hidden text-right sm:block">
+                <p className="text-sm font-medium">{user.name}</p>
+                <p className="text-xs text-zinc-500">{user.role}</p>
+              </div>
               <ThemeToggle />
+              <LogoutButton />
             </div>
           </div>
           <nav className="flex gap-1 overflow-x-auto px-4 pb-3 lg:hidden">

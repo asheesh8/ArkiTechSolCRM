@@ -52,8 +52,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Seed login credentials:
 
-- `ashish@locallead.test` / `locallead123`
-- `terri@locallead.test` / `locallead123`
+- `ashish@arkitech.com` / `ARKITECH`
+- `terri@arkitech.com` / `ARKITECH`
 
 ## Main Routes
 

@@ -4,25 +4,37 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash("locallead123", 10);
+  const passwordHash = await bcrypt.hash("ARKITECH", 10);
+
+  await prisma.user.deleteMany({
+    where: { email: { in: ["ashish@locallead.test", "terri@locallead.test"] } },
+  });
 
   const ashish = await prisma.user.upsert({
-    where: { email: "ashish@locallead.test" },
-    update: {},
+    where: { email: "ashish@arkitech.com" },
+    update: {
+      name: "Ashish",
+      passwordHash,
+      role: "OWNER",
+    },
     create: {
       name: "Ashish",
-      email: "ashish@locallead.test",
+      email: "ashish@arkitech.com",
       passwordHash,
       role: "OWNER",
     },
   });
 
   const terri = await prisma.user.upsert({
-    where: { email: "terri@locallead.test" },
-    update: {},
+    where: { email: "terri@arkitech.com" },
+    update: {
+      name: "Terri",
+      passwordHash,
+      role: "MEMBER",
+    },
     create: {
       name: "Terri",
-      email: "terri@locallead.test",
+      email: "terri@arkitech.com",
       passwordHash,
       role: "MEMBER",
     },

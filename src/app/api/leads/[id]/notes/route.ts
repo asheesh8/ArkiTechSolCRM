@@ -12,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       : await getCurrentUser();
 
     if (!currentUser) {
-      return NextResponse.json({ error: "Create a user before adding notes." }, { status: 400 });
+      return NextResponse.json({ error: "Please sign in before adding notes." }, { status: 401 });
     }
 
     const note = await prisma.callNote.create({

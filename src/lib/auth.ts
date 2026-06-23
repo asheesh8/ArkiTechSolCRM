@@ -10,5 +10,5 @@ export async function getCurrentUser() {
     if (user) return user;
   }
 
-  return prisma.user.findFirst({ orderBy: { createdAt: "asc" } });
+  return null;
 }
