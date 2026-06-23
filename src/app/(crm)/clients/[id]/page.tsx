@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ExternalLink, PhoneCall } from "lucide-react";
+import { Edit3, ExternalLink, PhoneCall, Save, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,8 @@ export default function ClientDetailPage() {
   const id = params.id;
   const [lead, setLead] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -25,6 +27,41 @@ export default function ClientDetailPage() {
   async function updateStatus(status: string) {
     setLead({ ...lead, status });
     await fetch(`/api/leads/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+  }
+
+  async function saveProfile(formData: FormData) {
+    setSavingProfile(true);
+    setMessage("");
+    const payload = {
+      businessName: formData.get("businessName"),
+      category: formData.get("category") || null,
+      phone: formData.get("phone") || null,
+      email: formData.get("email") || null,
+      website: formData.get("website") || null,
+      address: formData.get("address") || null,
+      city: formData.get("city") || null,
+      state: formData.get("state") || null,
+      googleMapsUrl: formData.get("googleMapsUrl") || null,
+      googleRating: formData.get("googleRating") || null,
+      googleReviewCount: formData.get("googleReviewCount") || null,
+      notes: formData.get("notes") || null,
+      status: formData.get("status"),
+    };
+    const res = await fetch(`/api/leads/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    setSavingProfile(false);
+
+    if (!res.ok) {
+      return setMessage(data.error ?? "Could not update profile");
+    }
+
+    setLead({ ...lead, ...data.lead });
+    setEditing(false);
+    setMessage("Client profile updated");
   }
 
   async function addNote(formData: FormData) {
@@ -65,18 +102,96 @@ export default function ClientDetailPage() {
       <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>Business Profile</CardTitle></CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <p><span className="text-sm text-zinc-500">Phone</span><br />{lead.phone ?? "No phone listed"}</p>
-              <p><span className="text-sm text-zinc-500">Email</span><br />{lead.email ?? "No email listed"}</p>
-              <p><span className="text-sm text-zinc-500">Address</span><br />{lead.address ?? "No address listed"}</p>
-              <p><span className="text-sm text-zinc-500">Rating</span><br />{lead.googleRating ?? "--"} from {lead.googleReviewCount ?? 0} reviews</p>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Call status</Label>
-                <Select value={lead.status} onChange={(event) => updateStatus(event.target.value)}>
-                  {leadStatuses.map((status) => <option key={status} value={status}>{formatStatus(status)}</option>)}
-                </Select>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle>Business Profile</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditing((value) => !value)}>
+                  {editing ? <X className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                  {editing ? "Cancel" : "Edit"}
+                </Button>
               </div>
+            </CardHeader>
+            <CardContent>
+              {editing ? (
+                <form action={saveProfile} className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Business name</Label>
+                    <Input name="businessName" defaultValue={lead.businessName ?? ""} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Input name="category" defaultValue={lead.category ?? ""} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Call status</Label>
+                    <Select name="status" defaultValue={lead.status}>
+                      {leadStatuses.map((status) => <option key={status} value={status}>{formatStatus(status)}</option>)}
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input name="phone" defaultValue={lead.phone ?? ""} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input name="email" type="email" defaultValue={lead.email ?? ""} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Website</Label>
+                    <Input name="website" defaultValue={lead.website ?? ""} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Google Maps URL</Label>
+                    <Input name="googleMapsUrl" defaultValue={lead.googleMapsUrl ?? ""} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Address</Label>
+                    <Input name="address" defaultValue={lead.address ?? ""} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>City</Label>
+                    <Input name="city" defaultValue={lead.city ?? ""} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>State</Label>
+                    <Input name="state" defaultValue={lead.state ?? ""} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Google rating</Label>
+                    <Input name="googleRating" type="number" step="0.1" min="0" max="5" defaultValue={lead.googleRating ?? ""} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Review count</Label>
+                    <Input name="googleReviewCount" type="number" min="0" defaultValue={lead.googleReviewCount ?? ""} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Internal notes</Label>
+                    <Textarea name="notes" defaultValue={lead.notes ?? ""} />
+                  </div>
+                  <div className="flex items-center gap-3 md:col-span-2">
+                    <Button disabled={savingProfile}>
+                      <Save className="h-4 w-4" />
+                      {savingProfile ? "Saving..." : "Save profile"}
+                    </Button>
+                    {message ? <p className="text-sm text-zinc-500">{message}</p> : null}
+                  </div>
+                </form>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <p><span className="text-sm text-zinc-500">Phone</span><br />{lead.phone ?? "No phone listed"}</p>
+                  <p><span className="text-sm text-zinc-500">Email</span><br />{lead.email ?? "No email listed"}</p>
+                  <p><span className="text-sm text-zinc-500">Address</span><br />{lead.address ?? "No address listed"}</p>
+                  <p><span className="text-sm text-zinc-500">Rating</span><br />{lead.googleRating ?? "--"} from {lead.googleReviewCount ?? 0} reviews</p>
+                  <p className="md:col-span-2"><span className="text-sm text-zinc-500">Internal notes</span><br />{lead.notes ?? "No internal notes"}</p>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Call status</Label>
+                    <Select value={lead.status} onChange={(event) => updateStatus(event.target.value)}>
+                      {leadStatuses.map((status) => <option key={status} value={status}>{formatStatus(status)}</option>)}
+                    </Select>
+                  </div>
+                  {message ? <p className="text-sm text-zinc-500 md:col-span-2">{message}</p> : null}
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -26,7 +26,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
+    <div className="min-h-screen bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-zinc-200 bg-white/95 px-4 py-5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95 lg:block">
         <Link href="/dashboard" className="flex items-center gap-3 px-2">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)]">
