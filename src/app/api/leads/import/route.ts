@@ -21,6 +21,8 @@ const allowedHeaders = [
   "notes",
 ];
 
+type ImportAction = "ADD_COPY" | "MERGE" | "CANCEL";
+
 function parseCsv(text: string) {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -105,11 +107,112 @@ function getDuplicateKey(input: {
   return `name-location:${businessName}:${normalizeText(input.city)}:${normalizeText(input.state)}`;
 }
 
+async function findExistingLead(payload: ReturnType<typeof leadCreateSchema.parse>) {
+  const phoneDigits = normalizePhone(payload.phone);
+  const website = normalizeUrl(payload.website);
+  return prisma.lead.findFirst({
+    where: {
+      OR: [
+        ...(payload.googlePlaceId ? [{ googlePlaceId: payload.googlePlaceId }] : []),
+        ...(website
+          ? [
+              { website: { contains: website, mode: "insensitive" as const } },
+              { website: { contains: `www.${website}`, mode: "insensitive" as const } },
+            ]
+          : []),
+        ...(phoneDigits
+          ? [
+              {
+                businessName: { equals: payload.businessName, mode: "insensitive" as const },
+                phone: { contains: phoneDigits },
+              },
+            ]
+          : []),
+        {
+          businessName: { equals: payload.businessName, mode: "insensitive" as const },
+          city: payload.city ? { equals: payload.city, mode: "insensitive" as const } : undefined,
+          state: payload.state ? { equals: payload.state, mode: "insensitive" as const } : undefined,
+        },
+      ],
+    },
+    select: { id: true, businessName: true, city: true, state: true, phone: true, website: true, status: true },
+  });
+}
+
+async function resolveDuplicates(request: NextRequest, userId: string) {
+  const body = await request.json();
+  const resolutions = Array.isArray(body.resolutions) ? body.resolutions : [];
+  const created = [];
+  const merged = [];
+  const cancelled = [];
+  const skipped: { row: number; reason: string }[] = [];
+
+  for (const item of resolutions) {
+    const row = Number(item.row);
+    const action = item.action as ImportAction;
+    const existingLeadId = typeof item.existingLeadId === "string" ? item.existingLeadId : "";
+    const payload = leadCreateSchema.parse({ ...item.payload, assignedToId: userId });
+
+    if (action === "CANCEL") {
+      cancelled.push({ row, businessName: payload.businessName });
+      continue;
+    }
+
+    if (action === "ADD_COPY") {
+      const lead = await prisma.lead.create({
+        data: {
+          ...payload,
+          googlePlaceId: null,
+          notes: `${payload.notes ?? ""}\nAdded as duplicate copy from CSV`.trim(),
+        },
+      });
+      created.push(lead);
+      continue;
+    }
+
+    if (action === "MERGE") {
+      if (!existingLeadId) {
+        skipped.push({ row, reason: "Missing existing lead to merge into" });
+        continue;
+      }
+      const existing = await prisma.lead.findUnique({
+        where: { id: existingLeadId },
+        select: { notes: true },
+      });
+      const mergedNotes = [existing?.notes, payload.notes, "Merged from CSV import"].filter(Boolean).join("\n");
+      const lead = await prisma.lead.update({
+        where: { id: existingLeadId },
+        data: {
+          ...payload,
+          googlePlaceId: payload.googlePlaceId || undefined,
+          notes: mergedNotes,
+        },
+      });
+      merged.push(lead);
+      continue;
+    }
+
+    skipped.push({ row, reason: "Choose add copy, merge, or cancel" });
+  }
+
+  return NextResponse.json({
+    created: created.length,
+    merged: merged.length,
+    cancelled: cancelled.length,
+    skipped,
+    leads: [...created, ...merged],
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Please sign in before importing leads." }, { status: 401 });
+    }
+
+    if (request.headers.get("content-type")?.includes("application/json")) {
+      return resolveDuplicates(request, user.id);
     }
 
     const formData = await request.formData();
@@ -145,6 +248,7 @@ export async function POST(request: NextRequest) {
 
     const created = [];
     const skipped: { row: number; reason: string }[] = [];
+    const duplicates = [];
     const seenImportKeys = new Set<string>();
 
     for (const [index, row] of bodyRows.entries()) {
@@ -176,43 +280,25 @@ export async function POST(request: NextRequest) {
 
       const duplicateKey = getDuplicateKey(payload);
       if (seenImportKeys.has(duplicateKey)) {
-        skipped.push({ row: rowNumber, reason: "Duplicate inside this CSV" });
+        duplicates.push({
+          row: rowNumber,
+          reason: "Duplicate inside this CSV",
+          existingLead: null,
+          payload,
+        });
         continue;
       }
       seenImportKeys.add(duplicateKey);
 
-      const phoneDigits = normalizePhone(payload.phone);
-      const website = normalizeUrl(payload.website);
-      const existingLead = await prisma.lead.findFirst({
-        where: {
-          OR: [
-            ...(payload.googlePlaceId ? [{ googlePlaceId: payload.googlePlaceId }] : []),
-            ...(website
-              ? [
-                  { website: { contains: website, mode: "insensitive" as const } },
-                  { website: { contains: `www.${website}`, mode: "insensitive" as const } },
-                ]
-              : []),
-            ...(phoneDigits
-              ? [
-                  {
-                    businessName: { equals: payload.businessName, mode: "insensitive" as const },
-                    phone: { contains: phoneDigits },
-                  },
-                ]
-              : []),
-            {
-              businessName: { equals: payload.businessName, mode: "insensitive" as const },
-              city: payload.city ? { equals: payload.city, mode: "insensitive" as const } : undefined,
-              state: payload.state ? { equals: payload.state, mode: "insensitive" as const } : undefined,
-            },
-          ],
-        },
-        select: { id: true, businessName: true },
-      });
+      const existingLead = await findExistingLead(payload);
 
       if (existingLead) {
-        skipped.push({ row: rowNumber, reason: `Duplicate of ${existingLead.businessName}` });
+        duplicates.push({
+          row: rowNumber,
+          reason: `Possible duplicate of ${existingLead.businessName}`,
+          existingLead,
+          payload,
+        });
         continue;
       }
 
@@ -220,7 +306,7 @@ export async function POST(request: NextRequest) {
       created.push(lead);
     }
 
-    return NextResponse.json({ created: created.length, skipped, leads: created }, { status: 201 });
+    return NextResponse.json({ created: created.length, skipped, duplicates, leads: created }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to import CSV" }, { status: 400 });
   }
