@@ -3,7 +3,7 @@ type SearchInput = {
   city?: string;
   state?: string;
   zip?: string;
-  category: string;
+  category?: string;
   maxReviewCount?: number;
   minimumRating?: number;
   onlyNoWebsite?: boolean;
@@ -28,7 +28,8 @@ export async function searchGooglePlaces(input: SearchInput) {
   }
 
   const locationQuery = (input.location || [input.city, input.state, input.zip].filter(Boolean).join(" ")).trim();
-  const query = `${input.category} businesses in ${locationQuery}, United States`;
+  const searchCategory = input.category?.trim() || "local businesses";
+  const query = `${searchCategory} in ${locationQuery}, United States`;
   const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {
@@ -52,7 +53,7 @@ export async function searchGooglePlaces(input: SearchInput) {
       const parsed = getCityState(address, input.city, input.state);
       return {
         businessName: place.displayName?.text ?? "Unnamed business",
-        category: place.primaryTypeDisplayName?.text ?? input.category,
+        category: place.primaryTypeDisplayName?.text ?? input.category ?? "Local Business",
         phone: place.nationalPhoneNumber ?? null,
         email: null,
         website: place.websiteUri ?? null,

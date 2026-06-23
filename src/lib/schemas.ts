@@ -36,7 +36,7 @@ export const leadSearchSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   zip: z.string().optional(),
-  category: z.string().min(1, "Industry is required"),
+  category: z.string().optional(),
   maxReviewCount: z.coerce.number().int().nonnegative().optional(),
   minimumRating: z.coerce.number().min(0).max(5).optional(),
   onlyNoWebsite: z.coerce.boolean().optional(),

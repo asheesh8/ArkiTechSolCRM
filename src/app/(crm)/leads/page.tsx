@@ -67,6 +67,7 @@ export default function LeadsPage() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zip, setZip] = useState("");
+  const [category, setCategory] = useState("");
 
   function parseLocation(value: string) {
     setLocation(value);
@@ -104,7 +105,7 @@ export default function LeadsPage() {
       city: formData.get("city"),
       state: formData.get("state"),
       zip: formData.get("zip"),
-      category: formData.get("category"),
+      category: String(formData.get("category") ?? "").trim() || undefined,
       maxReviewCount: formData.get("maxReviewCount") || undefined,
       minimumRating: formData.get("minimumRating") || undefined,
       onlyNoWebsite: formData.get("onlyNoWebsite") === "on",
@@ -225,7 +226,15 @@ export default function LeadsPage() {
               <div className="space-y-2"><Label>State</Label><Input name="state" value={state} onChange={(event) => setState(event.target.value.toUpperCase())} placeholder="NC" /></div>
             </div>
             <input type="hidden" name="zip" value={zip} />
-            <div className="space-y-2"><Label>Industry</Label><Input name="category" defaultValue="dentist" required /></div>
+            <div className="space-y-2">
+              <Label>Industry</Label>
+              <Input
+                name="category"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                placeholder="Optional, e.g. dentist or roofing"
+              />
+            </div>
             <div className="space-y-2"><Label>Max reviews</Label><Input name="maxReviewCount" type="number" placeholder="50" /></div>
             <div className="space-y-2"><Label>Min rating</Label><Input name="minimumRating" type="number" step="0.1" placeholder="4.0" /></div>
             <div className="flex items-end"><Button disabled={loading} className="w-full">{loading ? "Searching..." : "Search"}</Button></div>
@@ -264,7 +273,7 @@ export default function LeadsPage() {
           ))
         ) : (
           <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-800 xl:col-span-2">
-            Enter a location and industry to populate lead cards.
+            Enter a location to populate lead cards. Industry is optional.
           </div>
         )}
       </section>
