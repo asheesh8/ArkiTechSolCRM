@@ -44,12 +44,8 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = leadCreateSchema.parse(await request.json());
-    const notes = payload.notes?.includes("Saved from scraper")
-      ? payload.notes
-      : [payload.notes, "Saved from scraper"].filter(Boolean).join("\n");
     const data = {
       ...payload,
-      notes,
       assignedToId: payload.assignedToId ?? user.id,
       status: payload.status ?? "SAVED",
     };

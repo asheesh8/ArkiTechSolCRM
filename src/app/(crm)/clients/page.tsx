@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { LeadTable } from "@/components/crm/lead-table";
+import { ManualClientForm } from "@/components/crm/manual-client-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/field";
 import { leadStatuses } from "@/lib/schemas";
@@ -26,12 +27,19 @@ export default function ClientsPage() {
     await fetch(`/api/leads/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
   }
 
+  function addCreatedLead(lead: any) {
+    setLeads((current) => [lead, ...current]);
+    setFilters((current) => ({ ...current, status: "" }));
+  }
+
   return (
     <div className="space-y-6">
       <section>
         <h2 className="text-2xl font-semibold tracking-tight">CRM Clients</h2>
         <p className="mt-1 text-sm text-zinc-500">Saved leads, call states, owners, website strength, and review signals.</p>
       </section>
+
+      <ManualClientForm onCreated={addCreatedLead} />
 
       <Card>
         <CardContent className="grid gap-3 pt-5 md:grid-cols-4">

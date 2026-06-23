@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarCheck, CheckCircle2, ChevronDown, PhoneCall, Target, Trash2, Users } from "lucide-react";
+import { CalendarCheck, CheckCircle2, ChevronDown, PhoneCall, Target, Trash2, UserPlus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,9 +69,34 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
-        <p className="mt-1 text-sm text-zinc-500">A live view of calls, meetings, and local-business pipeline health.</p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
+            <p className="mt-1 text-sm text-zinc-500">A live view of calls, meetings, and local-business pipeline health.</p>
+          </div>
+          <Link href="/clients#manual-client">
+            <Button>
+              <UserPlus className="h-4 w-4" />
+              Onboard client
+            </Button>
+          </Link>
+        </div>
       </section>
+
+      <Card className="border-[var(--accent)]/30 bg-white/80 dark:bg-zinc-950">
+        <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-medium">Quick onboarding</p>
+            <p className="mt-1 text-sm text-zinc-500">Manually add a referral, existing contact, or walk-in without running a scrape.</p>
+          </div>
+          <Link href="/clients#manual-client">
+            <Button variant="outline">
+              <UserPlus className="h-4 w-4" />
+              Add manual client
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {metrics.map((metric) => {
