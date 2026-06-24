@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { Activity, Building2, CalendarClock, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2, Loader2, Mail, MapPin, MessageSquareQuote, Navigation, Phone, PhoneCall, Save, Sparkles, Star, Terminal, X } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Activity, Building2, CalendarClock, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2, Loader2, Mail, MapPin, MessageSquareQuote, Navigation, Phone, PhoneCall, Save, Sparkles, Star, Terminal, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,7 @@ function Stars({ value }: { value: number }) {
 
 export default function ClientDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = params.id;
   const [lead, setLead] = useState<any>(null);
   const [message, setMessage] = useState("");
@@ -36,6 +37,7 @@ export default function ClientDetailPage() {
   const [photosLoading, setPhotosLoading] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -110,6 +112,19 @@ export default function ClientDetailPage() {
       : "CALLED";
     setLead({ ...lead, callNotes: [data.note, ...(lead.callNotes ?? [])], status });
     setMessage("Call note saved");
+  }
+
+  async function deleteLead() {
+    if (!window.confirm(`Delete ${lead.businessName ?? "this client"} from the CRM? This can't be undone.`)) return;
+    setDeleting(true);
+    setMessage("");
+    const res = await fetch(`/api/leads/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setDeleting(false);
+      const data = await res.json().catch(() => ({}));
+      return setMessage(data.error ?? "Could not delete this client");
+    }
+    router.push("/clients");
   }
 
   async function downloadKit() {
@@ -191,6 +206,17 @@ export default function ClientDetailPage() {
                 <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" />
                 {formatStatus(lead.priority ?? "STANDARD")}
               </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={deleteLead}
+                disabled={deleting}
+                title="Delete client from CRM"
+                aria-label="Delete client from CRM"
+                className="text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
