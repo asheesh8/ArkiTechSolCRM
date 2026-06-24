@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Activity, Building2, CalendarClock, Camera, Edit3, ExternalLink, Globe2, ImageOff, Mail, MapPin, Navigation, Phone, PhoneCall, Save, Star, X } from "lucide-react";
+import { Activity, Building2, CalendarClock, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2, Loader2, Mail, MapPin, MessageSquareQuote, Navigation, Phone, PhoneCall, Save, Sparkles, Star, Terminal, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { ScoreCard } from "@/components/crm/score-card";
 import { callOutcomes, leadPriorities, leadStatuses, noteTypes } from "@/lib/schemas";
+import { kitSlug } from "@/lib/website-kit";
 import { formatStatus } from "@/lib/utils";
 
 function Stars({ value }: { value: number }) {
@@ -34,6 +35,7 @@ export default function ClientDetailPage() {
   const [photos, setPhotos] = useState<{ logo: string | null; cover: string | null; photos: string[] } | null>(null);
   const [photosLoading, setPhotosLoading] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -110,6 +112,30 @@ export default function ClientDetailPage() {
     setMessage("Call note saved");
   }
 
+  async function downloadKit() {
+    setDownloading(true);
+    setMessage("");
+    try {
+      const res = await fetch(`/api/leads/${id}/kit`);
+      if (!res.ok) throw new Error("kit failed");
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? "website-kit.zip";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage("Could not build the rebuild kit. Try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   if (!lead) return <div className="h-96 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />;
 
   const initials = String(lead.businessName ?? "LL")
@@ -124,40 +150,23 @@ export default function ClientDetailPage() {
   const directionsUrl =
     lead.googleMapsUrl ??
     (lead.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.address)}` : null);
-  const coverPhoto = photos?.cover ?? null;
   const galleryPhotos = photos?.photos ?? [];
 
   return (
     <div className="space-y-6">
       <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="relative h-40 w-full sm:h-52">
-          {coverPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={coverPhoto} alt={`${lead.businessName} cover`} className="h-full w-full object-cover" />
-          ) : (
-            <div className="h-full w-full bg-gradient-to-br from-[var(--accent)] to-zinc-900" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          <div className="absolute right-3 top-3 flex flex-wrap items-center gap-2">
-            <Badge value={lead.status} />
-            <span className="inline-flex items-center rounded-full bg-white/90 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 backdrop-blur dark:bg-zinc-900/80 dark:text-amber-300 dark:ring-amber-900">
-              <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" />
-              {formatStatus(lead.priority ?? "STANDARD")}
-            </span>
-          </div>
-        </div>
-        <div className="px-5 pb-4">
-          <div className="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-end gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-[var(--accent)] text-2xl font-semibold text-[var(--accent-foreground)] shadow-md dark:border-zinc-950">
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-[var(--accent)] text-xl font-semibold text-[var(--accent-foreground)] shadow-sm dark:border-zinc-800">
                 {photos?.logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photos.logo} alt={`${lead.businessName} logo`} className="h-full w-full object-contain bg-white" />
+                  <img src={photos.logo} alt={`${lead.businessName} logo`} className="h-full w-full bg-white object-contain" />
                 ) : (
                   initials
                 )}
               </div>
-              <div className="pb-1">
+              <div>
                 <h2 className="text-2xl font-semibold tracking-tight">{lead.businessName}</h2>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-500">
                   {rating != null ? (
@@ -176,49 +185,22 @@ export default function ClientDetailPage() {
                 </div>
               </div>
             </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge value={lead.status} />
+              <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:ring-amber-900">
+                <Star className="mr-1 h-3 w-3 fill-amber-400 text-amber-400" />
+                {formatStatus(lead.priority ?? "STANDARD")}
+              </span>
+            </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {lead.phone ? <a href={`tel:${lead.phone}`}><Button variant="outline" size="sm"><Phone className="h-4 w-4" /> Call</Button></a> : null}
             {directionsUrl ? <a href={directionsUrl} target="_blank"><Button variant="outline" size="sm"><Navigation className="h-4 w-4" /> Directions</Button></a> : null}
             {lead.email ? <a href={`mailto:${lead.email}`}><Button variant="outline" size="sm"><Mail className="h-4 w-4" /> Email</Button></a> : null}
             {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank"><Button variant="outline" size="sm"><ExternalLink className="h-4 w-4" /> Google profile</Button></a> : null}
-            {lead.website ? <a href={lead.website} target="_blank"><Button size="sm"><Globe2 className="h-4 w-4" /> Website</Button></a> : null}
+            {lead.website ? <a href={lead.website} target="_blank"><Button variant="outline" size="sm"><Globe2 className="h-4 w-4" /> Website</Button></a> : null}
           </div>
         </div>
-
-        {(photosLoading || galleryPhotos.length > 0 || lead.website) && (
-          <div className="border-t border-zinc-200 px-5 py-4 dark:border-zinc-800">
-            <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
-              <Camera className="h-4 w-4" /> Photos from website
-            </div>
-            {photosLoading ? (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="aspect-[4/3] animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />
-                ))}
-              </div>
-            ) : galleryPhotos.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {galleryPhotos.slice(0, 8).map((src) => (
-                  <button
-                    key={src}
-                    type="button"
-                    onClick={() => setActivePhoto(src)}
-                    className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt={`${lead.businessName} photo`} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 rounded-lg border border-dashed border-zinc-200 px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800">
-                <ImageOff className="h-4 w-4" />
-                {lead.website ? "No images could be scraped from this website." : "Add a website to scrape photos."}
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="grid gap-0 divide-y divide-zinc-200 border-t border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800 md:grid-cols-4 md:divide-x md:divide-y-0">
           <div className="p-5">
@@ -236,6 +218,92 @@ export default function ClientDetailPage() {
           <div className="p-5">
             <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500"><CalendarClock className="h-4 w-4" /> Last touch</div>
             <p className="mt-2 truncate text-sm font-medium">{latestNote ? new Date(latestNote.createdAt).toLocaleDateString() : "No notes yet"}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:ring-amber-900">
+              <Folder className="h-7 w-7" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold tracking-tight">Website Rebuild Kit</h3>
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent)] px-2 py-0.5 text-xs font-medium text-[var(--accent-foreground)]">
+                  <Sparkles className="h-3 w-3" /> Claude-powered
+                </span>
+              </div>
+              <p className="mt-1 max-w-xl text-sm text-zinc-500">
+                Download a ready-to-run folder. One command runs Claude Code to rebuild {lead.businessName}&apos;s
+                site from scratch — modern, smooth, and built around their real Google reviews
+                {photos?.photos?.length ? ` and ${photos.photos.length} photos pulled from their current site` : ""}.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col items-stretch gap-2">
+            <Button onClick={downloadKit} disabled={downloading} className="whitespace-nowrap">
+              {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {downloading ? "Building kit…" : "Download rebuild kit"}
+            </Button>
+            <p className="text-center text-xs text-zinc-400">.zip · runs with Claude Code</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 border-t border-zinc-200 p-5 dark:border-zinc-800 lg:grid-cols-[260px_1fr]">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300">
+            <p className="flex items-center gap-2 pb-2 font-sans font-medium text-zinc-700 dark:text-zinc-200">
+              <Folder className="h-4 w-4" /> {kitSlug(lead.businessName)}-website-kit/
+            </p>
+            <ul className="space-y-1.5 pl-1">
+              <li className="flex items-center gap-2"><Terminal className="h-3.5 w-3.5 text-emerald-500" /> rebuild.sh</li>
+              <li className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-sky-500" /> PROMPT.md</li>
+              <li className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-sky-500" /> CLAUDE.md</li>
+              <li className="flex items-center gap-2"><FileJson className="h-3.5 w-3.5 text-amber-500" /> data/business.json</li>
+              <li className="flex items-center gap-2"><FileJson className="h-3.5 w-3.5 text-amber-500" /> data/reviews.json</li>
+              <li className="flex items-center gap-2"><FileCode2 className="h-3.5 w-3.5 text-zinc-400" /> site/index.html</li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                { icon: MessageSquareQuote, label: "Real Google reviews", desc: "Top reviews bundled in, quoted verbatim" },
+                { icon: Sparkles, label: "Smooth & modern", desc: "Responsive, animated, accessible, fast" },
+                { icon: Globe2, label: "Deploy anywhere", desc: "Plain static HTML/CSS/JS, no build step" },
+              ].map((feature) => (
+                <div key={feature.label} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                  <feature.icon className="h-4 w-4 text-zinc-500" />
+                  <p className="mt-2 text-sm font-medium">{feature.label}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">{feature.desc}</p>
+                </div>
+              ))}
+            </div>
+            {photosLoading ? (
+              <div className="flex gap-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-14 w-14 shrink-0 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-900" />
+                ))}
+              </div>
+            ) : galleryPhotos.length > 0 ? (
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Assets included from their site</p>
+                <div className="flex flex-wrap gap-2">
+                  {galleryPhotos.slice(0, 8).map((src) => (
+                    <button
+                      key={src}
+                      type="button"
+                      onClick={() => setActivePhoto(src)}
+                      className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-50 transition hover:ring-2 hover:ring-[var(--accent)] dark:border-zinc-800 dark:bg-zinc-900"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt={`${lead.businessName} asset`} loading="lazy" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {message ? <p className="text-sm text-zinc-500">{message}</p> : null}
           </div>
         </div>
       </section>

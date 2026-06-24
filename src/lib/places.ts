@@ -21,6 +21,43 @@ function getCityState(address: string, fallbackCity?: string, fallbackState?: st
   return { city: city || fallbackCity || null, state: state || fallbackState || null };
 }
 
+export type PlaceReview = {
+  author: string;
+  rating: number | null;
+  text: string;
+  relativeTime: string | null;
+  publishTime: string | null;
+};
+
+/**
+ * Pull the top reviews for a place via Places Details. Best-effort: returns an
+ * empty list when the key or place id is missing, or on any API failure, so
+ * callers can degrade gracefully.
+ */
+export async function getPlaceReviews(placeId: string | null | undefined): Promise<PlaceReview[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey || !placeId) return [];
+  try {
+    const response = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, {
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "reviews",
+      },
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.reviews ?? []).map((review: any) => ({
+      author: review.authorAttribution?.displayName ?? "Google reviewer",
+      rating: typeof review.rating === "number" ? review.rating : null,
+      text: review.text?.text ?? review.originalText?.text ?? "",
+      relativeTime: review.relativePublishTimeDescription ?? null,
+      publishTime: review.publishTime ?? null,
+    })) as PlaceReview[];
+  } catch {
+    return [];
+  }
+}
+
 export async function searchGooglePlaces(input: SearchInput) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
