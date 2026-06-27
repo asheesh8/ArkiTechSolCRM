@@ -1,8 +1,17 @@
 import { Resend } from "resend";
 
+const ENABLED = !!process.env.RESEND_API_KEY;
 const resend = new Resend(process.env.RESEND_API_KEY ?? "re_placeholder");
 
 const FROM = "ArkiTech Solutions <hello@arkitechsol.com>";
+
+async function send(payload: Parameters<typeof resend.emails.send>[0]) {
+  if (!ENABLED) {
+    console.log("[email stub] would send:", payload.subject, "→", payload.to);
+    return { data: null, error: null };
+  }
+  return resend.emails.send(payload);
+}
 
 export async function sendContractEmail(opts: {
   to: string;
@@ -12,7 +21,7 @@ export async function sendContractEmail(opts: {
   billingCycle: string;
   signUrl: string;
 }) {
-  return resend.emails.send({
+  return send({
     from: FROM,
     to: opts.to,
     subject: `Your ArkiTech Solutions agreement is ready to sign`,
@@ -21,7 +30,7 @@ export async function sendContractEmail(opts: {
 }
 
 export async function sendMagicLink(to: string, name: string, link: string) {
-  return resend.emails.send({
+  return send({
     from: FROM,
     to,
     subject: "Sign in to your ArkiTech client portal",
@@ -37,7 +46,7 @@ export async function sendInvoiceReminder(opts: {
   payUrl: string;
   daysUntilDue: number;
 }) {
-  return resend.emails.send({
+  return send({
     from: FROM,
     to: opts.to,
     subject: `Payment reminder: $${opts.amount.toFixed(2)} due ${opts.daysUntilDue <= 0 ? "today" : `in ${opts.daysUntilDue} day${opts.daysUntilDue === 1 ? "" : "s"}`}`,
@@ -51,7 +60,7 @@ export async function sendPaymentConfirmation(opts: {
   amount: number;
   description: string;
 }) {
-  return resend.emails.send({
+  return send({
     from: FROM,
     to: opts.to,
     subject: `Payment confirmed — thank you!`,
