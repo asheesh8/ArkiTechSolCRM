@@ -87,6 +87,7 @@ model Lead {
   assignedTo                 User?       @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
   callNotes                  CallNote[]
   audits                     Audit[]
+  client                     Client?
   createdAt                  DateTime    @default(now())
   updatedAt                  DateTime    @updatedAt
 
@@ -160,4 +161,135 @@ model ScrapeUsage {
   @@unique([userId, dateKey])
   @@index([monthKey])
   @@index([userId, monthKey])
+}
+
+// ─── Client Portal ───────────────────────────────────────────────────────────
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  ACTIVE
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum WorkStatus {
+  OPEN
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  ONE_TIME
+}
+
+model Client {
+  id               String    @id @default(cuid())
+  leadId           String?   @unique
+  name             String
+  email            String    @unique
+  phone            String?
+  businessName     String
+  passwordHash     String?
+  magicToken       String?   @unique
+  magicExpiry      DateTime?
+  stripeCustomerId String?
+  avatarUrl        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  lead         Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  contracts    Contract[]
+  invoices     Invoice[]
+  workRequests WorkRequest[]
+
+  @@index([email])
+}
+
+model Contract {
+  id            String         @id @default(cuid())
+  clientId      String
+  planName      String
+  lineItems     Json
+  subtotal      Float
+  tax           Float          @default(0)
+  total         Float
+  billingCycle  BillingCycle   @default(MONTHLY)
+  status        ContractStatus @default(DRAFT)
+  sentAt        DateTime?
+  signedAt      DateTime?
+  signatureData String?
+  signToken     String?        @unique
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  clientId        String
+  contractId      String?
+  stripeInvoiceId String?
+  amount          Float
+  status          InvoiceStatus @default(PENDING)
+  dueDate         DateTime
+  paidAt          DateTime?
+  description     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contract Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model WorkRequest {
+  id          String     @id @default(cuid())
+  clientId    String
+  title       String
+  description String?
+  status      WorkStatus @default(OPEN)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  client Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  files  WorkFile[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model WorkFile {
+  id            String   @id @default(cuid())
+  workRequestId String
+  name          String
+  r2Key         String
+  size          BigInt
+  mimeType      String?
+  createdAt     DateTime @default(now())
+
+  workRequest WorkRequest @relation(fields: [workRequestId], references: [id], onDelete: Cascade)
+
+  @@index([workRequestId])
 }

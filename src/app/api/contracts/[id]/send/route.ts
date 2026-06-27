@@ -1,0 +1,29 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { sendContractEmail } from "@/lib/email";
+
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getCurrentUser();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+  const contract = await prisma.contract.findUnique({ where: { id }, include: { client: true } });
+  if (!contract) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const signUrl = `${baseUrl}/sign/${contract.signToken}`;
+
+  await sendContractEmail({
+    to: contract.client.email,
+    clientName: contract.client.name,
+    planName: contract.planName,
+    total: contract.total,
+    billingCycle: contract.billingCycle,
+    signUrl,
+  });
+
+  await prisma.contract.update({ where: { id }, data: { status: "SENT", sentAt: new Date() } });
+
+  return NextResponse.json({ ok: true, signUrl });
+}

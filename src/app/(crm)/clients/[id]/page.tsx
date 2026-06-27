@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Activity, Building2, CalendarClock, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2, Loader2, Mail, MapPin, MessageSquareQuote, Navigation, Phone, PhoneCall, Save, Sparkles, Star, Terminal, Trash2, X } from "lucide-react";
+import { Activity, Building2, CalendarClock, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2, Loader2, Mail, MapPin, MessageSquareQuote, Navigation, Phone, PhoneCall, Save, Sparkles, Star, Terminal, Trash2, UserCheck, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,6 +225,7 @@ export default function ClientDetailPage() {
             {lead.email ? <a href={`mailto:${lead.email}`}><Button variant="outline" size="sm"><Mail className="h-4 w-4" /> Email</Button></a> : null}
             {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank"><Button variant="outline" size="sm"><ExternalLink className="h-4 w-4" /> Google profile</Button></a> : null}
             {lead.website ? <a href={lead.website} target="_blank"><Button variant="outline" size="sm"><Globe2 className="h-4 w-4" /> Website</Button></a> : null}
+            <a href={`/clients/${id}/onboard`}><Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white"><UserCheck className="h-4 w-4" /> Onboard client</Button></a>
           </div>
         </div>
 
