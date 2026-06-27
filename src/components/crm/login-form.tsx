@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/field";
 
 type Step = "email" | "password" | "magic-sent";
+type UserType = "unknown" | "staff" | "client";
 
-export function LoginForm() {
+export function LoginForm({ onDetect }: { onDetect?: (type: UserType) => void }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -27,6 +28,7 @@ export function LoginForm() {
     const data = await res.json();
     setLoading(false);
 
+    onDetect?.(data.type as UserType);
     if (data.type === "staff") {
       setStep("password");
     } else if (data.type === "client") {
