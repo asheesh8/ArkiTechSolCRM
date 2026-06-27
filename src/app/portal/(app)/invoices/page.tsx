@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Clock, CreditCard, Loader2, XCircle } from "lucide-react";
 
@@ -19,7 +19,7 @@ function statusBadge(status: string) {
   return <span className="flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700"><Clock className="h-3.5 w-3.5" /> Pending</span>;
 }
 
-export default function InvoicesPage() {
+function InvoicesContent() {
   const searchParams = useSearchParams();
   const paid = searchParams.get("paid");
 
@@ -118,5 +118,13 @@ export default function InvoicesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function InvoicesPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse h-64 rounded-2xl bg-zinc-100" />}>
+      <InvoicesContent />
+    </Suspense>
   );
 }
