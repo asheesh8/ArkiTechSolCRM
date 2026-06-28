@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Building2, Gauge, LayoutDashboard, Search, Settings, Sparkles } from "lucide-react";
+import { BarChart3, Building2, Gauge, Inbox, LayoutDashboard, Search, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
@@ -13,6 +13,7 @@ const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leads", label: "Leads/Scraper", icon: Search },
   { href: "/clients", label: "CRM Clients", icon: Building2 },
+  { href: "/requests", label: "Work Requests", icon: Inbox },
   { href: "/audits", label: "PageSpeed Audit", icon: Gauge },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

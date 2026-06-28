@@ -132,7 +132,7 @@ export default function DashboardPage() {
                   {notifs.workRequests.map((r: any) => (
                     <NotifRow
                       key={r.id}
-                      href={`/portal/requests`}
+                      href={`/requests`}
                       primary={r.title}
                       secondary={`${r.client.businessName} · ${new Date(r.createdAt).toLocaleDateString()}`}
                       tag={r.status === "OPEN" ? "New" : "In progress"}
