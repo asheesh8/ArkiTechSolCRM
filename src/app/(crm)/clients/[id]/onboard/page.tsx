@@ -10,36 +10,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // ─── Plan presets ─────────────────────────────────────────────────────────────
 const PLAN_PRESETS = [
   {
-    name: "Starter",
-    price: 499,
+    name: "Basic",
+    price: 197,
     billing: "MONTHLY",
     items: [
-      { description: "Website design & development", amount: 299 },
-      { description: "Monthly hosting & maintenance", amount: 100 },
-      { description: "SEO optimization", amount: 100 },
+      { description: "Website design & development", amount: 147 },
+      { description: "Monthly hosting & maintenance", amount: 50 },
     ],
   },
   {
-    name: "Growth",
-    price: 999,
+    name: "Standard",
+    price: 349,
     billing: "MONTHLY",
     items: [
-      { description: "Custom website design & development", amount: 499 },
-      { description: "Monthly hosting, maintenance & updates", amount: 200 },
-      { description: "SEO & Google Business optimization", amount: 200 },
-      { description: "Monthly analytics report", amount: 100 },
+      { description: "Custom website design & development", amount: 199 },
+      { description: "Monthly hosting, maintenance & updates", amount: 100 },
+      { description: "SEO & Google Business optimization", amount: 50 },
     ],
   },
   {
-    name: "Pro",
-    price: 1999,
-    billing: "MONTHLY",
+    name: "One-Time Build",
+    price: 2000,
+    billing: "ONE_TIME",
     items: [
-      { description: "Premium custom website (up to 10 pages)", amount: 799 },
-      { description: "Monthly hosting, maintenance & updates", amount: 400 },
-      { description: "Full SEO suite & content strategy", amount: 400 },
-      { description: "Ad management (Google/Meta)", amount: 300 },
-      { description: "Monthly strategy call & reporting", amount: 100 },
+      { description: "Full website design & development", amount: 1900 },
+      { description: "Launch & setup", amount: 100 },
+    ],
+  },
+  {
+    name: "Edit / Add-on",
+    price: 50,
+    billing: "ONE_TIME",
+    items: [
+      { description: "Website edit or addition", amount: 50 },
     ],
   },
   {
