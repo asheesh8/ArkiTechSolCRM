@@ -220,7 +220,7 @@ export default function OnboardPage() {
                   <div>
                     <p className="font-semibold text-zinc-900 dark:text-zinc-100">{plan.name}</p>
                     <p className="mt-0.5 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                      {plan.price ? `$${plan.price}` : "Custom"}<span className="text-sm font-normal text-zinc-500">{plan.price ? "/mo" : ""}</span>
+                      {plan.price ? `$${plan.price}` : "Custom"}<span className="text-sm font-normal text-zinc-500">{plan.price && plan.billing === "MONTHLY" ? "/mo" : ""}</span>
                     </p>
                   </div>
                   {selectedPlan === i && <CheckCircle2 className="h-5 w-5 text-indigo-600" />}
@@ -319,7 +319,7 @@ export default function OnboardPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-t border-zinc-200 pt-2 text-base font-bold dark:border-zinc-800">
-                  <span>Total</span><span>${total.toFixed(2)} / {billing.toLowerCase()}</span>
+                  <span>Total</span><span>${total.toFixed(2)}{billing === "MONTHLY" ? " / mo" : ""}</span>
                 </div>
               </div>
             </CardContent>
@@ -356,7 +356,7 @@ export default function OnboardPage() {
             <CardContent className="pt-6 space-y-4">
               <div className="rounded-xl bg-indigo-50 p-5 dark:bg-indigo-950">
                 <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">{planName}</p>
-                <p className="mt-1 text-3xl font-bold text-indigo-900 dark:text-indigo-100">${total.toFixed(2)}<span className="text-base font-normal text-indigo-600"> / {billing.toLowerCase()}</span></p>
+                <p className="mt-1 text-3xl font-bold text-indigo-900 dark:text-indigo-100">${total.toFixed(2)}<span className="text-base font-normal text-indigo-600">{billing === "MONTHLY" ? " / mo" : ""}</span></p>
                 <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{items.length} service{items.length !== 1 ? "s" : ""} · to {clientName} ({clientEmail})</p>
               </div>
 
