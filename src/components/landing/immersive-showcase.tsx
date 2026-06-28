@@ -1,428 +1,422 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
-import { ExternalLink, ArrowUpRight } from "lucide-react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
-
-// ─── Projects ────────────────────────────────────────────────────────────────
+import { useEffect, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { ExternalLink, ArrowUpRight, Pause, Play } from "lucide-react";
 
 const PROJECTS = [
-  { id: "bb",       name: "BB Open Box",         desc: "E-commerce & product showcase",      url: "https://bb-openbox.vercel.app",                 color: "#3b82f6", bg: "#0a1628" },
-  { id: "crm",      name: "ArkiTech CRM",         desc: "Custom SaaS CRM platform",           url: "https://arkitech-sol.vercel.app",                color: "#a855f7", bg: "#130a28" },
-  { id: "darkroom", name: "Jon's Darkroom",        desc: "Photography portfolio & store",       url: "https://jon-darkroom.vercel.app",                color: "#d97706", bg: "#1a1000" },
-  { id: "protech",  name: "ProTech Contracting",   desc: "Local contractor lead generation",    url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", bg: "#001a0f" },
-  { id: "shine",    name: "HomeSHINE",             desc: "Home services booking platform",      url: "https://home-shine-v2.vercel.app",               color: "#ef4444", bg: "#1a0000" },
-  { id: "petspa",   name: "Pet Spa Grooming",      desc: "Appointment & business site",         url: "https://petspagrooming.vercel.app",              color: "#eab308", bg: "#191400" },
-  { id: "bible",    name: "Bible Runners",          desc: "Community & event platform",          url: "https://project-bible-runners-site.vercel.app", color: "#8b5cf6", bg: "#0e0820" },
-  { id: "art",      name: "Christine Art Folio",   desc: "Artist portfolio & gallery",          url: "https://christine-art-folio-ityx.vercel.app",   color: "#60a5fa", bg: "#081428" },
-  { id: "pit",      name: "ThePit",                desc: "Trader community & dashboard",        url: "https://pittrader.vercel.app",                   color: "#f97316", bg: "#1a0800" },
-  { id: "ashish",   name: "Ashish Portfolio",      desc: "Personal brand & resume site",        url: "https://ashish.network",                         color: "#e2e8f0", bg: "#0a0a14" },
+  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",                 color: "#3b82f6", accent: "#1d4ed8" },
+  { id: "crm",      name: "ArkiTech CRM",          desc: "Custom SaaS CRM platform",          url: "https://arkitech-sol.vercel.app",                color: "#a855f7", accent: "#7c3aed" },
+  { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
+  { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen",          url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
+  { id: "shine",    name: "HomeSHINE",              desc: "Home services booking",              url: "https://home-shine-v2.vercel.app",               color: "#f87171", accent: "#dc2626" },
+  { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
+  { id: "bible",    name: "Bible Runners",           desc: "Community & event platform",         url: "https://project-bible-runners-site.vercel.app", color: "#c084fc", accent: "#9333ea" },
+  { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
+  { id: "pit",      name: "ThePit",                 desc: "Trader community & dashboard",       url: "https://pittrader.vercel.app",                   color: "#fb923c", accent: "#ea580c" },
+  { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
 ] as const;
 
 type Project = typeof PROJECTS[number];
+type ProjectId = Project["id"];
 
-// ─── iPhone Frame ─────────────────────────────────────────────────────────────
+const AUTOPLAY_MS = 4500;
 
-function IPhoneFrame({ project, visible }: { project: Project; visible: boolean }) {
-  const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => { setFailed(false); setLoaded(false); }, [project.id]);
-
+// ── Fallback card shown when iframe is blocked ────────────────────────────────
+function FallbackCard({ project }: { project: Project }) {
   return (
-    <div className="relative" style={{ width: 220, height: 460 }}>
-      {/* Outer shell */}
+    <div
+      className="flex h-full flex-col items-center justify-center gap-5 p-6 text-center"
+      style={{ background: `linear-gradient(135deg, #0a0a14 0%, ${project.color}0d 100%)` }}
+    >
       <div
-        className="absolute inset-0 rounded-[44px]"
-        style={{
-          background: "linear-gradient(145deg, #2a2a3a 0%, #111118 60%, #1e1e2e 100%)",
-          boxShadow: `0 0 0 1px rgba(255,255,255,0.12), 0 40px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 60px ${project.color}22`,
-        }}
-      />
-      {/* Side buttons */}
-      <div className="absolute -right-1 top-24 h-12 w-1 rounded-l bg-white/10" />
-      <div className="absolute -left-1 top-20 h-8 w-1 rounded-r bg-white/10" />
-      <div className="absolute -left-1 top-32 h-8 w-1 rounded-r bg-white/10" />
-      <div className="absolute -left-1 top-44 h-8 w-1 rounded-r bg-white/10" />
-      {/* Dynamic island */}
-      <div className="absolute left-1/2 top-4 z-20 h-6 w-20 -translate-x-1/2 rounded-full bg-black" />
-      {/* Screen bezel */}
-      <div className="absolute inset-[6px] rounded-[38px] overflow-hidden bg-black">
-        {/* Screen content */}
-        <div className="absolute inset-[2px] overflow-hidden rounded-[36px] bg-black">
-          {!loaded && !failed && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2" style={{ background: project.bg }}>
-              <div className="h-5 w-5 rounded-full border-2 border-white/20 border-t-white/70 animate-spin" />
-            </div>
-          )}
-          {failed ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center" style={{ background: project.bg }}>
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center text-lg font-bold text-white" style={{ background: project.color + "33" }}>
-                {project.name[0]}
-              </div>
-              <p className="text-xs font-semibold text-white">{project.name}</p>
-              <a href={project.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-[10px] font-bold text-white" style={{ background: project.color }}>
-                Open <ArrowUpRight className="h-3 w-3" />
-              </a>
-            </div>
-          ) : (
-            <iframe
-              src={project.url}
-              title={project.name}
-              className="h-full w-full border-0"
-              style={{ transform: "scale(0.5) translateX(-50%) translateY(-50%)", transformOrigin: "top left", width: "200%", height: "200%" }}
-              onLoad={() => setLoaded(true)}
-              onError={() => setFailed(true)}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-            />
-          )}
-        </div>
+        className="flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-black text-white"
+        style={{ background: `${project.color}22`, border: `1px solid ${project.color}33` }}
+      >
+        {project.name[0]}
       </div>
+      <div>
+        <p className="font-bold text-white">{project.name}</p>
+        <p className="mt-1 text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{project.desc}</p>
+      </div>
+      <a
+        href={project.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-80"
+        style={{ background: project.color }}
+      >
+        Visit live site <ArrowUpRight className="h-4 w-4" />
+      </a>
     </div>
   );
 }
 
-// ─── MacBook Frame ────────────────────────────────────────────────────────────
-
-function MacBookFrame({ project }: { project: Project }) {
-  const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => { setFailed(false); setLoaded(false); }, [project.id]);
+// ── MacBook device ────────────────────────────────────────────────────────────
+function MacBook({ project }: { project: Project }) {
+  const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
+  useEffect(() => {
+    setState("loading");
+    const t = setTimeout(() => setState((s) => s === "loading" ? "failed" : s), 9000);
+    return () => clearTimeout(t);
+  }, [project.id]);
 
   return (
-    <div className="relative" style={{ width: 640, height: 420 }}>
+    <div className="relative select-none" style={{ width: 580, maxWidth: "100%" }}>
       {/* Lid */}
       <div
-        className="absolute top-0 left-0 right-0"
+        className="relative overflow-hidden"
         style={{
-          height: 380,
-          background: "linear-gradient(160deg, #2c2c3e 0%, #181824 50%, #111118 100%)",
-          borderRadius: "16px 16px 0 0",
-          boxShadow: `0 -2px 0 rgba(255,255,255,0.08) inset, 0 0 0 1px rgba(255,255,255,0.08), 0 0 80px ${project.color}18`,
+          height: 362,
+          borderRadius: "14px 14px 0 0",
+          background: "linear-gradient(170deg, #252535 0%, #14141f 100%)",
+          boxShadow: `0 -1px 0 rgba(255,255,255,0.08) inset, 0 1px 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(255,255,255,0.06), 0 0 60px ${project.color}1a`,
+          border: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Screen area */}
-        <div className="absolute inset-3 rounded-[10px] overflow-hidden bg-black">
-          {/* Camera notch */}
-          <div className="absolute top-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-zinc-700 z-20" />
+        {/* Camera dot */}
+        <div className="absolute top-2.5 left-1/2 z-20 h-2 w-2 -translate-x-1/2 rounded-full bg-zinc-700 ring-1 ring-zinc-600" />
+
+        {/* Screen bezel */}
+        <div className="absolute inset-[14px] overflow-hidden rounded-[6px] bg-black">
+          {/* Traffic lights */}
+          <div className="absolute left-3 top-2.5 z-20 flex items-center gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#ff5f57", boxShadow: "0 0 4px #ff5f5766" }} />
+            <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#febc2e", boxShadow: "0 0 4px #febc2e66" }} />
+            <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#28c840", boxShadow: "0 0 4px #28c84066" }} />
+          </div>
+          {/* URL bar */}
+          <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2 border-b border-white/5 bg-black/80 px-3 pb-1.5 pt-1.5 backdrop-blur">
+            <div className="flex h-5 flex-1 items-center rounded bg-white/5 px-2">
+              <span className="truncate font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{project.url.replace("https://", "")}</span>
+            </div>
+          </div>
           {/* Content */}
-          <div className="absolute inset-0">
-            {!loaded && !failed && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: project.bg }}>
-                <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
+          <div className="absolute inset-0 top-[28px]">
+            {state === "loading" && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: "#0a0a14" }}>
+                <div className="h-6 w-6 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
               </div>
             )}
-            {failed ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4" style={{ background: project.bg }}>
-                <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-2xl font-black text-white" style={{ background: project.color + "33" }}>
-                  {project.name[0]}
-                </div>
-                <div className="text-center">
-                  <p className="font-bold text-white">{project.name}</p>
-                  <p className="text-xs text-white/40 mt-0.5">{project.url}</p>
-                </div>
-                <a href={project.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: project.color }}>
-                  Visit Live Site <ArrowUpRight className="h-4 w-4" />
-                </a>
-              </div>
+            {state === "failed" ? (
+              <FallbackCard project={project} />
             ) : (
               <iframe
+                key={project.id}
                 src={project.url}
                 title={project.name}
                 className="h-full w-full border-0"
-                onLoad={() => setLoaded(true)}
-                onError={() => setFailed(true)}
+                onLoad={() => setState("loaded")}
+                onError={() => setState("failed")}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                loading="lazy"
               />
             )}
           </div>
         </div>
       </div>
+
       {/* Hinge */}
-      <div className="absolute left-0 right-0" style={{ top: 380, height: 4, background: "linear-gradient(to bottom, #1a1a28, #111118)", borderTop: "1px solid rgba(255,255,255,0.06)" }} />
+      <div style={{ height: 3, background: "linear-gradient(to bottom, #1e1e30, #12121c)", borderTop: "1px solid rgba(255,255,255,0.04)" }} />
+
       {/* Base */}
       <div
-        className="absolute left-0 right-0"
         style={{
-          top: 384,
-          height: 36,
-          background: "linear-gradient(to bottom, #222232, #181824)",
+          height: 28,
+          background: "linear-gradient(to bottom, #1f1f30, #131320)",
           borderRadius: "0 0 10px 10px",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.05)",
+          borderTop: "none",
         }}
       >
-        {/* Trackpad */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-4 w-24 rounded bg-white/5 border border-white/5" />
+        <div className="mx-auto mt-2 h-3 w-20 rounded-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.04)" }} />
       </div>
     </div>
   );
 }
 
-// ─── Aurora background ────────────────────────────────────────────────────────
+// ── iPhone device ─────────────────────────────────────────────────────────────
+function IPhone({ project }: { project: Project }) {
+  const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
+  useEffect(() => {
+    setState("loading");
+    const t = setTimeout(() => setState((s) => s === "loading" ? "failed" : s), 9000);
+    return () => clearTimeout(t);
+  }, [project.id]);
 
-function AuroraBackground({ color, bg }: { color: string; bg: string }) {
   return (
-    <motion.div
-      key={color}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 1.2, ease: "easeInOut" }}
-      className="absolute inset-0"
-      style={{ background: bg }}
+    <div
+      className="relative shrink-0 select-none"
+      style={{
+        width: 148,
+        height: 310,
+        borderRadius: 36,
+        background: "linear-gradient(160deg, #2a2a3e 0%, #131320 100%)",
+        boxShadow: `0 0 0 1px rgba(255,255,255,0.1), 0 30px 70px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.07), 0 0 40px ${project.color}22`,
+        border: "1px solid rgba(255,255,255,0.08)",
+      }}
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${color}18 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 20% 100%, ${color}10 0%, transparent 60%)`,
-        }}
-      />
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, ${color}15 1px, transparent 0)`,
-          backgroundSize: "48px 48px",
-        }}
-      />
-    </motion.div>
-  );
-}
-
-// ─── Scrolling ticker ─────────────────────────────────────────────────────────
-
-function Ticker({ projects }: { projects: typeof PROJECTS }) {
-  return (
-    <div className="overflow-hidden border-y border-white/5 py-3">
-      <motion.div
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
-        className="flex gap-12 whitespace-nowrap"
-      >
-        {[...projects, ...projects].map((p, i) => (
-          <span key={i} className="flex items-center gap-2.5 text-sm font-semibold text-white/25">
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: p.color }} />
-            {p.name}
-          </span>
-        ))}
-      </motion.div>
+      {/* Side button R */}
+      <div className="absolute -right-[3px] top-20 h-10 w-[3px] rounded-l" style={{ background: "rgba(255,255,255,0.08)" }} />
+      {/* Vol buttons L */}
+      <div className="absolute -left-[3px] top-16 h-7 w-[3px] rounded-r" style={{ background: "rgba(255,255,255,0.08)" }} />
+      <div className="absolute -left-[3px] top-28 h-7 w-[3px] rounded-r" style={{ background: "rgba(255,255,255,0.08)" }} />
+      {/* Dynamic island */}
+      <div className="absolute left-1/2 top-3 z-20 h-5 w-14 -translate-x-1/2 rounded-full bg-black" />
+      {/* Screen */}
+      <div className="absolute inset-[5px] overflow-hidden rounded-[30px] bg-black">
+        {state === "loading" && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: "#0a0a14" }}>
+            <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
+          </div>
+        )}
+        {state === "failed" ? (
+          <FallbackCard project={project} />
+        ) : (
+          <iframe
+            key={project.id}
+            src={project.url}
+            title={project.name + " mobile"}
+            className="h-full w-full border-0"
+            onLoad={() => setState("loaded")}
+            onError={() => setState("failed")}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            loading="lazy"
+          />
+        )}
+      </div>
+      {/* Home bar */}
+      <div className="absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full" style={{ background: "rgba(255,255,255,0.2)" }} />
     </div>
   );
 }
 
-// ─── Main showcase ────────────────────────────────────────────────────────────
+// ── Project info panel ────────────────────────────────────────────────────────
+function ProjectInfo({ project, idx, total }: { project: Project; idx: number; total: number }) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={project.id}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="flex flex-col gap-3"
+      >
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: project.color }} />
+          <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: project.color }}>
+            {String(idx + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+          </span>
+        </div>
+        <h3 className="text-3xl font-black tracking-tight text-white leading-none">{project.name}</h3>
+        <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{project.desc}</p>
+        <a
+          href={project.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
+          style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
+        >
+          {project.url.replace("https://", "")} <ExternalLink className="h-3 w-3" />
+        </a>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
+// ── Main component ────────────────────────────────────────────────────────────
 export function ImmersiveShowcase() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [prevIdx, setPrevIdx] = useState(0);
+  const [idx, setIdx] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Mouse parallax
+  // Mouse parallax on device group
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const rotX = useSpring(useMotionValue(0), { stiffness: 60, damping: 20 });
-  const rotY = useSpring(useMotionValue(0), { stiffness: 60, damping: 20 });
+  const rotX = useSpring(useTransform(mouseY, [-0.5, 0.5], [5, -5]), { stiffness: 50, damping: 20 });
+  const rotY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-6, 6]), { stiffness: 50, damping: 20 });
 
+  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - r.left) / r.width - 0.5);
+    mouseY.set((e.clientY - r.top) / r.height - 0.5);
+  }
+  function onMouseLeave() { mouseX.set(0); mouseY.set(0); }
+
+  const advance = useCallback(() => setIdx((i) => (i + 1) % PROJECTS.length), []);
+
+  // Autoplay
   useEffect(() => {
-    function onMouse(e: MouseEvent) {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      rotX.set(((e.clientY - cy) / cy) * -6);
-      rotY.set(((e.clientX - cx) / cx) * 6);
-    }
-    window.addEventListener("mousemove", onMouse);
-    return () => window.removeEventListener("mousemove", onMouse);
-  }, [rotX, rotY]);
+    if (!playing) { if (intervalRef.current) clearInterval(intervalRef.current); return; }
+    intervalRef.current = setInterval(advance, AUTOPLAY_MS);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [playing, advance]);
 
-  // GSAP ScrollTrigger pinned section
-  useEffect(() => {
-    if (!triggerRef.current || !containerRef.current) return;
-
-    const PIN_DURATION = "600%";
-    const n = PROJECTS.length;
-
-    const trigger = ScrollTrigger.create({
-      trigger: triggerRef.current,
-      start: "top top",
-      end: `+=${PIN_DURATION}`,
-      pin: containerRef.current,
-      scrub: 1,
-      onUpdate: (self) => {
-        const idx = Math.min(Math.floor(self.progress * n), n - 1);
-        setActiveIdx((prev) => {
-          if (prev !== idx) setPrevIdx(prev);
-          return idx;
-        });
-      },
-    });
-
-    return () => trigger.kill();
-  }, []);
-
-  const project = PROJECTS[activeIdx];
+  const project = PROJECTS[idx];
 
   return (
-    <>
-      {/* Ticker */}
-      <Ticker projects={PROJECTS} />
+    <section
+      id="showcase"
+      className="relative overflow-hidden py-24"
+      style={{ background: "#07070f" }}
+    >
+      {/* Ambient glow that follows active project color */}
+      <AnimatePresence>
+        <motion.div
+          key={project.color}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.5 }}
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse 60% 50% at 60% 60%, ${project.color}14 0%, transparent 70%)`,
+          }}
+        />
+      </AnimatePresence>
 
-      {/* Pinned scroll wrapper */}
-      <div ref={triggerRef} style={{ height: `${PROJECTS.length * 100}vh` }}>
+      <div className="relative mx-auto max-w-7xl px-6">
+
+        {/* ── Section label ── */}
+        <div className="mb-16 text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>Our work</p>
+          <h2 className="mt-3 text-5xl font-black tracking-tight text-white lg:text-6xl">
+            Every pixel.<br />
+            <span style={{ color: "rgba(255,255,255,0.2)" }}>Every client. Shipped.</span>
+          </h2>
+        </div>
+
+        {/* ── Main layout: info left + devices right ── */}
         <div
-          ref={containerRef}
-          className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden"
+          className="flex flex-col items-center gap-12 lg:flex-row lg:items-end lg:gap-16"
+          onMouseMove={onMouseMove}
+          onMouseLeave={onMouseLeave}
         >
-          {/* Aurora bg */}
-          <AnimatePresence mode="wait">
-            <AuroraBackground key={project.color} color={project.color} bg={project.bg} />
-          </AnimatePresence>
-
-          {/* Progress bar */}
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-white/5 z-20">
-            <motion.div
-              className="h-full"
-              animate={{ width: `${((activeIdx + 1) / PROJECTS.length) * 100}%` }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{ background: project.color }}
-            />
-          </div>
-
-          {/* Step counter */}
-          <div className="absolute top-6 right-8 z-20 flex items-center gap-2">
-            <span className="text-xs font-mono text-white/30">{String(activeIdx + 1).padStart(2, "0")}</span>
-            <span className="text-xs text-white/15">/</span>
-            <span className="text-xs font-mono text-white/15">{String(PROJECTS.length).padStart(2, "0")}</span>
-          </div>
-
-          {/* Project label (top left) */}
-          <div className="absolute top-6 left-8 z-20">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={project.id + "label"}
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 16 }}
-                transition={{ duration: 0.4 }}
-                className="flex items-center gap-2"
-              >
-                <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: project.color }} />
-                <span className="text-xs font-semibold text-white/50">{project.desc}</span>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Devices — 3D perspective wrapper */}
-          <motion.div
-            className="relative z-10 flex items-end justify-center gap-8"
-            style={{ perspective: 1200, rotateX: rotX, rotateY: rotY }}
-          >
-            {/* MacBook */}
-            <motion.div
-              key={project.id + "mac"}
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="relative"
-              style={{ transformStyle: "preserve-3d", transform: "rotateY(-4deg) rotateX(2deg)" }}
-            >
-              <MacBookFrame project={project} />
-              {/* Reflection */}
-              <div
-                className="absolute -bottom-4 left-0 right-0 h-20 opacity-20"
-                style={{
-                  background: `linear-gradient(to bottom, ${project.color}30, transparent)`,
-                  filter: "blur(8px)",
-                  transform: "scaleY(-1) translateY(-100%)",
-                  borderRadius: "0 0 10px 10px",
-                }}
-              />
-            </motion.div>
-
-            {/* iPhone (overlapping right side) */}
-            <motion.div
-              key={project.id + "phone"}
-              initial={{ opacity: 0, y: 60, x: 20 }}
-              animate={{ opacity: 1, y: 0, x: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-20 -ml-8 mb-[-24px]"
-              style={{ transform: "rotateY(6deg) rotateX(2deg)" }}
-            >
-              <IPhoneFrame project={project} visible={true} />
-              {/* Glow under iPhone */}
-              <div
-                className="absolute -bottom-6 left-1/2 -translate-x-1/2 h-12 w-32 rounded-full opacity-40"
-                style={{ background: project.color, filter: "blur(20px)" }}
-              />
-            </motion.div>
-          </motion.div>
-
-          {/* Project name + URL */}
-          <div className="absolute bottom-16 left-0 right-0 z-20 flex flex-col items-center gap-3">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={project.id + "name"}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center"
-              >
-                <h3 className="text-3xl font-black tracking-tight text-white">{project.name}</h3>
-                <a
-                  href={project.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 flex items-center justify-center gap-1.5 text-sm font-medium transition hover:opacity-80"
-                  style={{ color: project.color }}
-                >
-                  {project.url} <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </motion.div>
-            </AnimatePresence>
+          {/* Left: project info + controls */}
+          <div className="flex w-full flex-col gap-8 lg:w-72 lg:shrink-0 lg:pb-8">
+            <ProjectInfo project={project} idx={idx} total={PROJECTS.length} />
 
             {/* Dot nav */}
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap gap-2">
               {PROJECTS.map((p, i) => (
-                <motion.div
+                <button
                   key={p.id}
-                  animate={{ width: i === activeIdx ? 24 : 6, opacity: i === activeIdx ? 1 : 0.3 }}
-                  transition={{ duration: 0.3 }}
-                  className="h-1.5 rounded-full"
-                  style={{ background: i === activeIdx ? project.color : "white" }}
+                  type="button"
+                  onClick={() => { setIdx(i); setPlaying(false); }}
+                  className="transition-all duration-300"
+                  title={p.name}
+                  style={{
+                    width: i === idx ? 28 : 8,
+                    height: 8,
+                    borderRadius: 4,
+                    background: i === idx ? project.color : "rgba(255,255,255,0.12)",
+                    boxShadow: i === idx ? `0 0 10px ${project.color}80` : "none",
+                  }}
                 />
               ))}
             </div>
+
+            {/* Play/pause + prev/next */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPlaying((v) => !v)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border transition hover:border-white/20"
+                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+              >
+                {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIdx((i) => (i - 1 + PROJECTS.length) % PROJECTS.length); setPlaying(false); }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold transition hover:border-white/20"
+                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)" }}
+              >←</button>
+              <button
+                type="button"
+                onClick={() => { setIdx((i) => (i + 1) % PROJECTS.length); setPlaying(false); }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold transition hover:border-white/20"
+                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)" }}
+              >→</button>
+              {/* Progress ring */}
+              <div className="ml-auto text-xs font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
+                {String(idx + 1).padStart(2, "0")}&thinsp;/&thinsp;{String(PROJECTS.length).padStart(2, "0")}
+              </div>
+            </div>
           </div>
 
-          {/* Scroll hint (only on first project) */}
-          <AnimatePresence>
-            {activeIdx === 0 && (
+          {/* Right: devices with 3D parallax */}
+          <motion.div
+            className="relative flex items-end justify-center"
+            style={{ perspective: 1000, rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}
+          >
+            {/* Glow under devices */}
+            <motion.div
+              key={project.color + "glow"}
+              animate={{ background: `radial-gradient(ellipse 80% 40% at 50% 100%, ${project.color}30 0%, transparent 70%)` }}
+              transition={{ duration: 1 }}
+              className="pointer-events-none absolute -bottom-8 left-0 right-0 h-32"
+              style={{ filter: "blur(20px)" }}
+            />
+
+            {/* MacBook */}
+            <AnimatePresence mode="wait">
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute bottom-8 right-8 z-20 flex flex-col items-center gap-1"
+                key={project.id + "mac"}
+                initial={{ opacity: 0, scale: 0.97, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, y: -10 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                style={{ transformStyle: "preserve-3d" }}
               >
-                <motion.div
-                  animate={{ y: [0, 6, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="h-8 w-5 rounded-full border border-white/20 flex items-start justify-center pt-1.5"
-                >
-                  <div className="h-1.5 w-1 rounded-full bg-white/50" />
-                </motion.div>
-                <span className="text-[10px] text-white/30">scroll</span>
+                <MacBook project={project} />
               </motion.div>
-            )}
-          </AnimatePresence>
+            </AnimatePresence>
+
+            {/* iPhone — overlapping right side of MacBook */}
+            <motion.div
+              className="absolute -right-10 bottom-8 z-20"
+              style={{ transformStyle: "preserve-3d", translateZ: 30 }}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={project.id + "phone"}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <IPhone project={project} />
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* ── Project name ticker ── */}
+        <div className="mt-16 overflow-hidden border-t pt-8" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+          <motion.div
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
+            className="flex gap-10 whitespace-nowrap"
+          >
+            {[...PROJECTS, ...PROJECTS].map((p, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => { setIdx(PROJECTS.findIndex(x => x.id === p.id)); setPlaying(false); }}
+                className="flex items-center gap-2.5 text-sm font-semibold transition hover:opacity-100"
+                style={{ color: p.id === project.id ? p.color : "rgba(255,255,255,0.2)" }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: p.id === project.id ? p.color : "rgba(255,255,255,0.15)" }} />
+                {p.name}
+              </button>
+            ))}
+          </motion.div>
         </div>
       </div>
-    </>
+    </section>
   );
 }
