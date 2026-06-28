@@ -59,7 +59,7 @@ function NotifRow({ href, primary, secondary, tag, tagColor }: { href: string; p
 export default function DashboardPage() {
   const [notifs, setNotifs] = useState<Notif | null>(null);
   const [stats, setStats] = useState<any>(null);
-  const [openStatus, setOpenStatus] = useState("NEW");
+  const [openStatus, setOpenStatus] = useState("");
   const [statusLeads, setStatusLeads] = useState<any[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
 
