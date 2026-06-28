@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createSessionToken, setPortalCookie } from "@/lib/portal-auth";
+import { createSessionForClient, setPortalCookie } from "@/lib/portal-auth";
 
+// Legacy verify endpoint — redirects outstanding old-style links to setup
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const token = url.searchParams.get("token");
+  const token = new URL(req.url).searchParams.get("token");
   if (!token) return NextResponse.redirect(new URL("/portal/login?error=invalid", req.url));
 
   const client = await prisma.client.findFirst({
-    where: { magicToken: token, magicExpiry: { gt: new Date() } },
+    where: { setupToken: token, setupExpiry: { gt: new Date() } },
   });
   if (!client) return NextResponse.redirect(new URL("/portal/login?error=expired", req.url));
 
-  const sessionToken = await createSessionToken(client.id);
+  const sessionToken = await createSessionForClient(client.id);
   await setPortalCookie(sessionToken);
-
   return NextResponse.redirect(new URL("/portal", req.url));
 }

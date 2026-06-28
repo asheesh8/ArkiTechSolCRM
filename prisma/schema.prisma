@@ -203,8 +203,10 @@ model Client {
   phone            String?
   businessName     String
   passwordHash     String?
-  magicToken       String?   @unique
-  magicExpiry      DateTime?
+  setupToken       String?   @unique
+  setupExpiry      DateTime?
+  sessionToken     String?   @unique
+  sessionExpiry    DateTime?
   stripeCustomerId String?
   avatarUrl        String?
   createdAt        DateTime  @default(now())

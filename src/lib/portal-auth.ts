@@ -10,27 +10,17 @@ export async function getPortalSession() {
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
   const client = await prisma.client.findFirst({
-    where: { magicToken: token, magicExpiry: { gt: new Date() } },
+    where: { sessionToken: token, sessionExpiry: { gt: new Date() } },
   });
   return client ?? null;
 }
 
-export async function createMagicToken(clientId: string) {
-  const token = randomBytes(32).toString("hex");
-  const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 min
-  await prisma.client.update({
-    where: { id: clientId },
-    data: { magicToken: token, magicExpiry: expiry },
-  });
-  return token;
-}
-
-export async function createSessionToken(clientId: string) {
+export async function createSessionForClient(clientId: string) {
   const token = randomBytes(32).toString("hex");
   const expiry = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   await prisma.client.update({
     where: { id: clientId },
-    data: { magicToken: token, magicExpiry: expiry },
+    data: { sessionToken: token, sessionExpiry: expiry },
   });
   return token;
 }
@@ -49,4 +39,14 @@ export async function setPortalCookie(token: string) {
 export async function clearPortalCookie() {
   const jar = await cookies();
   jar.delete(COOKIE);
+}
+
+export async function createSetupToken(clientId: string) {
+  const token = randomBytes(32).toString("hex");
+  const expiry = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
+  await prisma.client.update({
+    where: { id: clientId },
+    data: { setupToken: token, setupExpiry: expiry },
+  });
+  return token;
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createSetupToken } from "@/lib/portal-auth";
+import { sendPortalWelcome } from "@/lib/email";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -16,7 +18,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const { signatureData } = await req.json();
   if (!signatureData) return NextResponse.json({ error: "Signature required" }, { status: 400 });
 
-  const contract = await prisma.contract.findUnique({ where: { signToken: token }, include: { client: true } });
+  const contract = await prisma.contract.findUnique({
+    where: { signToken: token },
+    include: { client: true },
+  });
   if (!contract) return NextResponse.json({ error: "Invalid link" }, { status: 404 });
   if (contract.status === "SIGNED" || contract.status === "ACTIVE") {
     return NextResponse.json({ error: "Already signed" }, { status: 409 });
@@ -27,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     data: { status: "ACTIVE", signedAt: new Date(), signatureData },
   });
 
-  // Create first invoice when contract is signed
+  // First invoice due in 7 days
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + 7);
   await prisma.invoice.create({
@@ -41,11 +46,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     },
   });
 
-  // Create magic token so client can access portal
-  const { randomBytes } = await import("crypto");
-  const magicToken = randomBytes(32).toString("hex");
-  const magicExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  await prisma.client.update({ where: { id: contract.clientId }, data: { magicToken, magicExpiry } });
+  // Generate a setup token so the client can create their password
+  const setupToken = await createSetupToken(contract.clientId);
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const setupUrl = `${baseUrl}/portal/setup?token=${setupToken}`;
+
+  await sendPortalWelcome({
+    to: contract.client.email,
+    name: contract.client.name,
+    businessName: contract.client.businessName,
+    setupUrl,
+  });
 
   return NextResponse.json({ ok: true, contract: updated });
 }

@@ -29,12 +29,12 @@ export async function sendContractEmail(opts: {
   });
 }
 
-export async function sendMagicLink(to: string, name: string, link: string) {
+export async function sendPortalWelcome(opts: { to: string; name: string; businessName: string; setupUrl: string }) {
   return send({
     from: FROM,
-    to,
-    subject: "Sign in to your ArkiTech client portal",
-    html: magicLinkHtml(name, link),
+    to: opts.to,
+    subject: "Welcome to ArkiTech — create your portal password",
+    html: portalWelcomeHtml(opts),
   });
 }
 
@@ -105,13 +105,17 @@ function contractEmailHtml(opts: { clientName: string; planName: string; total: 
 `);
 }
 
-function magicLinkHtml(name: string, link: string) {
+function portalWelcomeHtml(opts: { name: string; businessName: string; setupUrl: string }) {
   return base(`
-<h1>Sign in to your portal</h1>
-<p>Hi ${name},</p>
-<p>Click the button below to securely sign in to your ArkiTech client portal. This link expires in 15 minutes.</p>
-<a class="btn" href="${link}">Sign in to portal →</a>
-<p style="font-size:13px;color:#a1a1aa">If you didn't request this, you can ignore this email safely.</p>
+<h1>Welcome to your client portal 🎉</h1>
+<p>Hi ${opts.name},</p>
+<p>Your agreement for <strong>${opts.businessName}</strong> is signed and we're ready to get to work. Click below to create your password and access your portal — you'll be able to track your project, submit requests, and pay invoices all in one place.</p>
+<a class="btn" href="${opts.setupUrl}">Create my password →</a>
+<div class="info">
+  <p><strong>Your portal:</strong> arkitechsol.com/login</p>
+  <p style="margin-top:8px"><strong>Email:</strong> ${opts.name}</p>
+</div>
+<p style="font-size:13px;color:#a1a1aa">This setup link expires in 72 hours. If you have trouble, just reply to this email.</p>
 `);
 }
 
