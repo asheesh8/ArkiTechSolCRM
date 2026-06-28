@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { ExternalLink, ArrowUpRight, Pause, Play } from "lucide-react";
 
 const PROJECTS = [
-  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",                 color: "#3b82f6", accent: "#1d4ed8" },
+  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
   { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen",          url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
   { id: "shine",    name: "HomeSHINE",              desc: "Home services booking",              url: "https://home-shine-v2.vercel.app",               color: "#f87171", accent: "#dc2626" },
   { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
@@ -53,7 +53,7 @@ function FallbackCard({ project }: { project: Project }) {
 }
 
 // ── MacBook device ────────────────────────────────────────────────────────────
-function MacBook({ project }: { project: Project }) {
+function MacBook({ project }: { project: Project & { iframeSrc?: string } }) {
   const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
   useEffect(() => {
     setState("loading");
@@ -103,7 +103,7 @@ function MacBook({ project }: { project: Project }) {
             ) : (
               <iframe
                 key={project.id}
-                src={project.url}
+                src={"iframeSrc" in project ? (project as any).iframeSrc : project.url}
                 title={project.name}
                 className="border-0"
                 style={{
@@ -144,7 +144,7 @@ function MacBook({ project }: { project: Project }) {
 }
 
 // ── iPhone device ─────────────────────────────────────────────────────────────
-function IPhone({ project }: { project: Project }) {
+function IPhone({ project }: { project: Project & { iframeSrc?: string } }) {
   const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
   useEffect(() => {
     setState("loading");
@@ -183,7 +183,7 @@ function IPhone({ project }: { project: Project }) {
         ) : (
           <iframe
             key={project.id}
-            src={project.url}
+            src={"iframeSrc" in project ? (project as any).iframeSrc : project.url}
             title={project.name + " mobile"}
             className="border-0"
             style={{
