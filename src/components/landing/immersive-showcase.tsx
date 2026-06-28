@@ -91,8 +91,8 @@ function MacBook({ project }: { project: Project }) {
               <span className="truncate font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{project.url.replace("https://", "")}</span>
             </div>
           </div>
-          {/* Content */}
-          <div className="absolute inset-0 top-[28px]">
+          {/* Content — iframe renders at 1280px then scales to fit 552px screen */}
+          <div className="absolute inset-0 top-[28px] overflow-hidden">
             {state === "loading" && (
               <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: "#0a0a14" }}>
                 <div className="h-6 w-6 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
@@ -105,7 +105,14 @@ function MacBook({ project }: { project: Project }) {
                 key={project.id}
                 src={project.url}
                 title={project.name}
-                className="h-full w-full border-0"
+                className="border-0"
+                style={{
+                  width: 1280,
+                  height: 710,
+                  transform: "scale(0.43125)",
+                  transformOrigin: "top left",
+                  pointerEvents: "none",
+                }}
                 onLoad={() => setState("loaded")}
                 onError={() => setState("failed")}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
@@ -164,7 +171,7 @@ function IPhone({ project }: { project: Project }) {
       <div className="absolute -left-[3px] top-28 h-7 w-[3px] rounded-r" style={{ background: "rgba(255,255,255,0.08)" }} />
       {/* Dynamic island */}
       <div className="absolute left-1/2 top-3 z-20 h-5 w-14 -translate-x-1/2 rounded-full bg-black" />
-      {/* Screen */}
+      {/* Screen — iframe renders at 390px (iPhone width) then scales to 138px */}
       <div className="absolute inset-[5px] overflow-hidden rounded-[30px] bg-black">
         {state === "loading" && (
           <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: "#0a0a14" }}>
@@ -178,7 +185,14 @@ function IPhone({ project }: { project: Project }) {
             key={project.id}
             src={project.url}
             title={project.name + " mobile"}
-            className="h-full w-full border-0"
+            className="border-0"
+            style={{
+              width: 390,
+              height: 844,
+              transform: "scale(0.354)",
+              transformOrigin: "top left",
+              pointerEvents: "none",
+            }}
             onLoad={() => setState("loaded")}
             onError={() => setState("failed")}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
