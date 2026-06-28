@@ -12,6 +12,9 @@ const WORDS = ["Websites", "Brands", "Portals", "Stores", "Platforms"];
 export function Hero() {
   const wordRef = useRef<HTMLSpanElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const imgRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   /* Cycling word */
   useEffect(() => {
@@ -31,93 +34,84 @@ export function Hero() {
     return () => clearInterval(interval);
   }, []);
 
-  /* Parallax blobs on scroll */
+  /* Scroll-driven transition: hero zooms + fades into showcase */
   useEffect(() => {
-    const blobs = heroRef.current?.querySelectorAll<HTMLElement>(".aurora-blob");
-    if (!blobs) return;
-    const triggers = Array.from(blobs).map((blob, i) =>
-      ScrollTrigger.create({
+    if (!heroRef.current || !imgRef.current || !overlayRef.current || !contentRef.current) return;
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
         trigger: heroRef.current,
         start: "top top",
         end: "bottom top",
-        scrub: true,
-        onUpdate: (self) => {
-          gsap.set(blob, { y: self.progress * (i % 2 === 0 ? -120 : -80) });
-        },
-      })
-    );
-    return () => triggers.forEach((t) => t.kill());
+        scrub: 1.2,
+      },
+    });
+
+    // Image slowly zooms in and darkens
+    tl.to(imgRef.current, { scale: 1.12, duration: 1, ease: "none" }, 0);
+    // Dark overlay fades in
+    tl.to(overlayRef.current, { opacity: 1, duration: 1, ease: "none" }, 0);
+    // Content fades out and rises
+    tl.to(contentRef.current, { opacity: 0, y: -60, duration: 0.6, ease: "none" }, 0);
+
+    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
   }, []);
 
   return (
     <section
       ref={heroRef}
-      className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 text-center"
-      style={{ background: "#07070f" }}
+      className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden"
     >
-      {/* ── Aurora blobs ── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Big center blob */}
+      {/* ── Cinematic background image ── */}
+      <div ref={imgRef} className="absolute inset-0 will-change-transform">
         <div
-          className="aurora-blob absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(139,92,246,0.35) 0%, rgba(99,102,241,0.12) 50%, transparent 70%)",
-            filter: "blur(40px)",
-            animation: "aurora1 8s ease-in-out infinite alternate",
-          }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/hero-bg.jpg')" }}
         />
-        {/* Top-left blob */}
+        {/* Slight dark tint so text pops */}
+        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.28)" }} />
+        {/* Bottom fade to match showcase bg */}
         <div
-          className="aurora-blob absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 65%)",
-            filter: "blur(60px)",
-            animation: "aurora2 10s ease-in-out infinite alternate",
-          }}
-        />
-        {/* Bottom-right blob */}
-        <div
-          className="aurora-blob absolute -bottom-40 -right-20 h-[400px] w-[600px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 65%)",
-            filter: "blur(50px)",
-            animation: "aurora3 12s ease-in-out infinite alternate",
-          }}
-        />
-        {/* Grid */}
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "80px 80px",
-          }}
+          className="absolute bottom-0 left-0 right-0 h-48"
+          style={{ background: "linear-gradient(to bottom, transparent, #0c0c18)" }}
         />
       </div>
 
+      {/* ── Scroll overlay (fades to dark on scroll) ── */}
+      <div
+        ref={overlayRef}
+        className="pointer-events-none absolute inset-0 opacity-0"
+        style={{ background: "#0c0c18" }}
+      />
+
       {/* ── Content ── */}
-      <div className="relative z-10 flex flex-col items-center gap-6">
+      <div ref={contentRef} className="relative z-10 flex flex-col items-center gap-6 px-6 text-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
-          style={{ borderColor: "rgba(139,92,246,0.25)", background: "rgba(139,92,246,0.08)", color: "#a78bfa" }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest backdrop-blur-sm"
+          style={{
+            borderColor: "rgba(255,255,255,0.2)",
+            background: "rgba(255,255,255,0.08)",
+            color: "rgba(255,255,255,0.85)",
+          }}
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
+          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
           ArkiTech Solutions · Burlington, VT
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[clamp(52px,9vw,112px)] font-black leading-[0.93] tracking-tighter text-white"
+          transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="text-[clamp(52px,9vw,112px)] font-black leading-[0.93] tracking-tighter text-white drop-shadow-2xl"
         >
           We Build<br />
           <span
             ref={wordRef}
             style={{
-              background: "linear-gradient(135deg, #a855f7 0%, #6366f1 40%, #3b82f6 100%)",
+              background: "linear-gradient(135deg, #fff 0%, #c4b5fd 50%, #93c5fd 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
@@ -130,9 +124,8 @@ export function Hero() {
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
-          className="max-w-md text-base leading-relaxed"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="max-w-md text-base leading-relaxed text-white/70 drop-shadow"
         >
           Local businesses deserve world-class websites. We design, build, and ship — on time, on budget.
         </motion.p>
@@ -140,50 +133,47 @@ export function Hero() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.65 }}
           className="flex flex-wrap items-center justify-center gap-3"
         >
           <a
             href="mailto:hello@arkitech-sol.com"
-            className="rounded-full px-8 py-3.5 text-sm font-bold text-white transition-all hover:scale-105 hover:shadow-2xl"
+            className="rounded-full px-8 py-3.5 text-sm font-bold text-white transition-all hover:scale-105 backdrop-blur-sm"
             style={{
-              background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-              boxShadow: "0 0 40px rgba(124,58,237,0.5), inset 0 1px 0 rgba(255,255,255,0.15)",
+              background: "rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.35)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
             }}
           >
             Start a project
           </a>
           <a
             href="#showcase"
-            className="rounded-full border px-8 py-3.5 text-sm font-semibold transition-all hover:border-white/20 hover:text-white"
-            style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+            className="rounded-full px-8 py-3.5 text-sm font-semibold text-white/70 transition-all hover:text-white"
           >
             See our work ↓
           </a>
         </motion.div>
       </div>
 
-      {/* ── Bleed gradient into next section ── */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-64"
-        style={{ background: "linear-gradient(to bottom, transparent 0%, #07070f 100%)" }}
-      />
-
-      {/* Aurora keyframes */}
-      <style>{`
-        @keyframes aurora1 {
-          0%   { transform: translate(-50%,-50%) scale(1) rotate(0deg); }
-          100% { transform: translate(-48%,-52%) scale(1.15) rotate(8deg); }
-        }
-        @keyframes aurora2 {
-          0%   { transform: translate(0,0) scale(1); }
-          100% { transform: translate(40px, 60px) scale(1.2); }
-        }
-        @keyframes aurora3 {
-          0%   { transform: translate(0,0) scale(1); }
-          100% { transform: translate(-50px,-40px) scale(1.1); }
-        }
-      `}</style>
+      {/* ── Scroll indicator ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+      >
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-2"
+        >
+          <div className="h-10 w-6 rounded-full border-2 border-white/30 flex items-start justify-center pt-2">
+            <div className="h-2 w-1 rounded-full bg-white/60" />
+          </div>
+          <span className="text-[10px] font-medium uppercase tracking-widest text-white/40">scroll</span>
+        </motion.div>
+      </motion.div>
     </section>
   );
 }

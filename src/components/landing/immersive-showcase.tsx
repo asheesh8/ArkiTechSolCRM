@@ -274,7 +274,7 @@ export function ImmersiveShowcase() {
     <section
       id="showcase"
       className="relative overflow-hidden py-24"
-      style={{ background: "#07070f" }}
+      style={{ background: "#0c0c18" }}
     >
       {/* Ambient glow that follows active project color */}
       <AnimatePresence>
