@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
 import { ScrapeQuotaWidget } from "@/components/crm/scrape-quota-widget";
+import { StatsTicker } from "@/components/crm/stats-ticker";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -83,6 +84,9 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
               <ThemeToggle />
               <LogoutButton />
             </div>
+          </div>
+          <div className="border-t border-zinc-200 dark:border-zinc-800">
+            <StatsTicker />
           </div>
           <nav className="flex gap-1 overflow-x-auto px-4 pb-3 lg:hidden">
             {nav.map((item) => {
