@@ -6,15 +6,15 @@ import { ExternalLink, ArrowUpRight, Pause, Play } from "lucide-react";
 
 const PROJECTS = [
   { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",                 color: "#3b82f6", accent: "#1d4ed8" },
-  { id: "crm",      name: "ArkiTech CRM",          desc: "Custom SaaS CRM platform",          url: "https://arkitech-sol.vercel.app",                color: "#a855f7", accent: "#7c3aed" },
-  { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
   { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen",          url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
   { id: "shine",    name: "HomeSHINE",              desc: "Home services booking",              url: "https://home-shine-v2.vercel.app",               color: "#f87171", accent: "#dc2626" },
-  { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
-  { id: "bible",    name: "Bible Runners",           desc: "Community & event platform",         url: "https://project-bible-runners-site.vercel.app", color: "#c084fc", accent: "#9333ea" },
   { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
-  { id: "pit",      name: "ThePit",                 desc: "Trader community & dashboard",       url: "https://pittrader.vercel.app",                   color: "#fb923c", accent: "#ea580c" },
   { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
+  { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
+  { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
+  { id: "pit",      name: "ThePit",                 desc: "Trader community & dashboard",       url: "https://pittrader.vercel.app",                   color: "#fb923c", accent: "#ea580c" },
+  { id: "bible",    name: "Bible Runners",           desc: "Community & event platform",         url: "https://project-bible-runners-site.vercel.app", color: "#c084fc", accent: "#9333ea" },
+  { id: "crm",      name: "ArkiTech CRM",           desc: "Custom SaaS CRM platform",           url: "https://arkitech-sol.vercel.app",                color: "#a855f7", accent: "#7c3aed" },
 ] as const;
 
 type Project = typeof PROJECTS[number];
