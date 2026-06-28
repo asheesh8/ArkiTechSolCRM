@@ -105,7 +105,20 @@ function RequestCard({ req, onUpdate }: { req: WorkRequest; onUpdate: (updated: 
             )}
           </div>
         </div>
-        {open ? <ChevronUp className="h-4 w-4 shrink-0 text-zinc-400" /> : <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />}
+        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {req.status !== "COMPLETED" && (
+            <button
+              type="button"
+              disabled={savingStatus}
+              onClick={() => updateStatus("COMPLETED")}
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 transition"
+            >
+              {savingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+              All done
+            </button>
+          )}
+          {open ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+        </div>
       </button>
 
       {/* Expanded content */}

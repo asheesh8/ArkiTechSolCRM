@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { sendWorkComplete } from "@/lib/email";
 
 export async function GET() {
   const session = await getCurrentUser();
@@ -22,14 +23,32 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, status, staffNote } = await req.json();
+
+  const previous = await prisma.workRequest.findUnique({
+    where: { id },
+    select: { status: true, title: true, client: { select: { name: true, businessName: true, email: true } } },
+  });
+
   const updated = await prisma.workRequest.update({
     where: { id },
     data: {
       ...(status ? { status } : {}),
       ...(staffNote !== undefined ? { staffNote } : {}),
     },
-    include: { client: { select: { id: true, name: true, businessName: true } }, files: true },
+    include: { client: { select: { id: true, name: true, businessName: true, email: true } }, files: true },
   });
+
+  // Email client when marked complete
+  if (status === "COMPLETED" && previous?.status !== "COMPLETED") {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://arkitech-sol.com";
+    await sendWorkComplete({
+      to: updated.client.email,
+      clientName: updated.client.name,
+      businessName: updated.client.businessName,
+      requestTitle: updated.title,
+      portalUrl: `${baseUrl}/portal/requests`,
+    });
+  }
 
   return NextResponse.json({ request: updated });
 }

@@ -32,6 +32,25 @@ export async function sendContractEmail(opts: {
   });
 }
 
+export async function sendWorkComplete(opts: { to: string; clientName: string; businessName: string; requestTitle: string; portalUrl: string }) {
+  return send({
+    from: FROM,
+    to: opts.to,
+    subject: `Your request is done — ${opts.requestTitle}`,
+    html: base(`
+<h1>Your request is complete ✓</h1>
+<p>Hi ${opts.clientName},</p>
+<p>We've finished working on your request. Here's what was completed:</p>
+<div class="info">
+  <p><strong>${opts.requestTitle}</strong></p>
+  <p style="margin-top:8px;color:#71717a">${opts.businessName}</p>
+</div>
+<a class="btn" href="${opts.portalUrl}">View in your portal →</a>
+<p style="font-size:13px;color:#a1a1aa">If you have any questions or need any changes, you can submit a new request from your portal anytime.</p>
+`),
+  });
+}
+
 export async function sendPortalWelcome(opts: { to: string; name: string; businessName: string; setupUrl: string }) {
   return send({
     from: FROM,
