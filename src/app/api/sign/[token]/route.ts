@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createSetupToken } from "@/lib/portal-auth";
 import { sendPortalWelcome } from "@/lib/email";
+import { stripe, getOrCreateStripeCustomer, STRIPE_PRICES } from "@/lib/stripe";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -32,21 +33,55 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     data: { status: "ACTIVE", signedAt: new Date(), signatureData },
   });
 
-  // First invoice due in 7 days
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 7);
-  await prisma.invoice.create({
-    data: {
-      clientId: contract.clientId,
-      contractId: contract.id,
-      amount: contract.total,
-      dueDate,
-      description: `${contract.planName} — first payment`,
-      status: "PENDING",
-    },
-  });
+  // Create Stripe customer
+  const customerId = await getOrCreateStripeCustomer(
+    contract.clientId,
+    contract.client.email,
+    contract.client.name,
+  );
 
-  // Generate a setup token so the client can create their password
+  const planMeta = STRIPE_PRICES[contract.planName];
+
+  if (planMeta?.recurring) {
+    // Recurring plan → create subscription; Stripe auto-generates the first invoice
+    await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: planMeta.priceId }],
+      metadata: { clientId: contract.clientId, contractId: contract.id },
+      payment_behavior: "default_incomplete",
+      payment_settings: { save_default_payment_method: "on_subscription" },
+      expand: ["latest_invoice.payment_intent"],
+    });
+    // Record the first invoice locally so staff can see it
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
+    await prisma.invoice.create({
+      data: {
+        clientId: contract.clientId,
+        contractId: contract.id,
+        amount: contract.total,
+        dueDate,
+        description: `${contract.planName} — Month 1`,
+        status: "PENDING",
+      },
+    });
+  } else {
+    // One-time plan → single invoice due in 7 days, client pays via portal checkout
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
+    await prisma.invoice.create({
+      data: {
+        clientId: contract.clientId,
+        contractId: contract.id,
+        amount: contract.total,
+        dueDate,
+        description: `${contract.planName} — payment`,
+        status: "PENDING",
+      },
+    });
+  }
+
+  // Generate portal setup token → welcome email
   const setupToken = await createSetupToken(contract.clientId);
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const setupUrl = `${baseUrl}/portal/setup?token=${setupToken}`;
