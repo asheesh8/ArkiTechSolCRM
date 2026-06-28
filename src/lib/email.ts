@@ -3,7 +3,10 @@ import { Resend } from "resend";
 const ENABLED = !!process.env.RESEND_API_KEY;
 const resend = new Resend(process.env.RESEND_API_KEY ?? "re_placeholder");
 
-const FROM = process.env.RESEND_FROM ?? "ArkiTech Solutions <onboarding@resend.dev>";
+const rawFrom = process.env.RESEND_FROM ?? "onboarding@resend.dev";
+const FROM = rawFrom.includes("@") && !rawFrom.includes("<")
+  ? `ArkiTech Solutions <${rawFrom}>`
+  : rawFrom;
 
 async function send(payload: Parameters<typeof resend.emails.send>[0]) {
   if (!ENABLED) {
