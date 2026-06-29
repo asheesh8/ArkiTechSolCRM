@@ -296,3 +296,19 @@ model WorkFile {
 
   @@index([workRequestId])
 }
+
+// ─── Analytics ───────────────────────────────────────────────────────────────
+
+model PageView {
+  id        String   @id @default(cuid())
+  site      String
+  path      String   @default("/")
+  referrer  String?
+  ipHash    String
+  ua        String?
+  createdAt DateTime @default(now())
+
+  @@index([site])
+  @@index([site, createdAt])
+  @@index([createdAt])
+}

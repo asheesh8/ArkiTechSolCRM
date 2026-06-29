@@ -15,6 +15,7 @@ const nav = [
   { href: "/clients", label: "CRM Clients", icon: Building2 },
   { href: "/requests", label: "Work Requests", icon: Inbox },
   { href: "/audits", label: "PageSpeed Audit", icon: Gauge },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

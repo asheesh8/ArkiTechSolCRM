@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Hero } from "@/components/landing/hero";
 import { ImmersiveShowcase } from "@/components/landing/immersive-showcase";
@@ -9,6 +9,14 @@ import { ContactModal } from "@/components/landing/contact-modal";
 
 export default function Home() {
   const [contactOpen, setContactOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ site: "arkitech-landing", path: "/", referrer: document.referrer }),
+    }).catch(() => {});
+  }, []);
 
   return (
     <main className="overflow-x-hidden" style={{ background: "#0c0c18", color: "white" }}>
