@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -15,7 +15,6 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [videoReady, setVideoReady] = useState(false);
 
   /* Cycling word */
   useEffect(() => {
@@ -33,6 +32,11 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
       });
     }, 2200);
     return () => clearInterval(interval);
+  }, []);
+
+  /* Force video to load eagerly */
+  useEffect(() => {
+    videoRef.current?.load();
   }, []);
 
   /* Scroll-driven effects */
@@ -83,9 +87,9 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
           muted
           playsInline
           preload="auto"
-          onCanPlay={() => setVideoReady(true)}
+          onLoadedData={(e) => { (e.currentTarget as HTMLVideoElement).style.opacity = "1"; }}
           className="absolute inset-0 h-full w-full object-cover will-change-transform"
-          style={{ transformOrigin: "center center", opacity: videoReady ? 1 : 0, transition: "opacity 0.8s ease" }}
+          style={{ transformOrigin: "center center", opacity: 0, transition: "opacity 0.8s ease" }}
         />
 
         {/* Subtle dark tint so text pops */}
