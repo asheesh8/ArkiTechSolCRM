@@ -38,7 +38,7 @@ export function TeamSection() {
   const inView = useInView(ref, { once: true, margin: "-10%" });
 
   return (
-    <section ref={ref} className="relative overflow-hidden py-32 px-6" style={{ background: "#0e0e1c" }}>
+    <section ref={ref} className="relative overflow-hidden py-20 px-6 lg:py-32" style={{ background: "#0e0e1c" }}>
       {/* Subtle grid */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.025]"
         style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)", backgroundSize: "80px 80px" }} />
@@ -52,13 +52,13 @@ export function TeamSection() {
           className="mb-16 text-center"
         >
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(168,85,247,0.6)" }}>The team</p>
-          <h2 className="text-5xl font-black tracking-tight text-white lg:text-6xl">
+          <h2 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
             Built by people who<br />
             <span style={{ background: "linear-gradient(135deg,#c4b5fd,#93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               actually give a dang.
             </span>
           </h2>
-          <p className="mt-4 text-base" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="mt-4 text-sm sm:text-base" style={{ color: "rgba(255,255,255,0.35)" }}>
             Small team. Big output. Every client gets our full attention.
           </p>
         </motion.div>

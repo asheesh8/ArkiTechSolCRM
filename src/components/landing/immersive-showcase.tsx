@@ -294,9 +294,9 @@ export function ImmersiveShowcase() {
       <div className="relative mx-auto max-w-7xl px-6">
 
         {/* ── Section label ── */}
-        <div className="mb-16 text-center">
+        <div className="mb-10 text-center lg:mb-16">
           <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>Our work</p>
-          <h2 className="mt-3 text-5xl font-black tracking-tight text-white lg:text-6xl">
+          <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
             Every pixel.<br />
             <span style={{ color: "rgba(255,255,255,0.2)" }}>Every client. Shipped.</span>
           </h2>
@@ -375,7 +375,7 @@ export function ImmersiveShowcase() {
               style={{ filter: "blur(20px)" }}
             />
 
-            {/* MacBook */}
+            {/* MacBook — scaled down on mobile */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={project.id + "mac"}
@@ -384,14 +384,15 @@ export function ImmersiveShowcase() {
                 exit={{ opacity: 0, scale: 0.97, y: -10 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 style={{ transformStyle: "preserve-3d" }}
+                className="origin-top scale-[0.58] -mb-40 sm:scale-[0.75] sm:-mb-24 lg:scale-100 lg:mb-0"
               >
                 <MacBook project={project} />
               </motion.div>
             </AnimatePresence>
 
-            {/* iPhone — overlapping right side of MacBook */}
+            {/* iPhone — only on desktop to avoid overflow */}
             <motion.div
-              className="absolute -right-10 bottom-8 z-20"
+              className="absolute -right-10 bottom-8 z-20 hidden lg:block"
               style={{ transformStyle: "preserve-3d", translateZ: 30 }}
             >
               <AnimatePresence mode="wait">
