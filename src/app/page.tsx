@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Hero } from "@/components/landing/hero";
 import { ImmersiveShowcase } from "@/components/landing/immersive-showcase";
+import { TeamSection } from "@/components/landing/team-section";
 import { ContactModal } from "@/components/landing/contact-modal";
 
 export default function Home() {
@@ -37,6 +38,9 @@ export default function Home() {
 
       {/* ── Showcase ── */}
       <ImmersiveShowcase />
+
+      {/* ── Team ── */}
+      <TeamSection />
 
       {/* ── Stats ── */}
       <div className="border-y py-16 text-center" style={{ borderColor: "rgba(255,255,255,0.06)", background: "#10101e" }}>
