@@ -39,6 +39,21 @@ export function Hero() {
     if (!heroRef.current) return;
 
     const ctx = gsap.context(() => {
+      // Scrub video currentTime with scroll — plays forward scrolling down, reverses scrolling up
+      ScrollTrigger.create({
+        trigger: heroRef.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: 0.5,
+        onUpdate: (self) => {
+          const video = videoRef.current;
+          if (video && video.duration && video.readyState >= 2) {
+            video.currentTime = self.progress * video.duration;
+          }
+        },
+      });
+
+      // Overlay + content driven separately
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: heroRef.current,
@@ -47,21 +62,8 @@ export function Hero() {
           scrub: 1,
         },
       });
-
-      // Video parallax — moves up slower than scroll (parallax feel)
-      if (videoRef.current) {
-        tl.to(videoRef.current, { y: "30%", ease: "none" }, 0);
-      }
-
-      // Dark overlay fades in as user scrolls
-      if (overlayRef.current) {
-        tl.to(overlayRef.current, { opacity: 1, ease: "none" }, 0);
-      }
-
-      // Content rises and fades out
-      if (contentRef.current) {
-        tl.to(contentRef.current, { opacity: 0, y: -50, ease: "none" }, 0);
-      }
+      if (overlayRef.current) tl.to(overlayRef.current, { opacity: 1, ease: "none" }, 0);
+      if (contentRef.current) tl.to(contentRef.current, { opacity: 0, y: -50, ease: "none" }, 0);
     }, heroRef);
 
     return () => ctx.revert();
@@ -77,10 +79,9 @@ export function Hero() {
         <video
           ref={videoRef}
           src="/hero-bg.mp4"
-          autoPlay
-          loop
           muted
           playsInline
+          preload="auto"
           className="absolute inset-0 h-full w-full object-cover will-change-transform"
           style={{ transformOrigin: "center center" }}
         />
