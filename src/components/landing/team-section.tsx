@@ -55,7 +55,7 @@ export function TeamSection() {
           <h2 className="text-5xl font-black tracking-tight text-white lg:text-6xl">
             Built by people who<br />
             <span style={{ background: "linear-gradient(135deg,#c4b5fd,#93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              actually give a damn.
+              actually give a dang.
             </span>
           </h2>
           <p className="mt-4 text-base" style={{ color: "rgba(255,255,255,0.35)" }}>
