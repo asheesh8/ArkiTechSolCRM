@@ -21,6 +21,7 @@ const TEAM = [
     gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
     glow: "#059669",
     tags: ["Client Success", "Sales", "Relations", "Consultant"],
+    phone: "(802) 557-8828",
   },
   {
     name: "Krish Dahal",
@@ -125,6 +126,17 @@ export function TeamSection() {
                   </span>
                 ))}
               </div>
+
+              {"phone" in person && (
+                <a
+                  href={`tel:+1${(person as any).phone.replace(/\D/g, "")}`}
+                  className="flex items-center gap-2 text-xs font-medium transition hover:opacity-80"
+                  style={{ color: `${person.glow}99` }}
+                >
+                  <span style={{ color: person.glow }}>📞</span>
+                  {(person as any).phone}
+                </a>
+              )}
             </motion.div>
           ))}
         </div>
