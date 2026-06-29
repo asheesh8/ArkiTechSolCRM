@@ -184,6 +184,23 @@ export function Hero() {
             href="#showcase"
             className="rounded-full px-8 py-3.5 text-sm font-semibold transition-all hover:text-white"
             style={{ color: "rgba(255,255,255,0.55)" }}
+            onClick={(e) => {
+              e.preventDefault();
+              const target = document.getElementById("showcase");
+              if (!target) return;
+              const start = window.scrollY;
+              const end = target.getBoundingClientRect().top + window.scrollY;
+              const duration = 3200;
+              const startTime = performance.now();
+              function step(now: number) {
+                const t = Math.min((now - startTime) / duration, 1);
+                // ease in-out cubic
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                window.scrollTo(0, start + (end - start) * ease);
+                if (t < 1) requestAnimationFrame(step);
+              }
+              requestAnimationFrame(step);
+            }}
           >
             See our work ↓
           </a>
