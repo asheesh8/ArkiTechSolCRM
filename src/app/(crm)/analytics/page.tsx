@@ -69,10 +69,18 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/track?days=${days}`)
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); });
+    let cancelled = false;
+
+    const load = (initial: boolean) => {
+      if (initial) setLoading(true);
+      fetch(`/api/track?days=${days}`)
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled) { setData(d); setLoading(false); } });
+    };
+
+    load(true);
+    const interval = setInterval(() => load(false), 4000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [days]);
 
   return (
