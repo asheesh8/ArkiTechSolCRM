@@ -16,6 +16,23 @@ async function send(payload: Parameters<typeof resend.emails.send>[0]) {
   return resend.emails.send(payload);
 }
 
+export async function sendContactEmail(opts: { fromEmail: string; subject: string; message: string }) {
+  return send({
+    from: FROM,
+    to: "subediashish31@gmail.com",
+    replyTo: opts.fromEmail,
+    subject: `[ArkiTech] ${opts.subject}`,
+    html: base(`
+<h1>New project inquiry</h1>
+<div class="info">
+  <p><strong>From:</strong> ${opts.fromEmail}</p>
+  <p style="margin-top:8px"><strong>Subject:</strong> ${opts.subject}</p>
+</div>
+<p style="white-space:pre-wrap">${opts.message.replace(/</g, "&lt;")}</p>
+`),
+  });
+}
+
 export async function sendContractEmail(opts: {
   to: string;
   clientName: string;

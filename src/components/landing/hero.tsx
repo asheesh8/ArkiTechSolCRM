@@ -9,7 +9,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const WORDS = ["Websites", "Brands", "Portals", "Stores", "Platforms"];
 
-export function Hero() {
+export function Hero({ onStartProject }: { onStartProject?: () => void }) {
   const wordRef = useRef<HTMLSpanElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -168,8 +168,9 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.7 }}
           className="flex flex-wrap items-center justify-center gap-3"
         >
-          <a
-            href="mailto:hello@arkitech-sol.com"
+          <button
+            type="button"
+            onClick={onStartProject}
             className="rounded-full px-8 py-3.5 text-sm font-bold text-white transition-all hover:scale-105"
             style={{
               background: "rgba(255,255,255,0.12)",
@@ -179,7 +180,7 @@ export function Hero() {
             }}
           >
             Start a project
-          </a>
+          </button>
           <a
             href="#showcase"
             className="rounded-full px-8 py-3.5 text-sm font-semibold transition-all hover:text-white"
