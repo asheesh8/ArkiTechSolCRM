@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -15,6 +15,7 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [videoReady, setVideoReady] = useState(false);
 
   /* Cycling word */
   useEffect(() => {
@@ -75,15 +76,16 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
       className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden"
     >
       {/* ── Video background ── */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden" style={{ background: "linear-gradient(135deg, #0c0c18 0%, #1a0a2e 50%, #0c0c18 100%)" }}>
         <video
           ref={videoRef}
           src="/hero-bg.mp4"
           muted
           playsInline
           preload="auto"
+          onCanPlay={() => setVideoReady(true)}
           className="absolute inset-0 h-full w-full object-cover will-change-transform"
-          style={{ transformOrigin: "center center" }}
+          style={{ transformOrigin: "center center", opacity: videoReady ? 1 : 0, transition: "opacity 0.8s ease" }}
         />
 
         {/* Subtle dark tint so text pops */}
