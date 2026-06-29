@@ -14,6 +14,15 @@ const TEAM = [
     tags: ["Fullstack Dev", "UI/UX", "Product"],
   },
   {
+    name: "Teibiroa Ambo",
+    role: "Director of Client Relations",
+    bio: "Tei is the voice of ArkiTech — building trust with every call, nurturing long-term client relationships, and making sure every business we work with feels like a priority.",
+    initials: "TA",
+    gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+    glow: "#059669",
+    tags: ["Client Success", "Sales", "Relations", "Consultant"],
+  },
+  {
     name: "Krish Dahal",
     role: "Frontend Engineer & Digital Strategist",
     bio: "Krish brings interfaces to life with pixel-perfect execution and drives organic growth through smart digital marketing that puts clients in front of the right people.",
@@ -21,15 +30,6 @@ const TEAM = [
     gradient: "linear-gradient(135deg, #0891b2 0%, #6366f1 100%)",
     glow: "#0891b2",
     tags: ["Frontend", "UI Dev", "Marketing"],
-  },
-  {
-    name: "Teibiroa Ambo",
-    role: "Director of Client Relations",
-    bio: "Tei is the voice of ArkiTech — building trust with every call, nurturing long-term client relationships, and making sure every business we work with feels like a priority.",
-    initials: "TA",
-    gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
-    glow: "#059669",
-    tags: ["Client Success", "Sales", "Relations"],
   },
 ] as const;
 
