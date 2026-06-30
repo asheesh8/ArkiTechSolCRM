@@ -40,6 +40,21 @@ async function main() {
     },
   });
 
+  await prisma.user.upsert({
+    where: { email: "krish@arkitech.com" },
+    update: {
+      name: "Krish",
+      passwordHash,
+      role: "OWNER",
+    },
+    create: {
+      name: "Krish",
+      email: "krish@arkitech.com",
+      passwordHash,
+      role: "OWNER",
+    },
+  });
+
   const maple = await prisma.lead.upsert({
     where: { googlePlaceId: "seed-maple-dental" },
     update: {},
