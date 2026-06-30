@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Ban, Building2, ExternalLink, Gauge, Globe2, MapPin, Save, Search, Star, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,8 @@ const stateNames: Record<string, string> = {
   wyoming: "WY",
 };
 
+const SCRAPER_STATE_KEY = "locallead:scraper-state";
+
 export default function LeadsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -71,6 +73,42 @@ export default function LeadsPage() {
   const [zip, setZip] = useState("");
   const [category, setCategory] = useState("");
   const [websiteFilter, setWebsiteFilter] = useState("all");
+  const [hydrated, setHydrated] = useState(false);
+
+  // Rehydrate the last scrape (results + filters) so leaving the page or
+  // saving a lead to the CRM doesn't wipe the list. Cleared by a new search.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SCRAPER_STATE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (Array.isArray(saved.leads)) setLeads(saved.leads);
+        if (typeof saved.location === "string") setLocation(saved.location);
+        if (typeof saved.city === "string") setCity(saved.city);
+        if (typeof saved.state === "string") setState(saved.state);
+        if (typeof saved.zip === "string") setZip(saved.zip);
+        if (typeof saved.category === "string") setCategory(saved.category);
+        if (typeof saved.websiteFilter === "string") setWebsiteFilter(saved.websiteFilter);
+        if (typeof saved.message === "string") setMessage(saved.message);
+      }
+    } catch {
+      /* ignore corrupt/unavailable storage */
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist on every change once hydrated (skips the initial empty render).
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(
+        SCRAPER_STATE_KEY,
+        JSON.stringify({ leads, location, city, state, zip, category, websiteFilter, message }),
+      );
+    } catch {
+      /* ignore quota/unavailable storage */
+    }
+  }, [hydrated, leads, location, city, state, zip, category, websiteFilter, message]);
 
   function parseLocation(value: string) {
     setLocation(value);
