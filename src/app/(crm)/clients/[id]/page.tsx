@@ -90,7 +90,7 @@ function CallLogPanel({ leadId, onSaved }: { leadId: string; onSaved: (note: any
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         note: note || `Outcome: ${formatStatus(outcome)}`,
-        noteType: "CALL",
+        noteType: outcome === "MEETING_BOOKED" ? "MEETING" : outcome === "FOLLOW_UP" ? "FOLLOW_UP" : "GENERAL",
         callOutcome: outcome,
         followUpDate: followUpDate ? new Date(followUpDate).toISOString() : "",
       }),
