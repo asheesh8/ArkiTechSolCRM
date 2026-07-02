@@ -235,6 +235,8 @@ model Contract {
   signatureData String?
   signToken     String?        @unique
   notes         String?
+  documentKey   String?
+  documentName  String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 

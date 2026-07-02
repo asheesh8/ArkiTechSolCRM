@@ -1,0 +1,2 @@
+ALTER TABLE "Contract" ADD COLUMN IF NOT EXISTS "documentKey" TEXT;
+ALTER TABLE "Contract" ADD COLUMN IF NOT EXISTS "documentName" TEXT;

@@ -16,6 +16,8 @@ type Contract = {
   notes: string | null;
   status: string;
   signedAt: string | null;
+  documentKey: string | null;
+  documentName: string | null;
   client: { name: string; email: string; businessName: string };
 };
 
@@ -145,21 +147,56 @@ export default function SignPage() {
           </div>
 
           <div className="p-6">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">Scope of Services</h3>
-            <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
-              {(contract.lineItems as Array<{ description: string; amount: number }>).map((item, i) => (
-                <div key={i} className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-zinc-700">{item.description}</span>
-                  <span className="text-sm font-medium text-zinc-900">${item.amount.toFixed(2)}</span>
+            {contract.documentKey ? (
+              <>
+                <h3 className="mb-3 flex items-center justify-between text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                  <span>Contract Document</span>
+                  <a
+                    href={`/api/sign/${token}/document`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium normal-case text-indigo-600 hover:text-indigo-700"
+                  >
+                    Open in new tab ↗
+                  </a>
+                </h3>
+                <object
+                  data={`/api/sign/${token}/document`}
+                  type="application/pdf"
+                  className="h-[600px] w-full rounded-lg border border-zinc-200"
+                >
+                  <div className="flex flex-col items-center gap-2 p-8 text-center text-sm text-zinc-500">
+                    <p>{contract.documentName ?? "Contract document"}</p>
+                    <a href={`/api/sign/${token}/document`} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 hover:text-indigo-700">
+                      View document ↗
+                    </a>
+                  </div>
+                </object>
+                {contract.total > 0 && (
+                  <div className="mt-4 flex justify-between border-t border-zinc-200 pt-4 text-base font-bold text-zinc-900">
+                    <span>Total {cycle}</span><span>${contract.total.toFixed(2)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">Scope of Services</h3>
+                <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
+                  {(contract.lineItems as Array<{ description: string; amount: number }>).map((item, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-3">
+                      <span className="text-sm text-zinc-700">{item.description}</span>
+                      <span className="text-sm font-medium text-zinc-900">${item.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-4 space-y-2 text-right text-sm">
-              <div className="flex justify-between text-zinc-500"><span>Subtotal</span><span>${contract.subtotal.toFixed(2)}</span></div>
-              {contract.tax > 0 && <div className="flex justify-between text-zinc-500"><span>Tax</span><span>${contract.tax.toFixed(2)}</span></div>}
-              <div className="flex justify-between border-t border-zinc-200 pt-2 text-base font-bold text-zinc-900"><span>Total {cycle}</span><span>${contract.total.toFixed(2)}</span></div>
-            </div>
+                <div className="mt-4 space-y-2 text-right text-sm">
+                  <div className="flex justify-between text-zinc-500"><span>Subtotal</span><span>${contract.subtotal.toFixed(2)}</span></div>
+                  {contract.tax > 0 && <div className="flex justify-between text-zinc-500"><span>Tax</span><span>${contract.tax.toFixed(2)}</span></div>}
+                  <div className="flex justify-between border-t border-zinc-200 pt-2 text-base font-bold text-zinc-900"><span>Total {cycle}</span><span>${contract.total.toFixed(2)}</span></div>
+                </div>
+              </>
+            )}
           </div>
 
           {contract.notes && (

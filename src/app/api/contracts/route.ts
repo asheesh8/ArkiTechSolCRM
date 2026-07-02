@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { clientId, planName, lineItems, subtotal, tax, total, billingCycle, notes } = body;
+  const { clientId, planName, lineItems, subtotal, tax, total, billingCycle, notes, documentKey, documentName } = body;
   if (!clientId || !planName || !lineItems || total == null) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
@@ -24,6 +24,8 @@ export async function POST(req: Request) {
       total,
       billingCycle: billingCycle ?? "MONTHLY",
       notes: notes || null,
+      documentKey: documentKey || null,
+      documentName: documentName || null,
       signToken,
       status: "DRAFT",
     },

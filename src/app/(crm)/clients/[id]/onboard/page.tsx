@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, Loader2, Mail, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, FileText, Loader2, Mail, Plus, Send, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,11 +75,17 @@ export default function OnboardPage() {
   const [selectedPlan, setSelectedPlan] = useState(0);
 
   // Step 2: contract builder
+  const [contractMode, setContractMode] = useState<"build" | "upload">("build");
   const [planName, setPlanName] = useState(PLAN_PRESETS[0].name);
   const [items, setItems] = useState<LineItem[]>(PLAN_PRESETS[0].items);
   const [billing, setBilling] = useState<string>(PLAN_PRESETS[0].billing);
   const [tax, setTax] = useState(0);
   const [notes, setNotes] = useState("");
+
+  // Custom uploaded contract
+  const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [docAmount, setDocAmount] = useState(0);
 
   // Client info
   const [clientName, setClientName] = useState("");
@@ -97,6 +103,7 @@ export default function OnboardPage() {
 
   const subtotal = items.reduce((s, i) => s + Number(i.amount || 0), 0);
   const total = subtotal + Number(tax || 0);
+  const displayTotal = contractMode === "upload" ? Number(docAmount || 0) : total;
 
   function applyPreset(idx: number) {
     const p = PLAN_PRESETS[idx];
@@ -113,6 +120,30 @@ export default function OnboardPage() {
 
   function addItem() { setItems((prev) => [...prev, { description: "", amount: 0 }]); }
   function removeItem(idx: number) { setItems((prev) => prev.filter((_, i) => i !== idx)); }
+
+  function onPickFile(f: File | null) {
+    if (!f) return;
+    if (f.type !== "application/pdf" && !f.name.toLowerCase().endsWith(".pdf")) {
+      setError("Please upload a PDF file.");
+      return;
+    }
+    setError("");
+    setFile(f);
+  }
+
+  async function uploadContractFile(f: File): Promise<{ key: string; name: string }> {
+    const contentType = f.type || "application/pdf";
+    const res = await fetch("/api/contracts/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName: f.name, contentType }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Could not prepare upload");
+    const put = await fetch(data.uploadUrl, { method: "PUT", headers: { "Content-Type": contentType }, body: f });
+    if (!put.ok) throw new Error("Could not upload the file to storage");
+    return { key: data.key, name: f.name };
+  }
 
   async function createContractAndClient() {
     setBusy(true);
@@ -141,11 +172,38 @@ export default function OnboardPage() {
         setClientId(cId!);
       }
 
+      // Upload the custom contract file first (if in upload mode)
+      let doc: { key: string; name: string } | null = null;
+      if (contractMode === "upload") {
+        if (!file) { setError("Add a PDF contract before generating."); setBusy(false); return; }
+        try {
+          doc = await uploadContractFile(file);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : "Upload failed"); setBusy(false); return;
+        }
+      }
+
+      // Contract payload differs by mode
+      const payload = contractMode === "upload"
+        ? {
+            clientId: cId,
+            planName: planName || "Custom Contract",
+            lineItems: [{ description: planName || "Custom contract", amount: Number(docAmount || 0) }],
+            subtotal: Number(docAmount || 0),
+            tax: 0,
+            total: Number(docAmount || 0),
+            billingCycle: billing,
+            notes,
+            documentKey: doc!.key,
+            documentName: doc!.name,
+          }
+        : { clientId: cId, planName, lineItems: items, subtotal, tax, total, billingCycle: billing, notes };
+
       // Create contract
       const res2 = await fetch("/api/contracts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: cId, planName, lineItems: items, subtotal, tax, total, billingCycle: billing, notes }),
+        body: JSON.stringify(payload),
       });
       const data2 = await res2.json();
       if (!res2.ok) { setError(data2.error ?? "Could not create contract"); setBusy(false); return; }
@@ -249,7 +307,25 @@ export default function OnboardPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold">Build the contract</h2>
-            <p className="mt-1 text-sm text-zinc-500">Confirm client info and customize the line items.</p>
+            <p className="mt-1 text-sm text-zinc-500">Confirm client info, then build line items or upload your own contract PDF.</p>
+          </div>
+
+          {/* Mode toggle */}
+          <div className="inline-flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900">
+            <button
+              type="button"
+              onClick={() => setContractMode("build")}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${contractMode === "build" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-800 dark:text-indigo-300" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
+            >
+              <Plus className="h-4 w-4" /> Build line items
+            </button>
+            <button
+              type="button"
+              onClick={() => setContractMode("upload")}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${contractMode === "upload" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-800 dark:text-indigo-300" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
+            >
+              <Upload className="h-4 w-4" /> Upload PDF
+            </button>
           </div>
 
           <Card>
@@ -270,6 +346,7 @@ export default function OnboardPage() {
             </CardContent>
           </Card>
 
+          {contractMode === "build" && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -324,6 +401,61 @@ export default function OnboardPage() {
               </div>
             </CardContent>
           </Card>
+          )}
+
+          {contractMode === "upload" && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle>Upload contract</CardTitle>
+                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} placeholder="Contract name" className="max-w-[200px] text-sm" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!file ? (
+                <label
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragOver(false); onPickFile(e.dataTransfer.files?.[0] ?? null); }}
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition ${dragOver ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40" : "border-zinc-300 hover:border-indigo-400 dark:border-zinc-700"}`}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-950">
+                    <Upload className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Drop a PDF here, or click to browse</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">Your own contract, agreement, or proposal — PDF only</p>
+                  </div>
+                  <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} />
+                </label>
+              ) : (
+                <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600 dark:bg-red-950">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{file.name}</p>
+                    <p className="text-xs text-zinc-500">{(file.size / 1024).toFixed(0)} KB · ready to send for signature</p>
+                  </div>
+                  <button type="button" onClick={() => setFile(null)} className="shrink-0 rounded-lg p-2 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+                <div className="space-y-1.5">
+                  <Label>Contract amount <span className="font-normal text-zinc-400">(for billing)</span></Label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-zinc-500">$</span>
+                    <Input type="number" min="0" value={docAmount} onChange={(e) => setDocAmount(Number(e.target.value))} className="w-32" placeholder="0.00" />
+                  </div>
+                </div>
+                <p className="pb-2.5 text-xs text-zinc-500">Sets the invoice amount created when they sign. Leave 0 if this contract has no charge.</p>
+              </div>
+            </CardContent>
+          </Card>
+          )}
 
           <Card>
             <CardHeader><CardTitle>Additional terms <span className="font-normal text-zinc-500">(optional)</span></CardTitle></CardHeader>
@@ -336,7 +468,7 @@ export default function OnboardPage() {
 
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setStep(0)}><ArrowLeft className="h-4 w-4" /> Back</Button>
-            <Button onClick={createContractAndClient} disabled={busy || !clientEmail || !clientName || total === 0}>
+            <Button onClick={createContractAndClient} disabled={busy || !clientEmail || !clientName || (contractMode === "build" ? total === 0 : !file)}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Generate contract <ArrowRight className="h-4 w-4" />
             </Button>
@@ -356,8 +488,8 @@ export default function OnboardPage() {
             <CardContent className="pt-6 space-y-4">
               <div className="rounded-xl bg-indigo-50 p-5 dark:bg-indigo-950">
                 <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">{planName}</p>
-                <p className="mt-1 text-3xl font-bold text-indigo-900 dark:text-indigo-100">${total.toFixed(2)}<span className="text-base font-normal text-indigo-600">{billing === "MONTHLY" ? " / mo" : ""}</span></p>
-                <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{items.length} service{items.length !== 1 ? "s" : ""} · to {clientName} ({clientEmail})</p>
+                <p className="mt-1 text-3xl font-bold text-indigo-900 dark:text-indigo-100">${displayTotal.toFixed(2)}<span className="text-base font-normal text-indigo-600">{billing === "MONTHLY" ? " / mo" : ""}</span></p>
+                <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{contractMode === "upload" ? "Custom PDF contract" : `${items.length} service${items.length !== 1 ? "s" : ""}`} · to {clientName} ({clientEmail})</p>
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
@@ -450,7 +582,7 @@ export default function OnboardPage() {
                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">What happens next:</p>
                 {[
                   "Client receives the contract signing email",
-                  "When they sign, a first invoice is auto-created ($" + total.toFixed(2) + ")",
+                  "When they sign, a first invoice is auto-created ($" + displayTotal.toFixed(2) + ")",
                   "They get portal access to pay, view invoices & submit requests",
                   "You get notified when payment lands",
                   "Monthly reminders send automatically before each due date",
