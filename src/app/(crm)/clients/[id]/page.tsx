@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Activity, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronRight,
@@ -198,6 +198,65 @@ function SignatureDisplay({ data }: { data: string | null | undefined }) {
   return <img src={data} alt="Signature" className="h-14 w-auto object-contain" />;
 }
 
+// Type-or-draw signature capture, used for the provider (staff) counter-signature.
+function SignaturePad({ onSign, saving }: { onSign: (data: string) => void; saving: boolean }) {
+  const [method, setMethod] = useState<"type" | "draw">("type");
+  const [typed, setTyped] = useState("");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
+
+  function pos(e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) {
+    const rect = canvas.getBoundingClientRect();
+    const p = "touches" in e ? e.touches[0] : (e as React.MouseEvent);
+    return { x: p.clientX - rect.left, y: p.clientY - rect.top };
+  }
+  function start(e: React.MouseEvent | React.TouchEvent) {
+    drawing.current = true;
+    const ctx = canvasRef.current!.getContext("2d")!;
+    const { x, y } = pos(e, canvasRef.current!);
+    ctx.beginPath(); ctx.moveTo(x, y);
+  }
+  function move(e: React.MouseEvent | React.TouchEvent) {
+    if (!drawing.current) return;
+    const ctx = canvasRef.current!.getContext("2d")!;
+    ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.strokeStyle = "#18181b";
+    const { x, y } = pos(e, canvasRef.current!);
+    ctx.lineTo(x, y); ctx.stroke();
+  }
+  function submit() {
+    if (method === "draw") { onSign(canvasRef.current!.toDataURL("image/png")); return; }
+    if (!typed.trim()) return;
+    onSign(`typed:${typed.trim()}`);
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-1.5">
+        {(["type", "draw"] as const).map((m) => (
+          <button key={m} type="button" onClick={() => setMethod(m)}
+            className={cn("rounded-md border px-2.5 py-1 text-xs font-medium transition", method === m ? "border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300" : "border-zinc-200 text-zinc-500 dark:border-zinc-700")}>
+            {m === "type" ? "Type" : "Draw"}
+          </button>
+        ))}
+      </div>
+      {method === "type" ? (
+        <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Type your name"
+          style={{ fontFamily: "'Dancing Script', 'Segoe Script', cursive", fontSize: 22 }}
+          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-400 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
+      ) : (
+        <canvas ref={canvasRef} width={320} height={90}
+          className="w-full touch-none rounded-lg border border-zinc-300 bg-white dark:border-zinc-700"
+          onMouseDown={start} onMouseMove={move} onMouseUp={() => (drawing.current = false)} onMouseLeave={() => (drawing.current = false)}
+          onTouchStart={start} onTouchMove={move} onTouchEnd={() => (drawing.current = false)} />
+      )}
+      <Button size="sm" className="w-full" disabled={saving || (method === "type" && !typed.trim())} onClick={submit}>
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenLine className="h-4 w-4" />}
+        {saving ? "Signing…" : "Sign & approve"}
+      </Button>
+    </div>
+  );
+}
+
 const CONTRACT_TONE: Record<string, string> = {
   ACTIVE: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
   SIGNED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
@@ -208,9 +267,25 @@ const CONTRACT_TONE: Record<string, string> = {
 
 // The signed "client packet": every contract with its signature, PDF and billing.
 function ClientPacket({ client }: { client: any }) {
-  const contracts: any[] = client.contracts ?? [];
+  const [contracts, setContracts] = useState<any[]>(client.contracts ?? []);
+  const [signingId, setSigningId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const invoices: any[] = client.invoices ?? [];
-  const signedCount = contracts.filter((c) => c.signedAt).length;
+  const executedCount = contracts.filter((c) => c.signedAt && c.providerSignedAt).length;
+
+  async function providerSign(contractId: string, signatureData: string) {
+    setSavingId(contractId);
+    const res = await fetch(`/api/contracts/${contractId}/sign`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signatureData }),
+    });
+    const data = await res.json();
+    setSavingId(null);
+    if (!res.ok) return;
+    setContracts((prev) => prev.map((c) => (c.id === contractId ? data.contract : c)));
+    setSigningId(null);
+  }
 
   return (
     <Card className="border-emerald-200 dark:border-emerald-900/60">
@@ -221,7 +296,7 @@ function ClientPacket({ client }: { client: any }) {
             <CardTitle>Client Packet</CardTitle>
             <p className="text-xs text-zinc-500">Signed agreements, signatures & billing on file</p>
           </div>
-          <span className="ml-auto text-xs text-zinc-400">{signedCount}/{contracts.length} signed</span>
+          <span className="ml-auto text-xs text-zinc-400">{executedCount}/{contracts.length} fully executed</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-5">
@@ -277,19 +352,49 @@ function ClientPacket({ client }: { client: any }) {
 
                 {c.notes && <p className="rounded-lg bg-zinc-50 p-3 text-xs leading-5 text-zinc-500 dark:bg-zinc-900/40">{c.notes}</p>}
 
-                {/* Signature block */}
-                <div className="flex items-end justify-between gap-4 rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-                  <div className="min-w-0">
-                    <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-400"><PenLine className="h-3 w-3" />Signature</p>
-                    <SignatureDisplay data={c.signatureData} />
+                {/* Execution status */}
+                <div className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium",
+                  c.signedAt && c.providerSignedAt
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+                )}>
+                  {c.signedAt && c.providerSignedAt
+                    ? <><CheckCircle2 className="h-3.5 w-3.5" />Fully executed — both parties signed</>
+                    : <><PenLine className="h-3.5 w-3.5" />{!c.signedAt && !c.providerSignedAt ? "Awaiting both signatures" : !c.signedAt ? "Awaiting client signature" : "Awaiting your countersignature"}</>}
+                </div>
+
+                {/* Two-party signatures */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {/* Client */}
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+                    <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-400">Client signature</p>
+                    <div className="flex min-h-[3.5rem] items-center"><SignatureDisplay data={c.signatureData} /></div>
+                    <p className="mt-2 text-xs text-zinc-500">
+                      {c.signedAt ? (
+                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" />{client.name} · {new Date(c.signedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}</span>
+                      ) : c.signToken ? (
+                        <a href={`/sign/${c.signToken}`} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Open signing link ↗</a>
+                      ) : (
+                        <span className="text-zinc-400">Not sent</span>
+                      )}
+                    </p>
                   </div>
-                  <div className="shrink-0 text-right text-xs text-zinc-500">
-                    {c.signedAt ? (
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" />Signed {new Date(c.signedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}</span>
-                    ) : c.signToken ? (
-                      <a href={`/sign/${c.signToken}`} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Open signing link ↗</a>
+
+                  {/* Provider (ArkiTech / you) */}
+                  <div className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+                    <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-400">Your signature (ArkiTech)</p>
+                    {c.providerSignatureData ? (
+                      <>
+                        <div className="flex min-h-[3.5rem] items-center"><SignatureDisplay data={c.providerSignatureData} /></div>
+                        <p className="mt-2 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" />{c.providerName ?? "ArkiTech"} · {new Date(c.providerSignedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}</p>
+                      </>
+                    ) : signingId === c.id ? (
+                      <SignaturePad saving={savingId === c.id} onSign={(d) => providerSign(c.id, d)} />
                     ) : (
-                      <span className="text-zinc-400">Not sent</span>
+                      <div className="flex min-h-[3.5rem] flex-col justify-center">
+                        <Button variant="outline" size="sm" onClick={() => setSigningId(c.id)}><PenLine className="h-4 w-4" />Sign as ArkiTech</Button>
+                      </div>
                     )}
                   </div>
                 </div>

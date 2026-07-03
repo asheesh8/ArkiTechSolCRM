@@ -18,6 +18,9 @@ type Contract = {
   signedAt: string | null;
   documentKey: string | null;
   documentName: string | null;
+  providerSignatureData: string | null;
+  providerName: string | null;
+  providerSignedAt: string | null;
   client: { name: string; email: string; businessName: string };
 };
 
@@ -212,6 +215,22 @@ export default function SignPage() {
               in a professional and timely manner. Either party may cancel with 30 days written notice.
             </p>
           </div>
+
+          {/* Provider counter-signature (shown once ArkiTech has signed) */}
+          {contract.providerSignatureData && (
+            <div className="border-t border-zinc-100 bg-emerald-50/50 p-6">
+              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">Signed by ArkiTech Solutions</h3>
+              <div className="flex items-center justify-between gap-4">
+                {contract.providerSignatureData.startsWith("typed:") ? (
+                  <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-3xl text-zinc-900">{contract.providerSignatureData.slice(6)}</span>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={contract.providerSignatureData} alt="ArkiTech signature" className="h-14 w-auto object-contain" />
+                )}
+                <span className="text-xs text-zinc-500">{contract.providerName ?? "ArkiTech Solutions"}{contract.providerSignedAt ? ` · ${new Date(contract.providerSignedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}` : ""}</span>
+              </div>
+            </div>
+          )}
 
           {/* Signature area */}
           <div className="border-t border-zinc-200 p-6">

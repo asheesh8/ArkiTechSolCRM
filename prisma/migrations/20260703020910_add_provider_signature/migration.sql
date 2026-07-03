@@ -1,0 +1,3 @@
+ALTER TABLE "Contract" ADD COLUMN IF NOT EXISTS "providerSignatureData" TEXT;
+ALTER TABLE "Contract" ADD COLUMN IF NOT EXISTS "providerSignedAt" TIMESTAMP(3);
+ALTER TABLE "Contract" ADD COLUMN IF NOT EXISTS "providerName" TEXT;
