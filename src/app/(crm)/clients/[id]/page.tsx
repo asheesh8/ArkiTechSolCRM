@@ -392,13 +392,15 @@ function ClientPacket({ client }: { client: any }) {
               </div>
 
               <div className="space-y-3 p-4">
-                {/* Edit / replace — only before anyone signs */}
-                {!c.signedAt && !c.providerSignedAt && (
+                {/* Edit / replace — only before the client signs */}
+                {!c.signedAt && (
                   editId === c.id ? (
                     <div className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
                       <div>
                         <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">Edit / replace contract</p>
-                        <p className="text-xs text-zinc-500">Fix a wrong contract before it&apos;s signed — the signing link stays the same.</p>
+                        <p className="text-xs text-zinc-500">
+                          Fix terms before the client signs — the signing link stays the same. If ArkiTech already signed, that signature will reset.
+                        </p>
                       </div>
                       <div className="space-y-1.5"><Label>Contract name</Label><Input value={editForm.planName} onChange={(e) => setEditForm((f) => ({ ...f, planName: e.target.value }))} /></div>
                       <div className="grid gap-3 sm:grid-cols-2">
@@ -860,7 +862,7 @@ export default function ClientDetailPage() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-900"><PhoneCall className="h-4 w-4 text-zinc-600 dark:text-zinc-300" /></span>
                   <div>
                     <CardTitle>Log a call</CardTitle>
-                    <p className="text-xs text-zinc-400">What happened? Pick one and we'll update their stage.</p>
+                    <p className="text-xs text-zinc-400">What happened? Pick one and we&apos;ll update their stage.</p>
                   </div>
                 </div>
               </CardHeader>

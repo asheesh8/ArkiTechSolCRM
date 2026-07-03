@@ -21,15 +21,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const existing = await prisma.contract.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  // Don't let a contract change out from under a signature.
-  if (existing.signedAt || existing.providerSignedAt) {
-    return NextResponse.json({ error: "This contract has already been signed and can't be edited. Cancel it and create a new one instead." }, { status: 409 });
+  // Editable until the client signs. Our own (provider) signature doesn't lock it.
+  if (existing.signedAt) {
+    return NextResponse.json({ error: "The client has already signed this contract, so it can't be edited. Cancel it and create a new one instead." }, { status: 409 });
   }
 
   const body = await req.json();
   const data: Record<string, unknown> = {};
   for (const key of EDITABLE) {
     if (key in body) data[key] = body[key];
+  }
+  // If we'd already counter-signed, that signature was on the old terms — clear it so we re-sign.
+  if (existing.providerSignedAt) {
+    data.providerSignatureData = null;
+    data.providerSignedAt = null;
+    data.providerName = null;
   }
 
   const contract = await prisma.contract.update({ where: { id }, data, include: { client: true } });

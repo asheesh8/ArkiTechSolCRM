@@ -12,6 +12,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const contract = await prisma.contract.findUnique({ where: { id }, include: { client: true } });
   if (!contract) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (contract.signedAt) {
+    return NextResponse.json(
+      { error: "The client has already signed this contract, so it can't be resent. Cancel it and create a new one instead." },
+      { status: 409 },
+    );
+  }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const signUrl = `${baseUrl}/sign/${contract.signToken}`;
