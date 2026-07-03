@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Activity, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronRight,
-  Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2,
-  Loader2, Mail, MapPin, MessageSquareQuote, Navigation, Phone, PhoneCall,
-  PhoneMissed, Save, Sparkles, Star, Terminal, ThumbsDown, ThumbsUp, Trash2,
+  CreditCard, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2,
+  Loader2, Mail, MapPin, MessageSquareQuote, Navigation, PenLine, Phone, PhoneCall,
+  PhoneMissed, Save, ShieldCheck, Sparkles, Star, Terminal, ThumbsDown, ThumbsUp, Trash2,
   UserCheck, X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -180,6 +180,149 @@ function CallLogPanel({ leadId, onSaved }: { leadId: string; onSaved: (note: any
   );
 }
 
+function money(n: number) {
+  return `$${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Renders a stored signature: either a typed name (typed:Name) or a drawn PNG data URL.
+function SignatureDisplay({ data }: { data: string | null | undefined }) {
+  if (!data) return <span className="text-sm italic text-zinc-400">Awaiting signature</span>;
+  if (data.startsWith("typed:")) {
+    return (
+      <span style={{ fontFamily: "'Dancing Script', 'Segoe Script', cursive" }} className="text-3xl leading-none text-zinc-900 dark:text-zinc-50">
+        {data.slice(6)}
+      </span>
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={data} alt="Signature" className="h-14 w-auto object-contain" />;
+}
+
+const CONTRACT_TONE: Record<string, string> = {
+  ACTIVE: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  SIGNED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  SENT: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  DRAFT: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+};
+
+// The signed "client packet": every contract with its signature, PDF and billing.
+function ClientPacket({ client }: { client: any }) {
+  const contracts: any[] = client.contracts ?? [];
+  const invoices: any[] = client.invoices ?? [];
+  const signedCount = contracts.filter((c) => c.signedAt).length;
+
+  return (
+    <Card className="border-emerald-200 dark:border-emerald-900/60">
+      <CardHeader className="border-b border-emerald-100 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900"><ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" /></span>
+          <div>
+            <CardTitle>Client Packet</CardTitle>
+            <p className="text-xs text-zinc-500">Signed agreements, signatures & billing on file</p>
+          </div>
+          <span className="ml-auto text-xs text-zinc-400">{signedCount}/{contracts.length} signed</span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 pt-5">
+        {/* Portal access row */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900/40">
+          <span className="flex items-center gap-1.5 text-zinc-500"><Mail className="h-3.5 w-3.5" />{client.email}</span>
+          {client.phone && <span className="flex items-center gap-1.5 text-zinc-500"><Phone className="h-3.5 w-3.5" />{client.phone}</span>}
+          <span className={cn("ml-auto rounded-full px-2 py-0.5 text-xs font-medium", client.passwordHash ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300")}>
+            {client.passwordHash ? "Portal active" : "Portal invite pending"}
+          </span>
+        </div>
+
+        {contracts.length === 0 && (
+          <p className="py-4 text-center text-sm text-zinc-400">No contracts yet. Use Onboard to generate one.</p>
+        )}
+
+        {contracts.map((c) => {
+          const items: Array<{ description: string; amount: number }> = Array.isArray(c.lineItems) ? c.lineItems : [];
+          return (
+            <div key={c.id} className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+              {/* Contract header */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-zinc-400" />
+                  <span className="font-semibold text-sm">{c.planName}</span>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", CONTRACT_TONE[c.status] ?? CONTRACT_TONE.DRAFT)}>{formatStatus(c.status)}</span>
+                </div>
+                <span className="text-sm font-bold">{money(c.total)}<span className="text-xs font-normal text-zinc-400">{c.billingCycle === "MONTHLY" ? " / mo" : ""}</span></span>
+              </div>
+
+              <div className="space-y-3 p-4">
+                {/* Line items (only for built contracts) */}
+                {!c.documentKey && items.length > 0 && (
+                  <ul className="space-y-1 text-sm">
+                    {items.map((it, i) => (
+                      <li key={i} className="flex justify-between text-zinc-600 dark:text-zinc-400">
+                        <span>{it.description}</span><span>{money(it.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Uploaded PDF */}
+                {c.documentKey && (
+                  <a href={`/api/portal/files/${encodeURIComponent(c.documentKey)}`} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      <FileText className="h-4 w-4 text-red-500" />
+                      {c.documentName ?? "Contract document"}
+                      <ExternalLink className="ml-auto h-3.5 w-3.5 text-zinc-400" />
+                    </Button>
+                  </a>
+                )}
+
+                {c.notes && <p className="rounded-lg bg-zinc-50 p-3 text-xs leading-5 text-zinc-500 dark:bg-zinc-900/40">{c.notes}</p>}
+
+                {/* Signature block */}
+                <div className="flex items-end justify-between gap-4 rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+                  <div className="min-w-0">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-400"><PenLine className="h-3 w-3" />Signature</p>
+                    <SignatureDisplay data={c.signatureData} />
+                  </div>
+                  <div className="shrink-0 text-right text-xs text-zinc-500">
+                    {c.signedAt ? (
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" />Signed {new Date(c.signedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}</span>
+                    ) : c.signToken ? (
+                      <a href={`/sign/${c.signToken}`} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">Open signing link ↗</a>
+                    ) : (
+                      <span className="text-zinc-400">Not sent</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Invoices */}
+        {invoices.length > 0 && (
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800">
+              <CreditCard className="h-4 w-4 text-zinc-400" /><span className="text-sm font-medium">Invoices</span>
+              <span className="ml-auto text-xs text-zinc-400">{invoices.length}</span>
+            </div>
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {invoices.map((inv) => (
+                <div key={inv.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                  <span className="text-zinc-600 dark:text-zinc-400">{inv.description ?? "Invoice"}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium">{money(inv.amount)}</span>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", inv.status === "PAID" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : inv.status === "OVERDUE" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300")}>{formatStatus(inv.status)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ClientDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -261,12 +404,26 @@ export default function ClientDetailPage() {
   const rating = typeof lead.googleRating === "number" ? lead.googleRating : null;
   const directionsUrl = lead.googleMapsUrl ?? (lead.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.address)}` : null);
   const galleryPhotos = photos?.photos ?? [];
+  const client = lead.client ?? null;
+  const isClient = !!client;
+  const signedContract = (client?.contracts ?? []).find((c: any) => c.signedAt);
 
   return (
     <div className="space-y-6">
 
       {/* ── Hero header ── */}
-      <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+      <section className={cn(
+        "overflow-hidden rounded-xl border bg-white shadow-sm dark:bg-zinc-950",
+        isClient ? "border-emerald-300 dark:border-emerald-800" : "border-zinc-200 dark:border-zinc-800",
+      )}>
+        {isClient && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-medium text-white">
+            <ShieldCheck className="h-4 w-4" />
+            <span>Active Client</span>
+            {signedContract && <span className="opacity-90">· {signedContract.planName} · signed {new Date(signedContract.signedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}</span>}
+            <span className="ml-auto opacity-90">Onboarded {new Date(client.createdAt).toLocaleDateString(undefined, { dateStyle: "medium" })}</span>
+          </div>
+        )}
         <div className="p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-4">
@@ -303,7 +460,7 @@ export default function ClientDetailPage() {
             {lead.email && <a href={`mailto:${lead.email}`}><Button variant="outline" size="sm"><Mail className="h-4 w-4" />Email</Button></a>}
             {lead.googleMapsUrl && <a href={lead.googleMapsUrl} target="_blank"><Button variant="outline" size="sm"><ExternalLink className="h-4 w-4" />Google</Button></a>}
             {lead.website && <a href={lead.website} target="_blank"><Button variant="outline" size="sm"><Globe2 className="h-4 w-4" />Website</Button></a>}
-            <a href={`/clients/${id}/onboard`}><Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700"><UserCheck className="h-4 w-4" />Onboard</Button></a>
+            <a href={`/clients/${id}/onboard`}><Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700"><UserCheck className="h-4 w-4" />{isClient ? "New contract" : "Onboard"}</Button></a>
           </div>
         </div>
 
@@ -345,6 +502,9 @@ export default function ClientDetailPage() {
 
         {/* Left: notes timeline + profile + audits */}
         <div className="space-y-6">
+
+          {/* Client packet — signed agreements & signatures (onboarded clients only) */}
+          {isClient && <ClientPacket client={client} />}
 
           {/* Notes timeline */}
           <Card>

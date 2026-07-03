@@ -12,6 +12,12 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
         assignedTo: { select: { id: true, name: true, email: true } },
         callNotes: { include: { user: { select: { name: true, email: true } } }, orderBy: { createdAt: "desc" } },
         audits: { orderBy: { createdAt: "desc" } },
+        client: {
+          include: {
+            contracts: { orderBy: { createdAt: "desc" } },
+            invoices: { orderBy: { createdAt: "desc" } },
+          },
+        },
       },
     });
     if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
