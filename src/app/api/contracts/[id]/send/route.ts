@@ -3,9 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { sendContractEmail } from "@/lib/email";
 
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getCurrentUser();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const correction = await req.json().then((b) => !!b?.correction).catch(() => false);
 
   const { id } = await params;
   const contract = await prisma.contract.findUnique({ where: { id }, include: { client: true } });
@@ -21,6 +23,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     total: contract.total,
     billingCycle: contract.billingCycle,
     signUrl,
+    correction,
   });
 
   await prisma.contract.update({ where: { id }, data: { status: "SENT", sentAt: new Date() } });

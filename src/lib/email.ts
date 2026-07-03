@@ -40,11 +40,14 @@ export async function sendContractEmail(opts: {
   total: number;
   billingCycle: string;
   signUrl: string;
+  correction?: boolean;
 }) {
   return send({
     from: FROM,
     to: opts.to,
-    subject: `Your ArkiTech Solutions agreement is ready to sign`,
+    subject: opts.correction
+      ? `Corrected agreement — please use this one instead`
+      : `Your ArkiTech Solutions agreement is ready to sign`,
     html: contractEmailHtml(opts),
   });
 }
@@ -129,12 +132,15 @@ ${body}
 </div></body></html>`;
 }
 
-function contractEmailHtml(opts: { clientName: string; planName: string; total: number; billingCycle: string; signUrl: string }) {
+function contractEmailHtml(opts: { clientName: string; planName: string; total: number; billingCycle: string; signUrl: string; correction?: boolean }) {
   const cycle = opts.billingCycle.toLowerCase();
   return base(`
-<h1>Your agreement is ready</h1>
+<h1>${opts.correction ? "Corrected agreement" : "Your agreement is ready"}</h1>
 <p>Hi ${opts.clientName},</p>
-<p>We've put together your service agreement for <strong>${opts.planName}</strong>. Please review and sign it at your convenience — it only takes a minute.</p>
+${opts.correction ? `<div class="info" style="border-left:3px solid #f59e0b;background:#fffbeb">
+  <p><strong>Quick correction:</strong> I accidentally sent the wrong agreement in my previous email. Please disregard that one and use this most recent email instead.</p>
+</div>` : ""}
+<p>${opts.correction ? "Here's the correct" : "We've put together your"} service agreement for <strong>${opts.planName}</strong>. Please review and sign it at your convenience — it only takes a minute.</p>
 <div class="info">
   <p><strong>Plan:</strong> ${opts.planName}</p>
   <p style="margin-top:8px"><strong>Investment:</strong> $${opts.total.toFixed(2)} / ${cycle}</p>

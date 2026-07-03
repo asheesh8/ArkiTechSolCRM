@@ -6,13 +6,13 @@ import {
   Activity, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronRight,
   CreditCard, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2,
   Loader2, Mail, MapPin, MessageSquareQuote, Navigation, PenLine, Phone, PhoneCall,
-  PhoneMissed, Save, ShieldCheck, Sparkles, Star, Terminal, ThumbsDown, ThumbsUp, Trash2,
-  UserCheck, X,
+  PhoneMissed, Save, Send, ShieldCheck, Sparkles, Star, Terminal, ThumbsDown, ThumbsUp, Trash2,
+  Upload, UserCheck, X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label, Textarea } from "@/components/ui/field";
+import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { ScoreCard } from "@/components/crm/score-card";
 import { leadPriorities, leadStatuses, noteTypes, callOutcomes } from "@/lib/schemas";
 import { kitSlug } from "@/lib/website-kit";
@@ -287,6 +287,70 @@ function ClientPacket({ client }: { client: any }) {
     setSigningId(null);
   }
 
+  // ─── Edit / replace an unsigned contract ───
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ planName: string; amount: string; billingCycle: string; notes: string }>({ planName: "", amount: "", billingCycle: "MONTHLY", notes: "" });
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editBusy, setEditBusy] = useState<"" | "save" | "resend">("");
+  const [editMsg, setEditMsg] = useState("");
+
+  function openEdit(c: any) {
+    setEditId(c.id);
+    setEditFile(null);
+    setEditMsg("");
+    setEditForm({ planName: c.planName ?? "", amount: String(c.total ?? 0), billingCycle: c.billingCycle ?? "MONTHLY", notes: c.notes ?? "" });
+  }
+
+  async function uploadReplacement(f: File): Promise<{ key: string; name: string }> {
+    const res = await fetch(`/api/contracts/upload?filename=${encodeURIComponent(f.name)}`, {
+      method: "POST", headers: { "Content-Type": f.type || "application/pdf" }, body: f,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error ?? "Could not upload the file");
+    return { key: data.key, name: f.name };
+  }
+
+  async function saveEdit(contractId: string, resend: boolean) {
+    setEditBusy(resend ? "resend" : "save");
+    setEditMsg("");
+    try {
+      let doc: { key: string; name: string } | null = null;
+      if (editFile) {
+        try { doc = await uploadReplacement(editFile); }
+        catch (e) { setEditMsg(e instanceof Error ? e.message : "Upload failed"); return; }
+      }
+      const amount = Number(editForm.amount || 0);
+      const payload: Record<string, unknown> = {
+        planName: editForm.planName || "Contract",
+        billingCycle: editForm.billingCycle,
+        notes: editForm.notes,
+        subtotal: amount, tax: 0, total: amount,
+        lineItems: [{ description: editForm.planName || "Contract", amount }],
+        ...(doc ? { documentKey: doc.key, documentName: doc.name } : {}),
+      };
+      const res = await fetch(`/api/contracts/${contractId}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) { setEditMsg(data.error ?? "Could not save"); return; }
+      let updated = data.contract;
+      let softError = "";
+
+      if (resend) {
+        const sres = await fetch(`/api/contracts/${contractId}/send`, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ correction: true }),
+        });
+        if (!sres.ok) softError = "Saved, but the correction email failed to send.";
+        else updated = { ...updated, status: "SENT", sentAt: new Date().toISOString() };
+      }
+      setContracts((prev) => prev.map((c) => (c.id === contractId ? { ...c, ...updated } : c)));
+      if (softError) setEditMsg(softError);
+      else setEditId(null);
+    } finally {
+      setEditBusy("");
+    }
+  }
+
   return (
     <Card className="border-emerald-200 dark:border-emerald-900/60">
       <CardHeader className="border-b border-emerald-100 bg-emerald-50/60 dark:border-emerald-900/50 dark:bg-emerald-950/30">
@@ -328,6 +392,48 @@ function ClientPacket({ client }: { client: any }) {
               </div>
 
               <div className="space-y-3 p-4">
+                {/* Edit / replace — only before anyone signs */}
+                {!c.signedAt && !c.providerSignedAt && (
+                  editId === c.id ? (
+                    <div className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
+                      <div>
+                        <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">Edit / replace contract</p>
+                        <p className="text-xs text-zinc-500">Fix a wrong contract before it&apos;s signed — the signing link stays the same.</p>
+                      </div>
+                      <div className="space-y-1.5"><Label>Contract name</Label><Input value={editForm.planName} onChange={(e) => setEditForm((f) => ({ ...f, planName: e.target.value }))} /></div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5"><Label>Amount (for billing)</Label>
+                          <div className="flex items-center gap-1"><span className="text-zinc-500">$</span><Input type="number" min="0" value={editForm.amount} onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))} /></div>
+                        </div>
+                        <div className="space-y-1.5"><Label>Billing cycle</Label>
+                          <Select value={editForm.billingCycle} onChange={(e) => setEditForm((f) => ({ ...f, billingCycle: e.target.value }))}>
+                            <option value="MONTHLY">Monthly</option><option value="QUARTERLY">Quarterly</option><option value="ANNUAL">Annual</option><option value="ONE_TIME">One-time</option>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5"><Label>Notes <span className="font-normal text-zinc-400">(optional)</span></Label><Textarea rows={2} value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} /></div>
+                      <div className="space-y-1.5">
+                        <Label>Replace PDF <span className="font-normal text-zinc-400">(optional)</span></Label>
+                        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:border-indigo-400 dark:border-zinc-700 dark:text-zinc-300">
+                          <Upload className="h-4 w-4" />
+                          <span className="truncate">{editFile ? editFile.name : (c.documentName ? `Current: ${c.documentName} — pick a new PDF` : "Upload a PDF")}</span>
+                          <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f && (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"))) setEditFile(f); }} />
+                        </label>
+                      </div>
+                      {editMsg && <p className="text-xs text-red-600">{editMsg}</p>}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => { setEditId(null); setEditMsg(""); }}><X className="h-4 w-4" />Cancel</Button>
+                        <Button size="sm" variant="outline" disabled={!!editBusy} onClick={() => saveEdit(c.id, false)}>{editBusy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save changes</Button>
+                        <Button size="sm" disabled={!!editBusy} onClick={() => saveEdit(c.id, true)}>{editBusy === "resend" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Save &amp; resend correction email</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => openEdit(c)} className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+                      <Edit3 className="h-3.5 w-3.5" />Edit / replace contract
+                    </button>
+                  )
+                )}
+
                 {/* Line items (only for built contracts) */}
                 {!c.documentKey && items.length > 0 && (
                   <ul className="space-y-1 text-sm">
