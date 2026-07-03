@@ -132,9 +132,13 @@ export default function OnboardPage() {
   }
 
   async function uploadContractFile(f: File): Promise<{ key: string; name: string }> {
-    const form = new FormData();
-    form.append("file", f);
-    const res = await fetch("/api/contracts/upload", { method: "POST", body: form });
+    // Send the file as a raw binary body (not FormData) — Safari throws
+    // "The string did not match the expected pattern" on multipart File uploads.
+    const res = await fetch(`/api/contracts/upload?filename=${encodeURIComponent(f.name)}`, {
+      method: "POST",
+      headers: { "Content-Type": f.type || "application/pdf" },
+      body: f,
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error ?? "Could not upload the file");
     return { key: data.key, name: f.name };
