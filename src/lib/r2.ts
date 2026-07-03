@@ -19,6 +19,12 @@ export async function presignUpload(key: string, contentType: string, expiresIn 
   return { uploadUrl: url, key };
 }
 
+// Server-side upload — avoids browser→R2 CORS by streaming through our API.
+export async function uploadObject(key: string, body: Buffer | Uint8Array, contentType: string) {
+  await r2.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }));
+  return { key };
+}
+
 export async function deleteFile(key: string) {
   await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }

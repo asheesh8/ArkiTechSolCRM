@@ -132,16 +132,11 @@ export default function OnboardPage() {
   }
 
   async function uploadContractFile(f: File): Promise<{ key: string; name: string }> {
-    const contentType = f.type || "application/pdf";
-    const res = await fetch("/api/contracts/upload-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileName: f.name, contentType }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Could not prepare upload");
-    const put = await fetch(data.uploadUrl, { method: "PUT", headers: { "Content-Type": contentType }, body: f });
-    if (!put.ok) throw new Error("Could not upload the file to storage");
+    const form = new FormData();
+    form.append("file", f);
+    const res = await fetch("/api/contracts/upload", { method: "POST", body: form });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error ?? "Could not upload the file");
     return { key: data.key, name: f.name };
   }
 
@@ -448,7 +443,7 @@ export default function OnboardPage() {
                   <Label>Contract amount <span className="font-normal text-zinc-400">(for billing)</span></Label>
                   <div className="flex items-center gap-1">
                     <span className="text-zinc-500">$</span>
-                    <Input type="number" min="0" value={docAmount} onChange={(e) => setDocAmount(Number(e.target.value))} className="w-32" placeholder="0.00" />
+                    <Input type="number" min="0" value={docAmount || ""} onChange={(e) => setDocAmount(Number(e.target.value))} className="w-32" placeholder="0.00" />
                   </div>
                 </div>
                 <p className="pb-2.5 text-xs text-zinc-500">Sets the invoice amount created when they sign. Leave 0 if this contract has no charge.</p>
