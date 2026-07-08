@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Globe2, MapPin, Phone, Star } from "lucide-react";
+import { ExternalLink, Globe2, MapPin, Phone, Star, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/field";
 import { cn, formatStatus } from "@/lib/utils";
 import { leadStatuses } from "@/lib/schemas";
 
 type Lead = any;
+type TeamUser = { id: string; name: string; role: string };
 
 const STAGE_COLORS: Record<string, string> = {
   NEW:            "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
@@ -32,9 +34,13 @@ function RatingDots({ value }: { value: number }) {
 export function LeadTable({
   leads,
   onStatus,
+  users,
+  onAssign,
 }: {
   leads: Lead[];
   onStatus?: (id: string, status: string) => void;
+  users?: TeamUser[];
+  onAssign?: (id: string, assignedToId: string) => void;
 }) {
   if (!leads.length) {
     return (
@@ -111,8 +117,28 @@ export function LeadTable({
                 )}
               </div>
 
-              {/* Right: status chips + view */}
+              {/* Right: assignee + status chips + view */}
               <div className="flex flex-col items-end gap-2">
+                {/* Assignee */}
+                {onAssign && users ? (
+                  <label className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+                    <UserCheck className="h-3.5 w-3.5 text-zinc-400" />
+                    <Select
+                      value={lead.assignedTo?.id ?? ""}
+                      onChange={(e) => onAssign(lead.id, e.target.value)}
+                      className="h-7 w-auto min-w-32 rounded-md py-0 text-xs"
+                    >
+                      <option value="">Unassigned</option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>{u.name}</option>
+                      ))}
+                    </Select>
+                  </label>
+                ) : lead.assignedTo ? (
+                  <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+                    <UserCheck className="h-3.5 w-3.5 text-zinc-400" />{lead.assignedTo.name}
+                  </span>
+                ) : null}
                 {/* Status chip row */}
                 {onStatus && (
                   <div className="flex flex-wrap justify-end gap-1">

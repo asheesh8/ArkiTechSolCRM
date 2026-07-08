@@ -1,0 +1,1 @@
+ALTER TYPE "CallOutcome" ADD VALUE 'CALLED';

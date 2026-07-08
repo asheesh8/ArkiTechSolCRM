@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   OWNER
+  DEV
   MEMBER
 }
 
@@ -31,6 +32,7 @@ enum LeadPriority {
 enum CallOutcome {
   NO_ANSWER
   LEFT_VOICEMAIL
+  CALLED
   NOT_INTERESTED
   FOLLOW_UP
   MEETING_BOOKED

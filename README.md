@@ -54,6 +54,8 @@ Seed login credentials:
 
 - `ashish@arkitech.com` / `ARKITECH`
 - `terri@arkitech.com` / `ARKITECH`
+- `krish@arkitech.com` / `ARKITECH`
+- `tio@arkitech.com` / `ARKITECH`
 
 ## Main Routes
 

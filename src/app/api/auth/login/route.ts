@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
-    const user = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = typeof email === "string" ? email.toLowerCase().trim() : email;
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user?.passwordHash) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }

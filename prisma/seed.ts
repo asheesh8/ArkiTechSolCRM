@@ -45,13 +45,30 @@ async function main() {
     update: {
       name: "Krish",
       passwordHash,
-      role: "OWNER",
+      role: "DEV",
     },
     create: {
       name: "Krish",
       email: "krish@arkitech.com",
       passwordHash,
-      role: "OWNER",
+      role: "DEV",
+    },
+  });
+
+  // Tio — cold call / outreach agent. Email stored lowercase so mixed-case
+  // sign-ins (e.g. "Tio@arkitech.com") resolve correctly.
+  await prisma.user.upsert({
+    where: { email: "tio@arkitech.com" },
+    update: {
+      name: "Tio",
+      passwordHash,
+      role: "MEMBER",
+    },
+    create: {
+      name: "Tio",
+      email: "tio@arkitech.com",
+      passwordHash,
+      role: "MEMBER",
     },
   });
 

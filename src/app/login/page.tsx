@@ -97,7 +97,7 @@ const PANELS: Record<UserType, React.ReactNode> = {
       </div>
 
       <div className="max-w-2xl">
-        <p className="text-sm font-medium uppercase tracking-[0.24em] text-zinc-500">Ashish + Terri</p>
+        <p className="text-sm font-medium uppercase tracking-[0.24em] text-zinc-500">ArkiTech team</p>
         <h1 className="mt-5 text-5xl font-semibold tracking-tight">
           Turn local searches into booked website meetings.
         </h1>

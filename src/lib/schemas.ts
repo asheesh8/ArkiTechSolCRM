@@ -25,6 +25,7 @@ export const leadPriorities = ["STANDARD", "PRIORITY", "FAVORITE"] as const;
 export const callOutcomes = [
   "NO_ANSWER",
   "LEFT_VOICEMAIL",
+  "CALLED",
   "NOT_INTERESTED",
   "FOLLOW_UP",
   "MEETING_BOOKED",

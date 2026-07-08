@@ -80,24 +80,37 @@ function CallLogPanel({ leadId, onSaved }: { leadId: string; onSaved: (note: any
   const [followUpDate, setFollowUpDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!outcome) return;
     setSaving(true);
-    const res = await fetch(`/api/leads/${leadId}/notes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        note: note || `Outcome: ${formatStatus(outcome)}`,
-        noteType: outcome === "MEETING_BOOKED" ? "MEETING" : outcome === "FOLLOW_UP" ? "FOLLOW_UP" : "GENERAL",
-        callOutcome: outcome,
-        followUpDate: followUpDate ? new Date(followUpDate).toISOString() : "",
-      }),
-    });
-    const data = await res.json();
+    setError("");
+    let data: any;
+    try {
+      const res = await fetch(`/api/leads/${leadId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          note: note || `Outcome: ${formatStatus(outcome)}`,
+          noteType: outcome === "MEETING_BOOKED" ? "MEETING" : outcome === "FOLLOW_UP" ? "FOLLOW_UP" : "GENERAL",
+          callOutcome: outcome,
+          followUpDate: followUpDate ? new Date(followUpDate).toISOString() : "",
+        }),
+      });
+      data = await res.json();
+      if (!res.ok) {
+        setSaving(false);
+        setError(data?.error ?? "Could not save this call. Please try again.");
+        return;
+      }
+    } catch {
+      setSaving(false);
+      setError("Network error — your call was not saved. Please try again.");
+      return;
+    }
     setSaving(false);
-    if (!res.ok) return;
     const newStatus = ["MEETING_BOOKED", "FOLLOW_UP", "CLOSED", "NOT_INTERESTED"].includes(outcome) ? outcome : "CALLED";
     onSaved(data.note, newStatus);
     setOutcome(null);
@@ -170,6 +183,11 @@ function CallLogPanel({ leadId, onSaved }: { leadId: string; onSaved: (note: any
               rows={3}
             />
           </div>
+          {error && (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+              {error}
+            </p>
+          )}
           <Button className="w-full" disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneCall className="h-4 w-4" />}
             {saving ? "Saving…" : "Save call log"}
@@ -270,21 +288,31 @@ function ClientPacket({ client }: { client: any }) {
   const [contracts, setContracts] = useState<any[]>(client.contracts ?? []);
   const [signingId, setSigningId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [signError, setSignError] = useState("");
   const invoices: any[] = client.invoices ?? [];
   const executedCount = contracts.filter((c) => c.signedAt && c.providerSignedAt).length;
 
   async function providerSign(contractId: string, signatureData: string) {
     setSavingId(contractId);
-    const res = await fetch(`/api/contracts/${contractId}/sign`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ signatureData }),
-    });
-    const data = await res.json();
-    setSavingId(null);
-    if (!res.ok) return;
-    setContracts((prev) => prev.map((c) => (c.id === contractId ? data.contract : c)));
-    setSigningId(null);
+    setSignError("");
+    try {
+      const res = await fetch(`/api/contracts/${contractId}/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signatureData }),
+      });
+      const data = await res.json();
+      setSavingId(null);
+      if (!res.ok) {
+        setSignError(data?.error ?? "Could not save your signature. Please try again.");
+        return;
+      }
+      setContracts((prev) => prev.map((c) => (c.id === contractId ? data.contract : c)));
+      setSigningId(null);
+    } catch {
+      setSavingId(null);
+      setSignError("Network error — your signature was not saved.");
+    }
   }
 
   // ─── Edit / replace an unsigned contract ───
@@ -498,7 +526,10 @@ function ClientPacket({ client }: { client: any }) {
                         <p className="mt-2 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" />{c.providerName ?? "ArkiTech"} · {new Date(c.providerSignedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}</p>
                       </>
                     ) : signingId === c.id ? (
-                      <SignaturePad saving={savingId === c.id} onSign={(d) => providerSign(c.id, d)} />
+                      <>
+                        <SignaturePad saving={savingId === c.id} onSign={(d) => providerSign(c.id, d)} />
+                        {signError && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{signError}</p>}
+                      </>
                     ) : (
                       <div className="flex min-h-[3.5rem] flex-col justify-center">
                         <Button variant="outline" size="sm" onClick={() => setSigningId(c.id)}><PenLine className="h-4 w-4" />Sign as ArkiTech</Button>
@@ -550,6 +581,12 @@ export default function ClientDetailPage() {
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showAudits, setShowAudits] = useState(false);
+  const [users, setUsers] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/users").then((r) => r.json()).then((d) => setUsers(d.users ?? [])).catch(() => setUsers([]));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -563,8 +600,20 @@ export default function ClientDetailPage() {
   }, [id]);
 
   async function updateStatus(status: string) {
+    const previous = lead?.status;
     setLead((prev: any) => ({ ...prev, status }));
-    await fetch(`/api/leads/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+    setMessage("");
+    try {
+      const res = await fetch(`/api/leads/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setLead((prev: any) => ({ ...prev, status: previous }));
+        setMessage(data.error ?? "Could not update the stage. Please try again.");
+      }
+    } catch {
+      setLead((prev: any) => ({ ...prev, status: previous }));
+      setMessage("Network error — the stage was not updated.");
+    }
   }
 
   async function saveProfile(formData: FormData) {
@@ -583,6 +632,31 @@ export default function ClientDetailPage() {
     setEditing(false);
     setMessage("Saved");
     setTimeout(() => setMessage(""), 2000);
+  }
+
+  async function updateAssignee(assignedToId: string) {
+    const previous = lead?.assignedTo ?? null;
+    const nextUser = users.find((u) => u.id === assignedToId) ?? null;
+    setAssigning(true);
+    setMessage("");
+    setLead((prev: any) => ({ ...prev, assignedToId: assignedToId || null, assignedTo: nextUser }));
+    try {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedToId: assignedToId || null }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setLead((prev: any) => ({ ...prev, assignedToId: previous?.id ?? null, assignedTo: previous }));
+        setMessage(data.error ?? "Could not update the assignee.");
+      }
+    } catch {
+      setLead((prev: any) => ({ ...prev, assignedToId: previous?.id ?? null, assignedTo: previous }));
+      setMessage("Network error — the assignee was not updated.");
+    } finally {
+      setAssigning(false);
+    }
   }
 
   function handleCallSaved(note: any, status: string) {
@@ -675,6 +749,25 @@ export default function ClientDetailPage() {
             {lead.website && <a href={lead.website} target="_blank"><Button variant="outline" size="sm"><Globe2 className="h-4 w-4" />Website</Button></a>}
             <a href={`/clients/${id}/onboard`}><Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700"><UserCheck className="h-4 w-4" />{isClient ? "New contract" : "Onboard"}</Button></a>
           </div>
+        </div>
+
+        {/* Assigned owner */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 px-5 py-3 dark:border-zinc-800">
+          <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-zinc-400">
+            <UserCheck className="h-3.5 w-3.5" /> Assigned to
+          </span>
+          <Select
+            value={lead.assignedTo?.id ?? ""}
+            onChange={(e) => updateAssignee(e.target.value)}
+            disabled={assigning}
+            className="h-8 w-auto min-w-44 py-0 text-sm"
+          >
+            <option value="">Unassigned</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>{u.name}{u.role === "OWNER" ? " (Owner)" : ""}</option>
+            ))}
+          </Select>
+          {assigning && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />}
         </div>
 
         {/* Status chips */}

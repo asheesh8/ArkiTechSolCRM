@@ -38,7 +38,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           </span>
           <span>
             <span className="block text-sm font-semibold">LocalLead CRM</span>
-            <span className="block text-xs text-zinc-500">Ashish + Terri workspace</span>
+            <span className="block text-xs text-zinc-500">ArkiTech team workspace</span>
           </span>
         </Link>
         <nav className="mt-8 space-y-1">

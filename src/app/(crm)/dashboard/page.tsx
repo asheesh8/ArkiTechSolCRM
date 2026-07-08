@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, ArrowRight, CalendarCheck, CheckCircle2, ChevronDown, Clock, CreditCard, FileSignature, Inbox, MessageSquarePlus, PhoneCall, Trash2, UserPlus } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarCheck, CheckCircle2, ChevronDown, Clock, CreditCard, FileSignature, Inbox, MessageSquarePlus, PhoneCall, Trash2, UserPlus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +59,7 @@ function NotifRow({ href, primary, secondary, tag, tagColor }: { href: string; p
 export default function DashboardPage() {
   const [notifs, setNotifs] = useState<Notif | null>(null);
   const [stats, setStats] = useState<any>(null);
+  const [team, setTeam] = useState<any[] | null>(null);
   const [openStatus, setOpenStatus] = useState("");
   const [statusLeads, setStatusLeads] = useState<any[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -66,6 +67,7 @@ export default function DashboardPage() {
   useEffect(() => {
     fetch("/api/dashboard/stats").then((r) => r.json()).then(setStats);
     fetch("/api/dashboard/notifications").then((r) => r.json()).then(setNotifs);
+    fetch("/api/dashboard/assignments").then((r) => r.json()).then((d) => setTeam(d.team ?? [])).catch(() => setTeam([]));
   }, []);
 
   useEffect(() => {
@@ -239,6 +241,67 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Team call progress ── */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-zinc-500" />
+              <div>
+                <CardTitle>Team call progress</CardTitle>
+                <p className="text-sm text-zinc-500">Who&apos;s assigned what, and how many they&apos;ve worked through this week.</p>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!team ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />)}
+            </div>
+          ) : team.filter((m) => m.assigned > 0 || m.callsThisWeek > 0).length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-center text-zinc-400">
+              <Users className="h-8 w-8 opacity-30" />
+              <p className="text-sm">No leads assigned yet.</p>
+              <p className="text-xs">Assign leads to teammates from the CRM or a lead&apos;s page to track their calling.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {team.filter((m) => m.assigned > 0 || m.callsThisWeek > 0).map((m) => (
+                <div key={m.id} className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-[var(--accent-foreground)]">
+                        {m.name.split(/\s+/).slice(0, 2).map((p: string) => p[0]).join("").toUpperCase()}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold">{m.name}</p>
+                        <p className="text-[11px] uppercase tracking-wide text-zinc-400">{m.role}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="flex items-center gap-1.5 text-zinc-500"><PhoneCall className="h-3.5 w-3.5" />{m.callsThisWeek} this week</span>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{m.contacted}/{m.assigned} done</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
+                    <div
+                      className={cn("h-2 rounded-full transition-all", m.remaining === 0 ? "bg-emerald-500" : "bg-[var(--accent)]")}
+                      style={{ width: `${m.progress}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    {m.remaining === 0
+                      ? m.assigned > 0 ? "All assigned leads have been called — nice work." : "No leads assigned."
+                      : `${m.remaining} still to call.`}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ── Pipeline by status ── */}
       <Card>

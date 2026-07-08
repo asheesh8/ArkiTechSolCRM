@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Building2, Filter, MapPin, Phone, Plus, Search, Star, UserPlus, X } from "lucide-react";
+import { Building2, Filter, MapPin, Phone, Plus, Search, Star, UserCheck, UserPlus, X } from "lucide-react";
 import { LeadTable } from "@/components/crm/lead-table";
 import { ManualClientForm } from "@/components/crm/manual-client-form";
 import { CsvImportCard } from "@/components/crm/csv-import-card";
@@ -70,11 +70,15 @@ function ActiveClientCard({ lead }: { lead: any }) {
         <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-950 dark:text-violet-300">
           Active client
         </span>
-        {lead.callNotes?.[0]?.createdAt && (
+        {lead.assignedTo ? (
+          <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-400">
+            <UserCheck className="h-3 w-3" />{lead.assignedTo.name}
+          </span>
+        ) : lead.callNotes?.[0]?.createdAt ? (
           <span className="text-[10px] text-zinc-400">
             Last contact {new Date(lead.callNotes[0].createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
           </span>
-        )}
+        ) : null}
       </div>
     </Link>
   );
@@ -94,6 +98,7 @@ export default function ClientsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [users, setUsers] = useState<{ id: string; name: string; role: string }[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -101,6 +106,7 @@ export default function ClientsPage() {
       .then((r) => r.json())
       .then((d) => setAllLeads(d.leads ?? []))
       .finally(() => setLoading(false));
+    fetch("/api/users").then((r) => r.json()).then((d) => setUsers(d.users ?? [])).catch(() => setUsers([]));
   }, []);
 
   useEffect(() => {
@@ -117,12 +123,38 @@ export default function ClientsPage() {
   }
 
   async function updateStatus(id: string, newStatus: string) {
+    const previous = allLeads.find((l) => l.id === id)?.status;
     setAllLeads((prev) => prev.map((l) => l.id === id ? { ...l, status: newStatus } : l));
-    await fetch(`/api/leads/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
+    try {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        setAllLeads((prev) => prev.map((l) => l.id === id ? { ...l, status: previous } : l));
+      }
+    } catch {
+      setAllLeads((prev) => prev.map((l) => l.id === id ? { ...l, status: previous } : l));
+    }
+  }
+
+  async function updateAssignee(id: string, assignedToId: string) {
+    const previous = allLeads.find((l) => l.id === id)?.assignedTo ?? null;
+    const nextUser = users.find((u) => u.id === assignedToId) ?? null;
+    setAllLeads((prev) => prev.map((l) => l.id === id ? { ...l, assignedToId: assignedToId || null, assignedTo: nextUser } : l));
+    try {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedToId: assignedToId || null }),
+      });
+      if (!res.ok) {
+        setAllLeads((prev) => prev.map((l) => l.id === id ? { ...l, assignedToId: previous?.id ?? null, assignedTo: previous } : l));
+      }
+    } catch {
+      setAllLeads((prev) => prev.map((l) => l.id === id ? { ...l, assignedToId: previous?.id ?? null, assignedTo: previous } : l));
+    }
   }
 
   function addLead(lead: any) {
@@ -356,7 +388,7 @@ export default function ClientsPage() {
             ))}
           </div>
 
-          <LeadTable leads={filteredLeads} onStatus={updateStatus} />
+          <LeadTable leads={filteredLeads} onStatus={updateStatus} users={users} onAssign={updateAssignee} />
         </div>
       )}
     </div>
