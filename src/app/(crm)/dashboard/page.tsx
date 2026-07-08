@@ -147,7 +147,7 @@ export default function DashboardPage() {
                   {notifs.overdueInvoices.map((inv: any) => (
                     <NotifRow
                       key={inv.id}
-                      href={`/portal/invoices`}
+                      href={inv.client.leadId ? `/clients/${inv.client.leadId}` : `/clients`}
                       primary={`$${inv.amount.toFixed(2)} overdue`}
                       secondary={`${inv.client.businessName} · due ${new Date(inv.dueDate).toLocaleDateString()}`}
                       tag="Overdue"
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                   {notifs.unsignedContracts.map((c: any) => (
                     <NotifRow
                       key={c.id}
-                      href={`/clients/${c.client.id}/onboard`}
+                      href={c.client.leadId ? `/clients/${c.client.leadId}/onboard` : `/clients`}
                       primary={`${c.client.businessName} — ${c.planName}`}
                       secondary={`Sent ${c.sentAt ? new Date(c.sentAt).toLocaleDateString() : "—"} · $${c.total.toFixed(2)}/${c.billingCycle.toLowerCase()}`}
                       tag="Pending"

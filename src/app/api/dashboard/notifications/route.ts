@@ -13,25 +13,25 @@ export async function GET() {
   const [workRequests, overdueInvoices, upcomingInvoices, unsignedContracts, followUps, meetings] = await Promise.all([
     prisma.workRequest.findMany({
       where: { status: { in: ["OPEN", "IN_PROGRESS"] } },
-      include: { client: { select: { id: true, name: true, businessName: true } } },
+      include: { client: { select: { id: true, name: true, businessName: true, leadId: true } } },
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
     prisma.invoice.findMany({
       where: { status: "PENDING", dueDate: { lt: now } },
-      include: { client: { select: { id: true, name: true, businessName: true } } },
+      include: { client: { select: { id: true, name: true, businessName: true, leadId: true } } },
       orderBy: { dueDate: "asc" },
       take: 10,
     }),
     prisma.invoice.findMany({
       where: { status: "PENDING", dueDate: { gte: now, lte: in7Days } },
-      include: { client: { select: { id: true, name: true, businessName: true } } },
+      include: { client: { select: { id: true, name: true, businessName: true, leadId: true } } },
       orderBy: { dueDate: "asc" },
       take: 10,
     }),
     prisma.contract.findMany({
       where: { status: "SENT" },
-      include: { client: { select: { id: true, name: true, businessName: true } } },
+      include: { client: { select: { id: true, name: true, businessName: true, leadId: true } } },
       orderBy: { sentAt: "asc" },
       take: 10,
     }),
