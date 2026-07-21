@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { AnimatePresence, motion, useInView } from "framer-motion";
+import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
 import {
   ArrowUpRight,
   Building2,
@@ -82,6 +82,7 @@ export function CompanySections() {
   const aboutRef = useRef<HTMLElement>(null);
   const servicesInView = useInView(servicesRef, { once: true, margin: "-10%" });
   const aboutInView = useInView(aboutRef, { once: true, margin: "-10%" });
+  const reduceMotion = useReducedMotion();
   const [activeService, setActiveService] = useState(0);
   const [activePrinciple, setActivePrinciple] = useState(0);
   const service = SERVICES[activeService];
@@ -91,7 +92,7 @@ export function CompanySections() {
     <>
       <section id="services" ref={servicesRef} className="relative overflow-hidden px-6 py-24 sm:py-32" style={{ background: "#10101e" }}>
         <div className="pointer-events-none absolute inset-0 opacity-[0.035]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.45) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.45) 1px,transparent 1px)", backgroundSize: "72px 72px" }} />
-        <motion.div className="pointer-events-none absolute -left-40 top-24 h-96 w-96 rounded-full blur-[120px]" animate={{ backgroundColor: service.color }} transition={{ duration: 0.7 }} style={{ opacity: 0.12 }} />
+        <motion.div className="pointer-events-none absolute -left-48 top-24 h-80 w-80 rounded-full blur-[140px]" animate={{ backgroundColor: service.color }} transition={{ duration: reduceMotion ? 0 : 0.7 }} style={{ opacity: 0.055 }} />
 
         <div className="relative mx-auto max-w-7xl">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={servicesInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.7 }} className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
@@ -150,7 +151,7 @@ export function CompanySections() {
                     </div>
                   </motion.div>
                 </AnimatePresence>
-                <motion.div key={service.color} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pointer-events-none absolute -bottom-40 -right-40 h-[430px] w-[430px] rounded-full blur-[100px]" style={{ background: service.color, opacity: 0.1 }} />
+                <motion.div key={service.color} initial={{ opacity: 0 }} animate={{ opacity: 0.05 }} transition={{ duration: reduceMotion ? 0 : 0.45 }} className="pointer-events-none absolute -bottom-44 -right-44 h-[360px] w-[360px] rounded-full blur-[32px]" style={{ background: `radial-gradient(circle, ${service.color} 0%, transparent 70%)` }} />
               </div>
             </div>
           </motion.div>
@@ -177,14 +178,20 @@ export function CompanySections() {
             <p className="mt-6 text-base leading-8 text-white/50">ArkiTech Solutions is a Vermont-based digital product studio serving organizations of every size. We turn complex business needs into clear, fast, dependable digital experiences.</p>
             <p className="mt-4 text-base leading-8 text-white/50">Our work spans customer-facing websites, internal platforms, automation, and long-term technical partnerships.</p>
 
-            <div className="mt-8 space-y-2">
+            <div className="mt-8 space-y-2" aria-label="ArkiTech operating principles">
               {PRINCIPLES.map((item, index) => {
                 const active = index === activePrinciple;
-                return <button key={item.title} type="button" onClick={() => setActivePrinciple(index)} onMouseEnter={() => setActivePrinciple(index)} onFocus={() => setActivePrinciple(index)} className="w-full rounded-2xl border px-4 py-4 text-left transition sm:px-5" style={{ borderColor: active ? "rgba(147,197,253,.28)" : "rgba(255,255,255,.06)", background: active ? "rgba(147,197,253,.07)" : "rgba(255,255,255,.02)" }}>
-                  <span className="flex items-center gap-4"><span className="font-mono text-[10px] text-white/25">0{index + 1}</span><span className="font-bold text-white">{item.title}</span><motion.span animate={{ rotate: active ? 45 : 0 }} className="ml-auto text-lg text-white/30">+</motion.span></span>
-                  <AnimatePresence initial={false}>{active && <motion.span initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="block overflow-hidden"><span className="block pl-9 pt-3 text-sm leading-6 text-white/40">{item.text}</span></motion.span>}</AnimatePresence>
+                return <button key={item.title} type="button" aria-expanded={active} aria-controls="principle-detail" onClick={() => setActivePrinciple(index)} className="w-full rounded-2xl border px-4 py-4 text-left transition-colors duration-200 sm:px-5" style={{ borderColor: active ? "rgba(147,197,253,.28)" : "rgba(255,255,255,.06)", background: active ? "rgba(147,197,253,.07)" : "rgba(255,255,255,.02)" }}>
+                  <span className="flex items-center gap-4"><span className="font-mono text-[10px] text-white/25">0{index + 1}</span><span className="font-bold text-white">{item.title}</span><motion.span animate={{ rotate: active ? 45 : 0 }} transition={{ duration: reduceMotion ? 0 : 0.18 }} className="ml-auto text-lg text-white/30">+</motion.span></span>
                 </button>;
               })}
+            </div>
+            <div id="principle-detail" aria-live="polite" className="mt-3 h-[130px] overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 sm:h-[92px]">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.p key={PRINCIPLES[activePrinciple].title} initial={{ opacity: 0, y: reduceMotion ? 0 : 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduceMotion ? 0 : -5 }} transition={{ duration: reduceMotion ? 0 : 0.16, ease: "easeOut" }} className="text-sm leading-6 text-white/40">
+                  {PRINCIPLES[activePrinciple].text}
+                </motion.p>
+              </AnimatePresence>
             </div>
           </motion.div>
         </div>
