@@ -9,6 +9,7 @@ import { CompanySections } from "@/components/landing/company-sections";
 import { TeamSection } from "@/components/landing/team-section";
 import { ClosingSections } from "@/components/landing/closing-sections";
 import { ContactModal } from "@/components/landing/contact-modal";
+import { ChatWidget } from "@/components/landing/chat-widget";
 
 export default function Home() {
   const [contactOpen, setContactOpen] = useState(false);
@@ -44,6 +45,7 @@ export default function Home() {
   return (
     <main className="overflow-x-hidden" style={{ background: "#0c0c18", color: "white" }}>
       <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
+      <ChatWidget suppressed={contactOpen} onStartProject={() => setContactOpen(true)} />
       <motion.div className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-violet-500 via-sky-400 to-cyan-300" style={{ scaleX: progress }} />
 
       {/* ── Nav ── */}
