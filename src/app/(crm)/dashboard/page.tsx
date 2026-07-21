@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [notifs, setNotifs] = useState<Notif | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [team, setTeam] = useState<any[] | null>(null);
+  const [isManager, setIsManager] = useState(false);
   const [openStatus, setOpenStatus] = useState("");
   const [statusLeads, setStatusLeads] = useState<any[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -67,7 +68,11 @@ export default function DashboardPage() {
   useEffect(() => {
     fetch("/api/dashboard/stats").then((r) => r.json()).then(setStats);
     fetch("/api/dashboard/notifications").then((r) => r.json()).then(setNotifs);
-    fetch("/api/dashboard/assignments").then((r) => r.json()).then((d) => setTeam(d.team ?? [])).catch(() => setTeam([]));
+    fetch("/api/auth/me").then((r) => r.json()).then((d) => {
+      if (!d.isManager) return;
+      setIsManager(true);
+      fetch("/api/dashboard/assignments").then((r) => r.json()).then((a) => setTeam(a.team ?? [])).catch(() => setTeam([]));
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -242,7 +247,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Team call progress ── */}
+      {/* ── Team call progress (managers only) ── */}
+      {isManager && (
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -302,6 +308,7 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* ── Pipeline by status ── */}
       <Card>

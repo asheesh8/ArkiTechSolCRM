@@ -36,12 +36,17 @@ export function LeadTable({
   onStatus,
   users,
   onAssign,
+  selectedIds,
+  onToggleSelect,
 }: {
   leads: Lead[];
   onStatus?: (id: string, status: string) => void;
   users?: TeamUser[];
   onAssign?: (id: string, assignedToId: string) => void;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }) {
+  const selectable = !!onToggleSelect;
   if (!leads.length) {
     return (
       <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-800">
@@ -58,12 +63,29 @@ export function LeadTable({
         const lastTouch = lead.callNotes?.[0]?.createdAt;
         const location = [lead.city, lead.state].filter(Boolean).join(", ");
 
+        const checked = selectedIds?.has(lead.id) ?? false;
+
         return (
           <div
             key={lead.id}
-            className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
+            className={cn(
+              "group relative overflow-hidden rounded-xl border bg-white transition hover:shadow-sm dark:bg-zinc-950",
+              checked
+                ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/40"
+                : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700",
+            )}
           >
             <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+
+              {selectable && (
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onToggleSelect!(lead.id)}
+                  aria-label={`Select ${lead.businessName}`}
+                  className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
+                />
+              )}
 
               {/* Left: business info */}
               <div className="min-w-0 flex-1">

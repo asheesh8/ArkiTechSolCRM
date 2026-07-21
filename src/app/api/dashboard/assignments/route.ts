@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, isManager } from "@/lib/auth";
 
 // Per-teammate call progress: how many leads they own, how many they've
 // already worked (contacted), how many are still waiting for a first call,
-// and how many calls they've logged so far this week.
+// and how many calls they've logged so far this week. Managers only.
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!isManager(user)) return NextResponse.json({ team: [], forbidden: true }, { status: 403 });
+
     // Start of the current week (Monday 00:00 local server time).
     const weekStart = new Date();
     weekStart.setHours(0, 0, 0, 0);

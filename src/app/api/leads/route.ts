@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { demoLeads } from "@/lib/demo-data";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isManager } from "@/lib/auth";
 import { leadCreateSchema } from "@/lib/schemas";
 
 export async function GET(request: NextRequest) {
@@ -11,10 +11,21 @@ export async function GET(request: NextRequest) {
   const priority = params.get("priority") ?? undefined;
   const city = params.get("city") ?? undefined;
   const category = params.get("category") ?? undefined;
+  const assignedTo = params.get("assignedTo") ?? undefined;
 
   try {
+    const user = await getCurrentUser();
+    // Agents only ever see leads delegated to them; managers see everyone's
+    // and can optionally filter to one teammate via ?assignedTo=<userId>.
+    const ownerFilter = !user
+      ? {}
+      : isManager(user)
+        ? (assignedTo ? { assignedToId: assignedTo } : {})
+        : { assignedToId: user.id };
+
     const leads = await prisma.lead.findMany({
       where: {
+        ...ownerFilter,
         ...(status ? { status: status as any } : {}),
         ...(priority ? { priority: priority as any } : {}),
         ...(city ? { city: { contains: city, mode: "insensitive" } } : {}),

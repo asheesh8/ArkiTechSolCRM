@@ -11,6 +11,7 @@ const PROJECTS = [
   { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
   { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
   { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
+  { id: "vermont",  name: "Vermont Exterior Construction", desc: "Commercial construction showcase", url: "https://vermont-exterior-construction.vercel.app", color: "#34d399", accent: "#047857" },
   { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
   { id: "pit",      name: "ThePit",                 desc: "Trader community & dashboard",       url: "https://pittrader.vercel.app",                   color: "#fb923c", accent: "#ea580c" },
   { id: "bible",    name: "Village Server Initiative", desc: "Community & event platform",         url: "https://villageservers.org",            color: "#c084fc", accent: "#9333ea" },

@@ -25,18 +25,19 @@ async function main() {
     },
   });
 
+  // Terri is a manager alongside Ashish: sees every lead and can assign.
   const terri = await prisma.user.upsert({
     where: { email: "terri@arkitech.com" },
     update: {
       name: "Terri",
       passwordHash,
-      role: "MEMBER",
+      role: "OWNER",
     },
     create: {
       name: "Terri",
       email: "terri@arkitech.com",
       passwordHash,
-      role: "MEMBER",
+      role: "OWNER",
     },
   });
 

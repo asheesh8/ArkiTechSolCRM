@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { demoLeads, demoNotes } from "@/lib/demo-data";
+import { getCurrentUser, isManager } from "@/lib/auth";
 import { leadUpdateSchema } from "@/lib/schemas";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +22,12 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
       },
     });
     if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+
+    // Agents can only open leads delegated to them.
+    const user = await getCurrentUser();
+    if (user && !isManager(user) && lead.assignedToId !== user.id) {
+      return NextResponse.json({ error: "This lead isn't assigned to you." }, { status: 403 });
+    }
     return NextResponse.json({ lead });
   } catch {
     const lead = demoLeads.find((item) => item.id === id) ?? demoLeads[0];
@@ -32,6 +39,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const { id } = await params;
   try {
     const payload = leadUpdateSchema.parse(await request.json());
+
+    const user = await getCurrentUser();
+    if (user && !isManager(user)) {
+      // Agents may only touch their own leads, and may never reassign.
+      const existing = await prisma.lead.findUnique({ where: { id }, select: { assignedToId: true } });
+      if (!existing || existing.assignedToId !== user.id) {
+        return NextResponse.json({ error: "This lead isn't assigned to you." }, { status: 403 });
+      }
+      delete (payload as Record<string, unknown>).assignedToId;
+    }
+
     const lead = await prisma.lead.update({ where: { id }, data: payload });
     return NextResponse.json({ lead });
   } catch (error) {

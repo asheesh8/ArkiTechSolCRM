@@ -165,7 +165,7 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
           className="max-w-md text-base leading-relaxed"
           style={{ color: "rgba(255,255,255,0.6)", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
         >
-          Local businesses deserve world-class websites. We design, build, and ship — on time, on budget.
+          We design and engineer websites, platforms, and digital systems for growing teams and established organizations.
         </motion.p>
 
         <motion.div

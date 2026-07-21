@@ -21,16 +21,6 @@ const TEAM = [
     gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
     glow: "#059669",
     tags: ["Client Success", "Sales", "Relations", "Consultant"],
-    phone: "(802) 557-8828",
-  },
-  {
-    name: "Krish Dahal",
-    role: "Frontend Engineer & Digital Strategist",
-    bio: "Krish brings interfaces to life with pixel-perfect execution and drives organic growth through smart digital marketing that puts clients in front of the right people.",
-    initials: "KD",
-    gradient: "linear-gradient(135deg, #0891b2 0%, #6366f1 100%)",
-    glow: "#0891b2",
-    tags: ["Frontend", "UI Dev", "Marketing"],
   },
 ] as const;
 
@@ -60,12 +50,12 @@ export function TeamSection() {
             </span>
           </h2>
           <p className="mt-4 text-sm sm:text-base" style={{ color: "rgba(255,255,255,0.35)" }}>
-            Small team. Big output. Every client gets our full attention.
+            A focused leadership team with a network built to scale around each engagement.
           </p>
         </motion.div>
 
         {/* Cards */}
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
           {TEAM.map((person, i) => (
             <motion.div
               key={person.name}
@@ -105,7 +95,7 @@ export function TeamSection() {
               {/* Info */}
               <div>
                 <p className="text-lg font-bold text-white">{person.name}</p>
-                <p className="mt-0.5 text-sm font-medium" style={{ color: person.glow === "#7c3aed" ? "#a78bfa" : person.glow === "#0891b2" ? "#67e8f9" : "#6ee7b7" }}>
+                <p className="mt-0.5 text-sm font-medium" style={{ color: person.glow === "#7c3aed" ? "#a78bfa" : "#6ee7b7" }}>
                   {person.role}
                 </p>
               </div>
@@ -127,16 +117,6 @@ export function TeamSection() {
                 ))}
               </div>
 
-              {"phone" in person && (
-                <a
-                  href={`tel:+1${(person as any).phone.replace(/\D/g, "")}`}
-                  className="flex items-center gap-2 text-xs font-medium transition hover:opacity-80"
-                  style={{ color: `${person.glow}99` }}
-                >
-                  <span style={{ color: person.glow }}>📞</span>
-                  {(person as any).phone}
-                </a>
-              )}
             </motion.div>
           ))}
         </div>

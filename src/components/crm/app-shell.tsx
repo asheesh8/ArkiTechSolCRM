@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Building2, Gauge, Inbox, LayoutDashboard, MessageSquare, Search, Settings, Sparkles } from "lucide-react";
+import { BarChart3, BookOpenText, Building2, Gauge, Inbox, LayoutDashboard, MessageSquare, Search, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
@@ -17,6 +17,7 @@ const nav = [
   { href: "/requests", label: "Work Requests", icon: Inbox },
   { href: "/audits", label: "PageSpeed Audit", icon: Gauge },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/resources", label: "Templates & Scripts", icon: BookOpenText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -24,6 +25,12 @@ type ShellUser = {
   name: string;
   email: string;
   role: string;
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  OWNER: "Manager",
+  DEV: "Developer",
+  MEMBER: "Agent",
 };
 
 export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser }) {
@@ -82,7 +89,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
               <ScrapeQuotaWidget />
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-medium">{user.name}</p>
-                <p className="text-xs text-zinc-500">{user.role}</p>
+                <p className="text-xs text-zinc-500">{ROLE_LABELS[user.role] ?? user.role}</p>
               </div>
               <ThemeToggle />
               <LogoutButton />

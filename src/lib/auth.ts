@@ -12,3 +12,9 @@ export async function getCurrentUser() {
 
   return null;
 }
+
+// Managers (currently OWNER role) see and assign every lead/client.
+// Everyone else is an agent who only sees leads delegated to them.
+export function isManager(user: { role?: string | null } | null | undefined) {
+  return user?.role === "OWNER";
+}

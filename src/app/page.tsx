@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Hero } from "@/components/landing/hero";
 import { ImmersiveShowcase } from "@/components/landing/immersive-showcase";
+import { CompanySections } from "@/components/landing/company-sections";
 import { TeamSection } from "@/components/landing/team-section";
 import { ContactModal } from "@/components/landing/contact-modal";
 
@@ -30,19 +30,18 @@ export default function Home() {
         <span className="text-base font-black tracking-tight text-white drop-shadow">
           Arki<span style={{ color: "#c4b5fd" }}>Tech</span>
         </span>
-        <div className="flex items-center gap-4">
-          <a href="mailto:subediashish31@gmail.com" className="hidden text-sm font-medium text-white/60 sm:block hover:text-white transition">
-            hello@arkitech-sol.com
-          </a>
-          <Link href="/login" className="rounded-full px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition hover:opacity-80"
-            style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}>
-            Staff login
-          </Link>
+        <div className="flex items-center gap-5 text-sm font-medium text-white/60">
+          <a href="#services" className="hidden transition hover:text-white sm:block">Services</a>
+          <a href="#about" className="hidden transition hover:text-white sm:block">About</a>
+          <a href="#showcase" className="hidden transition hover:text-white md:block">Work</a>
+          <a href="tel:+18023103749" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">Call us</a>
         </div>
       </nav>
 
       {/* ── Hero ── */}
       <Hero onStartProject={() => setContactOpen(true)} />
+
+      <CompanySections />
 
       {/* ── Showcase ── */}
       <ImmersiveShowcase />
@@ -53,7 +52,7 @@ export default function Home() {
       {/* ── Stats ── */}
       <div className="border-y py-12 text-center" style={{ borderColor: "rgba(255,255,255,0.06)", background: "#10101e" }}>
         <div className="mx-auto grid max-w-3xl grid-cols-3 gap-4 px-6">
-          {[["10+", "Sites shipped"], ["$197", "Starting /mo"], ["72hr", "Avg turnaround"]].map(([n, l]) => (
+          {[["10+", "Products shipped"], ["3", "Core disciplines"], ["72hr", "Typical kickoff"]].map(([n, l]) => (
             <div key={l} className="flex flex-col gap-1">
               <span className="text-3xl font-black text-white sm:text-4xl">{n}</span>
               <span className="text-xs text-white/40 sm:text-sm">{l}</span>
@@ -69,12 +68,12 @@ export default function Home() {
         <div className="relative z-10">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.25em] text-violet-400/70">Ready when you are</p>
           <h2 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-7xl text-white">
-            Let's build<br />
+            Let&apos;s build<br />
             <span style={{ background: "linear-gradient(135deg, #c4b5fd, #93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               something great.
             </span>
           </h2>
-          <p className="mt-5 text-base text-white/40 sm:text-lg">Starting at $197/mo. No agency bloat — just clean, fast, converting websites.</p>
+          <p className="mt-5 text-base text-white/40 sm:text-lg">Tell us what your organization needs. We’ll shape the right team and a clear path to launch.</p>
           <button
             onClick={() => setContactOpen(true)}
             className="mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 text-base font-bold text-white transition-all hover:scale-105 sm:mt-10 sm:px-10 sm:py-5"

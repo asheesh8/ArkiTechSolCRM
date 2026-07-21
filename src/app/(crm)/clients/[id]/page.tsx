@@ -583,8 +583,10 @@ export default function ClientDetailPage() {
   const [showAudits, setShowAudits] = useState(false);
   const [users, setUsers] = useState<{ id: string; name: string; role: string }[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
+    fetch("/api/auth/me").then((r) => r.json()).then((d) => setIsManager(!!d.isManager)).catch(() => setIsManager(false));
     fetch("/api/users").then((r) => r.json()).then((d) => setUsers(d.users ?? [])).catch(() => setUsers([]));
   }, []);
 
@@ -621,6 +623,7 @@ export default function ClientDetailPage() {
     setMessage("");
     const payload: Record<string, any> = {};
     for (const key of ["businessName","category","phone","email","website","address","city","state","googleMapsUrl","googleRating","googleReviewCount","notes","priority"]) {
+      if (!formData.has(key)) continue;
       payload[key] = formData.get(key) || null;
     }
     payload.businessName = formData.get("businessName");
@@ -756,18 +759,24 @@ export default function ClientDetailPage() {
           <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-zinc-400">
             <UserCheck className="h-3.5 w-3.5" /> Assigned to
           </span>
-          <Select
-            value={lead.assignedTo?.id ?? ""}
-            onChange={(e) => updateAssignee(e.target.value)}
-            disabled={assigning}
-            className="h-8 w-auto min-w-44 py-0 text-sm"
-          >
-            <option value="">Unassigned</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>{u.name}{u.role === "OWNER" ? " (Owner)" : ""}</option>
-            ))}
-          </Select>
-          {assigning && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />}
+          {isManager ? (
+            <>
+              <Select
+                value={lead.assignedTo?.id ?? ""}
+                onChange={(e) => updateAssignee(e.target.value)}
+                disabled={assigning}
+                className="h-8 w-auto min-w-44 py-0 text-sm"
+              >
+                <option value="">Unassigned</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </Select>
+              {assigning && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />}
+            </>
+          ) : (
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{lead.assignedTo?.name ?? "Unassigned"}</span>
+          )}
         </div>
 
         {/* Status chips */}
@@ -882,6 +891,7 @@ export default function ClientDetailPage() {
                   <div className="space-y-2 md:col-span-2"><Label>Google Maps URL</Label><Input name="googleMapsUrl" defaultValue={lead.googleMapsUrl ?? ""} /></div>
                   <div className="space-y-2"><Label>Google rating</Label><Input name="googleRating" type="number" step="0.1" min="0" max="5" defaultValue={lead.googleRating ?? ""} /></div>
                   <div className="space-y-2"><Label>Review count</Label><Input name="googleReviewCount" type="number" min="0" defaultValue={lead.googleReviewCount ?? ""} /></div>
+                  <div className="space-y-2 md:col-span-2"><Label>Priority</Label><Select name="priority" defaultValue={lead.priority ?? "STANDARD"}><option value="STANDARD">Standard</option><option value="PRIORITY">Priority</option><option value="FAVORITE">Favorite</option></Select></div>
                   <div className="space-y-2 md:col-span-2"><Label>Internal notes</Label><Textarea name="notes" defaultValue={lead.notes ?? ""} /></div>
                   <div className="flex items-center gap-3 md:col-span-2">
                     <Button disabled={savingProfile}><Save className="h-4 w-4" />{savingProfile ? "Saving…" : "Save"}</Button>
