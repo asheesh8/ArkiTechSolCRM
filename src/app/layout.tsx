@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LocalLead CRM",
-  description: "A local-business CRM for prospecting, website audits, calls, notes, and meetings.",
+  title: "ArkiTech Solutions",
+  description: "Websites, platforms, automations, and digital systems for growing teams and established organizations.",
 };
 
 export default function RootLayout({
