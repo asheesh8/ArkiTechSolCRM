@@ -5,13 +5,13 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { ExternalLink, ArrowUpRight, Pause, Play } from "lucide-react";
 
 const PROJECTS = [
+  { id: "vermont",  name: "Vermont Exterior Construction", desc: "Commercial construction showcase", url: "https://vermont-exterior-construction.vercel.app", color: "#34d399", accent: "#047857" },
+  { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
   { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
   { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen (demo built)",     url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
   { id: "shine",    name: "HomeSHINE",              desc: "Home services booking",              url: "https://home-shine-v2.vercel.app",               color: "#f87171", accent: "#dc2626" },
   { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
   { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
-  { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
-  { id: "vermont",  name: "Vermont Exterior Construction", desc: "Commercial construction showcase", url: "https://vermont-exterior-construction.vercel.app", color: "#34d399", accent: "#047857" },
   { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
   { id: "pit",      name: "ThePit",                 desc: "Trader community & dashboard",       url: "https://pittrader.vercel.app",                   color: "#fb923c", accent: "#ea580c" },
   { id: "bible",    name: "Village Server Initiative", desc: "Community & event platform",         url: "https://villageservers.org",            color: "#c084fc", accent: "#9333ea" },
@@ -19,8 +19,6 @@ const PROJECTS = [
 ] as const;
 
 type Project = typeof PROJECTS[number];
-type ProjectId = Project["id"];
-
 const AUTOPLAY_MS = 4500;
 
 // ── Fallback card shown when iframe is blocked ────────────────────────────────
