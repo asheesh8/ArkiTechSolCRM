@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { Hero } from "@/components/landing/hero";
@@ -53,9 +54,20 @@ export default function Home() {
         onFocusCapture={() => setNavVisible(true)}
         className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-white/[0.055] bg-[#0c0c18]/55 px-5 py-4 backdrop-blur-xl sm:px-8"
       >
-        <span className="text-base font-black tracking-tight text-white drop-shadow">
-          Arki<span style={{ color: "#c4b5fd" }}>Tech</span>
-        </span>
+        <a
+          href="#"
+          aria-label="ArkiTech Solutions home"
+          className="relative h-9 w-40 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white shadow-[0_6px_24px_rgba(0,0,0,0.24)] sm:w-48"
+        >
+          <Image
+            src="/arkitech-banner.png"
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 640px) 192px, 160px"
+            className="object-cover object-center"
+          />
+        </a>
         <div className="flex items-center gap-5 text-sm font-medium text-white/60">
           <a href="#services" className="hidden transition hover:text-white sm:block">Services</a>
           <a href="#about" className="hidden transition hover:text-white sm:block">About</a>
