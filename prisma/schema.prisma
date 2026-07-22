@@ -59,8 +59,21 @@ model User {
   leads        Lead[]     @relation("AssignedLeads")
   callNotes    CallNote[]
   scrapeUsages ScrapeUsage[]
+  staffSessions StaffSession[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+model StaffSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Lead {
@@ -90,6 +103,7 @@ model Lead {
   callNotes                  CallNote[]
   audits                     Audit[]
   client                     Client?
+  receptionistConversations ReceptionistConversation[]
   createdAt                  DateTime    @default(now())
   updatedAt                  DateTime    @updatedAt
 
@@ -302,6 +316,83 @@ model WorkFile {
   workRequest WorkRequest @relation(fields: [workRequestId], references: [id], onDelete: Cascade)
 
   @@index([workRequestId])
+}
+
+// ─── AI Receptionist Archive ────────────────────────────────────────────────
+
+model ReceptionistConversation {
+  id                     String    @id @default(cuid())
+  providerConversationId String    @unique
+  agentId                String
+  agentName              String?
+  status                 String
+  callSuccessful         String?
+  callSuccessScore       Float?
+  title                  String?
+  summary                String?   @db.Text
+  searchText             String?   @db.Text
+  callerPhone            String?
+  agentPhone             String?
+  direction              String?
+  initiationSource       String?
+  mainLanguage           String?
+  terminationReason      String?
+  durationSecs           Int       @default(0)
+  messageCount           Int       @default(0)
+  startedAt              DateTime
+  endedAt                DateTime?
+  hasAudio               Boolean   @default(false)
+  costFiat               Float?
+  rating                 Float?
+  sentimentLabel         String?
+  metadata               Json?
+  analysis               Json?
+  initiationData         Json?
+  tagIds                 String[]  @default([])
+  internalNote           String?   @db.Text
+  leadId                 String?
+  detailStatus           String?
+  detailSyncedAt         DateTime?
+  syncedAt               DateTime  @default(now())
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  lead     Lead?                 @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  messages ReceptionistMessage[]
+
+  @@index([agentId, startedAt])
+  @@index([startedAt])
+  @@index([status])
+  @@index([callSuccessful])
+  @@index([callerPhone])
+  @@index([leadId])
+}
+
+model ReceptionistMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  sequence       Int
+  role           String
+  message        String?  @db.Text
+  timeInCallSecs Float?
+  interrupted    Boolean  @default(false)
+  sourceMedium   String?
+  rawData        Json?
+  createdAt      DateTime @default(now())
+
+  conversation ReceptionistConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId])
+  @@index([role])
+}
+
+model ReceptionistSyncState {
+  agentId              String    @id
+  lastIncrementalAt    DateTime?
+  lastFullReconcileAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }
 
 // ─── Analytics ───────────────────────────────────────────────────────────────

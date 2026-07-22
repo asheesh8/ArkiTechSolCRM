@@ -5,6 +5,9 @@ import { getCurrentUser, isManager } from "@/lib/auth";
 import { leadUpdateSchema } from "@/lib/schemas";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
     const lead = await prisma.lead.findUnique({
@@ -24,8 +27,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
     // Agents can only open leads delegated to them.
-    const user = await getCurrentUser();
-    if (user && !isManager(user) && lead.assignedToId !== user.id) {
+    if (!isManager(user) && lead.assignedToId !== user.id) {
       return NextResponse.json({ error: "This lead isn't assigned to you." }, { status: 403 });
     }
     return NextResponse.json({ lead });
@@ -36,12 +38,14 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
     const payload = leadUpdateSchema.parse(await request.json());
 
-    const user = await getCurrentUser();
-    if (user && !isManager(user)) {
+    if (!isManager(user)) {
       // Agents may only touch their own leads, and may never reassign.
       const existing = await prisma.lead.findUnique({ where: { id }, select: { assignedToId: true } });
       if (!existing || existing.assignedToId !== user.id) {
@@ -58,8 +62,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   try {
+    if (!isManager(user)) {
+      const existing = await prisma.lead.findUnique({ where: { id }, select: { assignedToId: true } });
+      if (!existing || existing.assignedToId !== user.id) {
+        return NextResponse.json({ error: "This lead isn't assigned to you." }, { status: 403 });
+      }
+    }
+
     await prisma.lead.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (error) {

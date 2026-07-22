@@ -5,6 +5,9 @@ import { getCurrentUser, isManager } from "@/lib/auth";
 import { leadCreateSchema } from "@/lib/schemas";
 
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const params = request.nextUrl.searchParams;
   const search = params.get("search") ?? undefined;
   const status = params.get("status") ?? undefined;
@@ -14,14 +17,11 @@ export async function GET(request: NextRequest) {
   const assignedTo = params.get("assignedTo") ?? undefined;
 
   try {
-    const user = await getCurrentUser();
     // Agents only ever see leads delegated to them; managers see everyone's
     // and can optionally filter to one teammate via ?assignedTo=<userId>.
-    const ownerFilter = !user
-      ? {}
-      : isManager(user)
-        ? (assignedTo ? { assignedToId: assignedTo } : {})
-        : { assignedToId: user.id };
+    const ownerFilter = isManager(user)
+      ? (assignedTo ? { assignedToId: assignedTo } : {})
+      : { assignedToId: user.id };
 
     const leads = await prisma.lead.findMany({
       where: {

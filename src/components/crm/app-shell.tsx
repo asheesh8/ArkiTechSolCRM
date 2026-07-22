@@ -2,17 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpenText, Building2, Gauge, Inbox, LayoutDashboard, MessageSquare, Search, Settings, Sparkles } from "lucide-react";
+import { BarChart3, BookOpenText, Building2, Gauge, Headphones, Inbox, LayoutDashboard, MessageSquare, Search, Settings, Sparkles, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
 import { ScrapeQuotaWidget } from "@/components/crm/scrape-quota-widget";
 import { StatsTicker } from "@/components/crm/stats-ticker";
 
-const nav = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  managerOnly?: boolean;
+};
+
+const nav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leads", label: "Leads/Scraper", icon: Search },
   { href: "/outreach", label: "Cold Text", icon: MessageSquare },
+  { href: "/receptionist", label: "AI Receptionist", icon: Headphones, managerOnly: true },
   { href: "/clients", label: "CRM Clients", icon: Building2 },
   { href: "/requests", label: "Work Requests", icon: Inbox },
   { href: "/audits", label: "PageSpeed Audit", icon: Gauge },
@@ -35,6 +43,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser }) {
   const pathname = usePathname();
+  const visibleNav = nav.filter((item) => !item.managerOnly || user.role === "OWNER");
 
   return (
     <div className="min-h-screen bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
@@ -49,7 +58,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           </span>
         </Link>
         <nav className="mt-8 space-y-1">
-          {nav.map((item) => {
+          {visibleNav.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
             return (
@@ -99,7 +108,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
             <StatsTicker />
           </div>
           <nav className="flex gap-1 overflow-x-auto px-4 pb-3 lg:hidden">
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const Icon = item.icon;
               return (
