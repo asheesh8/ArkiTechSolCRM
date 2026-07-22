@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type MouseEvent } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { Hero } from "@/components/landing/hero";
 import { ImmersiveShowcase } from "@/components/landing/immersive-showcase";
@@ -15,6 +15,8 @@ export default function Home() {
   const [contactOpen, setContactOpen] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
   const lastNavScrollY = useRef(0);
+  const footerLogoClickCount = useRef(0);
+  const footerLogoResetTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
   const { scrollY, scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.25 });
@@ -41,6 +43,28 @@ export default function Home() {
       body: JSON.stringify({ site: "arkitech-landing", path: "/", referrer: document.referrer }),
     }).catch(() => {});
   }, []);
+
+  useEffect(() => () => {
+    if (footerLogoResetTimer.current) window.clearTimeout(footerLogoResetTimer.current);
+  }, []);
+
+  function handleFooterLogoClick(event: MouseEvent<HTMLButtonElement>) {
+    footerLogoClickCount.current += 1;
+
+    if (event.detail >= 3 || footerLogoClickCount.current >= 3) {
+      if (footerLogoResetTimer.current) window.clearTimeout(footerLogoResetTimer.current);
+      footerLogoClickCount.current = 0;
+      footerLogoResetTimer.current = null;
+      window.location.assign("/dashboard");
+      return;
+    }
+
+    if (footerLogoResetTimer.current) window.clearTimeout(footerLogoResetTimer.current);
+    footerLogoResetTimer.current = window.setTimeout(() => {
+      footerLogoClickCount.current = 0;
+      footerLogoResetTimer.current = null;
+    }, 4_000);
+  }
 
   return (
     <main className="overflow-x-hidden" style={{ background: "#0c0c18", color: "white" }}>
@@ -94,7 +118,21 @@ export default function Home() {
       {/* ── Footer ── */}
       <footer className="border-t px-6 py-8" style={{ borderColor: "rgba(255,255,255,0.05)", background: "#0a0a16" }}>
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-          <span className="text-sm font-black text-white">Arki<span style={{ color: "#c4b5fd" }}>Tech</span> Solutions</span>
+          <button
+            type="button"
+            onClick={handleFooterLogoClick}
+            aria-label="ArkiTech Solutions logo"
+            className="relative h-10 w-44 cursor-default select-none overflow-hidden rounded-xl border border-white/15 bg-white shadow-[0_8px_28px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none sm:w-48"
+          >
+            <Image
+              src="/arkitech-banner.png"
+              alt="ArkiTech Solutions"
+              fill
+              sizes="(min-width: 640px) 192px, 176px"
+              className="pointer-events-none object-cover object-center"
+              draggable={false}
+            />
+          </button>
           <span className="text-xs text-white/25">© {new Date().getFullYear()} · Burlington, VT</span>
           <button onClick={() => setContactOpen(true)} className="text-xs text-white/35 transition hover:text-white">
             hello@arkitech-sol.com
