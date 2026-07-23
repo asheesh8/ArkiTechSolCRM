@@ -16,6 +16,7 @@ type DropTarget =
   | { kind: "page"; pageId: string; cabinetId: string; position: DropPosition }
   | { kind: "cabinet"; cabinetId: string };
 type MoveDestination = { cabinetId: string; parentId: string | null; index: number };
+type CabinetDropTarget = { cabinetId: string; position: "before" | "after" };
 
 const COLORS: Record<string, { chip: string; dot: string }> = {
   blue: { chip: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300", dot: "bg-blue-500" },
@@ -50,6 +51,13 @@ function sortedChildren(pages: FlatPage[], parentId: string | null) {
     .filter(({ page }) => page.parentId === parentId)
     .sort((a, b) => a.page.sortOrder - b.page.sortOrder || a.index - b.index)
     .map(({ page }) => page);
+}
+
+function sortedCabinets(cabinets: Cabinet[]) {
+  return cabinets
+    .map((cabinet, index) => ({ cabinet, index }))
+    .sort((a, b) => a.cabinet.sortOrder - b.cabinet.sortOrder || a.index - b.index)
+    .map(({ cabinet }) => cabinet);
 }
 
 function expandPath(cabinet: Cabinet, pageId: string) {
@@ -106,6 +114,24 @@ function movePageInTree(cabinets: Cabinet[], pageId: string, destination: MoveDe
   });
 }
 
+function moveCabinetInTree(cabinets: Cabinet[], cabinetId: string, target: CabinetDropTarget) {
+  if (cabinetId === target.cabinetId) return cabinets;
+  const ordered = sortedCabinets(cabinets);
+  const moving = ordered.find((cabinet) => cabinet.id === cabinetId);
+  if (!moving) return cabinets;
+
+  const withoutMoving = ordered.filter((cabinet) => cabinet.id !== cabinetId);
+  const targetIndex = withoutMoving.findIndex((cabinet) => cabinet.id === target.cabinetId);
+  if (targetIndex === -1) return cabinets;
+
+  const insertAt = target.position === "after" ? targetIndex + 1 : targetIndex;
+  const nextOrdered = [...withoutMoving.slice(0, insertAt), moving, ...withoutMoving.slice(insertAt)]
+    .map((cabinet, sortOrder) => ({ ...cabinet, sortOrder }));
+  const byId = new Map(nextOrdered.map((cabinet) => [cabinet.id, cabinet]));
+
+  return cabinets.map((cabinet) => byId.get(cabinet.id) ?? cabinet);
+}
+
 export function NotesWorkspace({ user }: { user: { id: string; name: string } }) {
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,9 +144,12 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   const [query, setQuery] = useState("");
   const [treeOpen, setTreeOpen] = useState(true);
   const [draggingPageId, setDraggingPageId] = useState<string | null>(null);
+  const [draggingCabinetId, setDraggingCabinetId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const [cabinetDropTarget, setCabinetDropTarget] = useState<CabinetDropTarget | null>(null);
   const renameValue = useRef("");
   const dropTargetRef = useRef<DropTarget | null>(null);
+  const cabinetDropTargetRef = useRef<CabinetDropTarget | null>(null);
 
   const toggle = (id: string) => setExpanded((prev) => {
     const next = new Set(prev);
@@ -224,6 +253,13 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
     await fetch(`/api/notes/pages/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }).catch(() => {});
   };
 
+  const setCabinetDropTargetIfChanged = useCallback((target: CabinetDropTarget | null) => {
+    cabinetDropTargetRef.current = target;
+    setCabinetDropTarget((prev) => (
+      prev?.cabinetId === target?.cabinetId && prev?.position === target?.position ? prev : target
+    ));
+  }, []);
+
   const setDropTargetIfChanged = useCallback((target: DropTarget | null) => {
     dropTargetRef.current = target;
     setDropTarget((prev) => sameDropTarget(prev, target) ? prev : target);
@@ -303,6 +339,9 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", pageId);
     setDraggingPageId(pageId);
+    setDraggingCabinetId(null);
+    cabinetDropTargetRef.current = null;
+    setCabinetDropTarget(null);
     dropTargetRef.current = null;
     setDropTarget(null);
   };
@@ -322,7 +361,7 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   };
 
   const onCabinetDragOver = (event: DragEvent<HTMLDivElement>, cabinetId: string) => {
-    if (!draggingPageId) return;
+    if (!draggingPageId || draggingCabinetId) return;
     const target: DropTarget = { kind: "cabinet", cabinetId };
     if (!destinationForDrop(target)) return;
     event.preventDefault();
@@ -331,15 +370,68 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
     expand(cabinetId);
   };
 
+  const onCabinetDragStart = (event: DragEvent<HTMLDivElement>, cabinetId: string) => {
+    if (rename?.id === cabinetId || menuFor === cabinetId || iconFor === cabinetId) {
+      event.preventDefault();
+      return;
+    }
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", cabinetId);
+    setDraggingCabinetId(cabinetId);
+    setDraggingPageId(null);
+    dropTargetRef.current = null;
+    setDropTarget(null);
+    cabinetDropTargetRef.current = null;
+    setCabinetDropTarget(null);
+  };
+
+  const onCabinetReorderDragOver = (event: DragEvent<HTMLDivElement>, cabinetId: string) => {
+    if (!draggingCabinetId || draggingCabinetId === cabinetId) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const position = event.clientY - rect.top > rect.height / 2 ? "after" : "before";
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setCabinetDropTargetIfChanged({ cabinetId, position });
+  };
+
+  const commitCabinetMove = useCallback(async (target: CabinetDropTarget | null) => {
+    if (!draggingCabinetId || !target || draggingCabinetId === target.cabinetId) return;
+    const movedCabinetId = draggingCabinetId;
+    const previous = cabinets;
+    const next = moveCabinetInTree(cabinets, movedCabinetId, target);
+    setCabinets(next);
+
+    try {
+      const ids = sortedCabinets(next).map((cabinet) => cabinet.id);
+      const res = await fetch("/api/notes/cabinets/reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error("Reorder failed");
+      await syncCabinets();
+    } catch {
+      setCabinets(previous);
+    } finally {
+      setDraggingCabinetId(null);
+      cabinetDropTargetRef.current = null;
+      setCabinetDropTarget(null);
+    }
+  }, [cabinets, draggingCabinetId, syncCabinets]);
+
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    void commitPageMove(dropTargetRef.current);
+    if (draggingCabinetId) void commitCabinetMove(cabinetDropTargetRef.current);
+    else void commitPageMove(dropTargetRef.current);
   };
 
   const onDragEnd = () => {
     setDraggingPageId(null);
+    setDraggingCabinetId(null);
     dropTargetRef.current = null;
+    cabinetDropTargetRef.current = null;
     setDropTarget(null);
+    setCabinetDropTarget(null);
   };
 
   const deleteCabinet = async (id: string) => {
@@ -465,16 +557,24 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
     const isOpen = expanded.has(cab.id);
     const color = COLORS[cab.color] ?? COLORS.blue;
     const cabinetDropActive = dropTarget?.kind === "cabinet" && dropTarget.cabinetId === cab.id;
+    const cabinetDropPosition = cabinetDropTarget?.cabinetId === cab.id ? cabinetDropTarget.position : null;
+    const isDraggingCabinet = draggingCabinetId === cab.id;
     return (
       <div key={cab.id} className="mb-1">
         <div
-          onDragOver={(event) => onCabinetDragOver(event, cab.id)}
+          draggable={rename?.id !== cab.id}
+          onDragStart={(event) => onCabinetDragStart(event, cab.id)}
+          onDragOver={(event) => draggingCabinetId ? onCabinetReorderDragOver(event, cab.id) : onCabinetDragOver(event, cab.id)}
           onDrop={onDrop}
+          onDragEnd={onDragEnd}
           className={cn(
-            "group/cab relative flex h-9 items-center gap-1.5 rounded-lg px-1.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-800/70",
+            "group/cab relative flex h-9 cursor-grab items-center gap-1.5 rounded-lg px-1.5 transition active:cursor-grabbing hover:bg-zinc-100 dark:hover:bg-zinc-800/70",
             cabinetDropActive && "bg-[var(--accent)]/12 ring-1 ring-[var(--accent)]/40",
+            isDraggingCabinet && "opacity-45",
           )}
         >
+          {cabinetDropPosition === "before" && <span className="pointer-events-none absolute left-1 right-1 top-0 h-0.5 rounded-full bg-[var(--accent)]" />}
+          {cabinetDropPosition === "after" && <span className="pointer-events-none absolute bottom-0 left-1 right-1 h-0.5 rounded-full bg-[var(--accent)]" />}
           <button type="button" onClick={() => toggle(cab.id)} className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700">
             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
@@ -557,7 +657,7 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
               </button>
             )) : <p className="px-2 py-6 text-center text-sm text-zinc-400">No pages match “{query}”.</p>
           ) : cabinets.length ? (
-            cabinets.map(renderCabinet)
+            sortedCabinets(cabinets).map(renderCabinet)
           ) : (
             <div className="px-3 py-10 text-center">
               <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent)]/12 text-[var(--accent)]"><FolderPlus className="h-5 w-5" /></div>
