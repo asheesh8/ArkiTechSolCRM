@@ -12,7 +12,9 @@ export type PageMeta = { title?: string; icon?: string };
 type WorkspaceUser = { id: string; name: string };
 type RemoteSnapshot = { title: string; icon: string; content: string; updatedAt: string };
 
-const PRESENCE_INTERVAL_MS = 3000;
+const PRESENCE_INTERVAL_MS = 1000;
+const SAVE_FLUSH_MS = 150;
+const LOCAL_EDIT_QUIET_MS = 450;
 
 export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: WorkspaceUser; onMeta: (id: string, meta: PageMeta) => void }) {
   const [title, setTitle] = useState("");
@@ -30,10 +32,15 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
   const dirty = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingApplyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlight = useRef(false);
+  const saveQueued = useRef(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
+  const activePageRef = useRef(pageId);
   const updatedAtRef = useRef<string>("");    // server version of the content we currently hold
-  const focusedRef = useRef(false);           // is the body being actively edited
+  const localEditQuietUntil = useRef(0);
   const pendingRemote = useRef<RemoteSnapshot | null>(null); // teammate change waiting until we're idle
+  const flushSaveRef = useRef<(() => Promise<void>) | null>(null);
 
   const growTitle = useCallback(() => {
     const el = titleRef.current;
@@ -41,6 +48,7 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
   }, []);
 
   const applyRemote = useCallback((remote: RemoteSnapshot) => {
+    if (remote.updatedAt === updatedAtRef.current) return;
     setTitle(remote.title);
     setIcon(remote.icon);
     setEditorHTML(remote.content);
@@ -56,15 +64,43 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
     flashTimer.current = setTimeout(() => setRemoteFlash(false), 2200);
   }, [pageId, onMeta, growTitle]);
 
+  const canApplyRemote = useCallback(() => (
+    !dirty.current && !saveInFlight.current && Date.now() >= localEditQuietUntil.current
+  ), []);
+
+  const schedulePendingApply = useCallback(() => {
+    if (pendingApplyTimer.current) clearTimeout(pendingApplyTimer.current);
+    const delay = Math.max(0, localEditQuietUntil.current - Date.now()) + 40;
+    pendingApplyTimer.current = setTimeout(() => {
+      if (pendingRemote.current && canApplyRemote()) applyRemote(pendingRemote.current);
+    }, delay);
+  }, [applyRemote, canApplyRemote]);
+
+  const handleRemote = useCallback((remote: RemoteSnapshot) => {
+    if (remote.updatedAt === updatedAtRef.current) return;
+    if (canApplyRemote()) applyRemote(remote);
+    else {
+      pendingRemote.current = remote;
+      schedulePendingApply();
+    }
+  }, [applyRemote, canApplyRemote, schedulePendingApply]);
+
+  const markLocalEdit = useCallback(() => {
+    localEditQuietUntil.current = Date.now() + LOCAL_EDIT_QUIET_MS;
+  }, []);
+
   // Load a page when it becomes active; flush any pending edits to the previous
   // page in the cleanup so switching never drops unsaved changes.
   useEffect(() => {
     let cancelled = false;
     const previousId = pageId;
+    activePageRef.current = pageId;
     setLoaded(false);
     setNotFound(false);
     setPickerOpen(false);
+    localEditQuietUntil.current = 0;
     pendingRemote.current = null;
+    if (pendingApplyTimer.current) { clearTimeout(pendingApplyTimer.current); pendingApplyTimer.current = null; }
     fetch(`/api/notes/pages/${pageId}`)
       .then((r) => r.json())
       .then((d) => {
@@ -85,6 +121,7 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
     return () => {
       cancelled = true;
       if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+      if (pendingApplyTimer.current) { clearTimeout(pendingApplyTimer.current); pendingApplyTimer.current = null; }
       if (dirty.current) {
         fetch(`/api/notes/pages/${previousId}`, {
           method: "PATCH",
@@ -93,14 +130,34 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
           keepalive: true,
         }).catch(() => {});
         dirty.current = false;
+        saveQueued.current = false;
       }
     };
   }, [pageId, growTitle]);
 
-  // Presence heartbeat + live sync loop.
+  // Realtime page stream. Same-instance saves arrive immediately; the server
+  // route also polls briefly as a cross-instance fallback.
+  useEffect(() => {
+    if (!loaded || notFound) return;
+
+    const source = new EventSource(`/api/notes/pages/${pageId}/events?version=${encodeURIComponent(updatedAtRef.current)}`);
+    const onPage = (event: Event) => {
+      try {
+        const data = JSON.parse((event as MessageEvent<string>).data) as { actorId?: string | null; page?: RemoteSnapshot };
+        if (!data.page || data.actorId === user.id) return;
+        handleRemote(data.page);
+      } catch {
+        /* malformed stream event — EventSource reconnects if needed */
+      }
+    };
+
+    source.addEventListener("page", onPage);
+    return () => source.close();
+  }, [handleRemote, loaded, notFound, pageId, user.id]);
+
+  // Presence heartbeat + fallback live sync loop.
   useEffect(() => {
     let stopped = false;
-    const canApply = () => !focusedRef.current && !dirty.current;
 
     const tick = async () => {
       try {
@@ -115,10 +172,9 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
 
         if (data.page?.changed) {
           const remote: RemoteSnapshot = { title: data.page.title, icon: data.page.icon, content: data.page.content, updatedAt: data.page.updatedAt };
-          if (canApply()) applyRemote(remote);
-          else pendingRemote.current = remote; // hold until the user stops typing
-        } else if (pendingRemote.current && canApply()) {
-          applyRemote(pendingRemote.current);
+          handleRemote(remote);
+        } else if (pendingRemote.current) {
+          schedulePendingApply();
         }
       } catch {
         /* transient network hiccup — next tick retries */
@@ -133,29 +189,57 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
       setPresence([]);
       fetch(`/api/notes/presence?pageId=${pageId}`, { method: "DELETE", keepalive: true }).catch(() => {});
     };
-  }, [pageId, user.id, applyRemote]);
+  }, [pageId, schedulePendingApply, handleRemote]);
 
-  const queueSave = useCallback(() => {
-    dirty.current = true;
-    setStatus("saving");
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/notes/pages/${pageId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values.current),
-        });
-        if (res.ok) {
-          const d = await res.json().catch(() => null);
-          if (d?.page?.updatedAt) updatedAtRef.current = d.page.updatedAt; // our write is the new baseline
-          pendingRemote.current = null; // our save supersedes anything queued
+  const flushSave = useCallback(async () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    if (!saveQueued.current) return;
+
+    saveQueued.current = false;
+    saveInFlight.current = true;
+    const payload = { ...values.current };
+
+    try {
+      const res = await fetch(`/api/notes/pages/${pageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const d = await res.json().catch(() => null);
+        if (activePageRef.current === pageId && d?.page?.updatedAt) updatedAtRef.current = d.page.updatedAt;
+        pendingRemote.current = null; // our save is the latest last-write-wins baseline
+        if (!saveQueued.current) {
           dirty.current = false;
           setStatus("saved");
-        } else setStatus("idle");
-      } catch { setStatus("idle"); }
-    }, 700);
-  }, [pageId]);
+        }
+      } else if (!saveQueued.current) {
+        setStatus("idle");
+      }
+    } catch {
+      if (!saveQueued.current) setStatus("idle");
+    } finally {
+      saveInFlight.current = false;
+      if (saveQueued.current) {
+        timer.current = setTimeout(() => { void flushSaveRef.current?.(); }, SAVE_FLUSH_MS);
+      } else {
+        schedulePendingApply();
+      }
+    }
+  }, [pageId, schedulePendingApply]);
+
+  useEffect(() => {
+    flushSaveRef.current = flushSave;
+  }, [flushSave]);
+
+  const queueSave = useCallback(() => {
+    markLocalEdit();
+    dirty.current = true;
+    saveQueued.current = true;
+    setStatus("saving");
+    if (timer.current || saveInFlight.current) return;
+    timer.current = setTimeout(() => { void flushSaveRef.current?.(); }, SAVE_FLUSH_MS);
+  }, [markLocalEdit]);
 
   const onTitle = (v: string) => {
     setTitle(v);
@@ -176,8 +260,6 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
     values.current.content = html;
     queueSave();
   }, [queueSave]);
-
-  const onFocusChange = useCallback((focused: boolean) => { focusedRef.current = focused; }, []);
 
   if (notFound) {
     return <div className="flex h-full items-center justify-center text-sm text-zinc-400">This page could not be found.</div>;
@@ -235,7 +317,7 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
       </div>
 
       <div className="mt-6">
-        <RichEditor key={`${pageId}:${contentVersion}`} initialHTML={editorHTML} onChange={onContent} onFocusChange={onFocusChange} />
+        <RichEditor key={`${pageId}:${contentVersion}`} initialHTML={editorHTML} onChange={onContent} />
       </div>
     </div>
   );

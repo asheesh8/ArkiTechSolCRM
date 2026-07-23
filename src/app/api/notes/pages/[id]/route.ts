@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { publishNotePage } from "@/lib/notes-realtime";
 
 // Full page fetch — includes the heavy `content` field the list endpoint omits.
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +32,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const page = await prisma.notePage.update({
       where: { id },
       data,
-      select: { id: true, title: true, icon: true, parentId: true, cabinetId: true, sortOrder: true, updatedAt: true },
+      select: { id: true, title: true, icon: true, content: true, parentId: true, cabinetId: true, sortOrder: true, updatedAt: true },
+    });
+    publishNotePage(id, {
+      actorId: user.id,
+      page: {
+        title: page.title,
+        icon: page.icon,
+        content: page.content,
+        updatedAt: page.updatedAt.toISOString(),
+      },
     });
     return NextResponse.json({ page });
   } catch (error) {
