@@ -1,7 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeCustomizer } from "@/components/crm/theme-customizer";
 
-const env = ["DATABASE_URL", "GOOGLE_PLACES_API_KEY", "GOOGLE_PAGESPEED_API_KEY", "NEXTAUTH_SECRET", "NEXTAUTH_URL"];
+const env = [
+  "DATABASE_URL",
+  "GOOGLE_PLACES_API_KEY",
+  "GOOGLE_PAGESPEED_API_KEY",
+  "GOOGLE_CALENDAR_ID",
+  "GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL",
+  "GOOGLE_CALENDAR_PRIVATE_KEY",
+  "GOOGLE_CALENDAR_API_KEY",
+  "NEXTAUTH_SECRET",
+  "NEXTAUTH_URL",
+];
 
 export default function SettingsPage() {
   return (
