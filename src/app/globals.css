@@ -62,3 +62,180 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* ─── Notes editor: beautiful document typography ─────────────────────────── */
+
+.note-content {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #27272a;
+  outline: none;
+  word-break: break-word;
+}
+.dark .note-content {
+  color: #e4e7ec;
+}
+
+.note-content:focus {
+  outline: none;
+}
+
+/* Placeholder shown only when the document is empty */
+.note-content[data-empty="true"]::before {
+  content: attr(data-placeholder);
+  color: #a1a1aa;
+  pointer-events: none;
+}
+.dark .note-content[data-empty="true"]::before {
+  color: #52525b;
+}
+
+.note-content > *:first-child {
+  margin-top: 0;
+}
+
+.note-content h1 {
+  font-size: 1.875rem;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 1.6rem 0 0.6rem;
+}
+.note-content h2 {
+  font-size: 1.4rem;
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin: 1.4rem 0 0.5rem;
+}
+.note-content h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 1.1rem 0 0.4rem;
+}
+.note-content p {
+  margin: 0.5rem 0;
+}
+.note-content ul,
+.note-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+.note-content ul {
+  list-style: disc;
+}
+.note-content ol {
+  list-style: decimal;
+}
+.note-content li {
+  margin: 0.2rem 0;
+  padding-left: 0.2rem;
+}
+.note-content li::marker {
+  color: #a1a1aa;
+}
+.note-content blockquote {
+  margin: 0.8rem 0;
+  padding: 0.2rem 0 0.2rem 1rem;
+  border-left: 3px solid var(--accent);
+  color: #52525b;
+  font-style: italic;
+}
+.dark .note-content blockquote {
+  color: #a1a1aa;
+}
+.note-content pre {
+  margin: 0.8rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  background: #f4f4f5;
+  border: 1px solid #e4e7ec;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+.dark .note-content pre {
+  background: #18181b;
+  border-color: #27272a;
+}
+.note-content code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.85em;
+  background: #f4f4f5;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.35rem;
+}
+.dark .note-content code {
+  background: #27272a;
+}
+.note-content pre code {
+  background: transparent;
+  padding: 0;
+}
+.note-content a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.note-content hr {
+  margin: 1.4rem 0;
+  border: none;
+  border-top: 1px solid #e4e7ec;
+}
+.dark .note-content hr {
+  border-top-color: #27272a;
+}
+.note-content strong {
+  font-weight: 650;
+}
+
+/* Checklists — click the left gutter of a row to toggle it */
+.note-content ul.todo-list {
+  list-style: none;
+  padding-left: 0;
+}
+.note-content ul.todo-list > li {
+  position: relative;
+  padding-left: 1.9rem;
+  margin: 0.25rem 0;
+  cursor: text;
+}
+.note-content ul.todo-list > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.32em;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1.5px solid #d4d4d8;
+  border-radius: 0.35rem;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.dark .note-content ul.todo-list > li::before {
+  border-color: #3f3f46;
+  background: #18181b;
+}
+.note-content ul.todo-list > li[data-checked="true"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.note-content ul.todo-list > li[data-checked="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0.36rem;
+  top: 0.5em;
+  width: 0.3rem;
+  height: 0.55rem;
+  border: solid var(--accent-foreground);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.note-content ul.todo-list > li[data-checked="true"] {
+  color: #a1a1aa;
+  text-decoration: line-through;
+}

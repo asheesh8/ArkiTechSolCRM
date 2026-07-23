@@ -60,6 +60,8 @@ model User {
   callNotes    CallNote[]
   scrapeUsages ScrapeUsage[]
   staffSessions StaffSession[]
+  noteCabinets NoteCabinet[]
+  notePages    NotePage[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -409,4 +411,44 @@ model PageView {
   @@index([site])
   @@index([site, createdAt])
   @@index([createdAt])
+}
+
+// ─── Notes workspace ─────────────────────────────────────────────────────────
+// A team-shared, AppFlowy-style docs area. Cabinets are the top-level "filing
+// cabinets"; pages nest infinitely inside a cabinet via NotePage.parentId.
+
+model NoteCabinet {
+  id          String     @id @default(cuid())
+  name        String     @default("New cabinet")
+  icon        String     @default("📁")
+  color       String     @default("blue")
+  sortOrder   Int        @default(0)
+  createdById String?
+  createdBy   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  pages       NotePage[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([sortOrder])
+}
+
+model NotePage {
+  id          String      @id @default(cuid())
+  cabinetId   String
+  cabinet     NoteCabinet @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      NotePage?   @relation("PageTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    NotePage[]  @relation("PageTree")
+  title       String      @default("Untitled")
+  icon        String      @default("📄")
+  content     String      @default("")
+  sortOrder   Int         @default(0)
+  createdById String?
+  createdBy   User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([cabinetId])
+  @@index([parentId])
+  @@index([cabinetId, parentId, sortOrder])
 }
