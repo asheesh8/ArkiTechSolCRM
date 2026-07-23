@@ -64,11 +64,11 @@ function calendarColor(value: string) {
   return colors[hash % colors.length];
 }
 
-export function CalendarWorkspace() {
+export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { embedUrl?: string; nativeAgendaEnabled?: boolean }) {
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(nativeAgendaEnabled);
   const [error, setError] = useState<string | null>(null);
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)), [anchor]);
@@ -93,8 +93,9 @@ export function CalendarWorkspace() {
   }, [anchor]);
 
   useEffect(() => {
+    if (!nativeAgendaEnabled) return;
     void loadEvents();
-  }, [loadEvents]);
+  }, [loadEvents, nativeAgendaEnabled]);
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -108,6 +109,7 @@ export function CalendarWorkspace() {
 
   const selectedEvents = eventsByDay.get(selectedDay.toDateString()) ?? [];
   const today = new Date();
+  const showNativeAgenda = nativeAgendaEnabled && (!embedUrl || !error);
 
   return (
     <div className="space-y-6">
@@ -116,7 +118,7 @@ export function CalendarWorkspace() {
           <h2 className="text-2xl font-semibold tracking-tight">Calendar</h2>
           <p className="mt-1 text-sm text-zinc-500">Ashish and Terri&apos;s shared Google Calendar inside the CRM.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {showNativeAgenda && <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setAnchor(addDays(anchor, -7))}>
             <ChevronLeft className="h-4 w-4" /> Previous
           </Button>
@@ -129,10 +131,33 @@ export function CalendarWorkspace() {
           <Button variant="ghost" size="icon" title="Refresh calendar" onClick={() => void loadEvents()} disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
-        </div>
+        </div>}
       </section>
 
-      {error && (
+      {embedUrl && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Shared Google Calendar</CardTitle>
+            <a href={embedUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-2 rounded-md bg-[var(--accent)] px-3 text-xs font-medium text-[var(--accent-foreground)] hover:opacity-90">
+              Open in Google <ExternalLink className="h-4 w-4" />
+            </a>
+          </CardHeader>
+          <CardContent>
+            <iframe
+              title="Ashish and Terri shared Google Calendar"
+              src={embedUrl}
+              className="h-[720px] w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-800"
+            />
+            {!nativeAgendaEnabled && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                Google may block private calendar embeds inside the CRM. Use the button above, or connect Calendar API access to render the native agenda here.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {error && !embedUrl && (
         <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
           <CardContent className="pt-5">
             <p className="text-sm font-medium text-amber-900 dark:text-amber-100">Calendar needs connection</p>
@@ -141,7 +166,7 @@ export function CalendarWorkspace() {
         </Card>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+      {showNativeAgenda && <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
@@ -242,7 +267,7 @@ export function CalendarWorkspace() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </div>}
     </div>
   );
 }
