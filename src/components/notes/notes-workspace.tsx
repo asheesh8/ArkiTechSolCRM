@@ -23,6 +23,7 @@ const COLORS: Record<string, { chip: string; dot: string }> = {
 };
 const COLOR_KEYS = Object.keys(COLORS);
 const STORAGE_KEY = "locallead-note-page";
+const TREE_SYNC_INTERVAL_MS = 5000;
 
 function descendantIds(pages: FlatPage[], id: string): string[] {
   const out = [id];
@@ -34,7 +35,23 @@ function descendantIds(pages: FlatPage[], id: string): string[] {
   return out;
 }
 
-export function NotesWorkspace() {
+function findPageCabinet(cabinets: Cabinet[], pageId: string) {
+  return cabinets.find((cab) => cab.pages.some((p) => p.id === pageId)) ?? null;
+}
+
+function expandPath(cabinet: Cabinet, pageId: string) {
+  const exp = new Set<string>([cabinet.id]);
+  let cur = cabinet.pages.find((p) => p.id === pageId);
+  const seen = new Set<string>();
+  while (cur?.parentId && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    exp.add(cur.parentId);
+    cur = cabinet.pages.find((p) => p.id === cur?.parentId);
+  }
+  return exp;
+}
+
+export function NotesWorkspace({ user }: { user: { id: string; name: string } }) {
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -49,10 +66,29 @@ export function NotesWorkspace() {
 
   const toggle = (id: string) => setExpanded((prev) => {
     const next = new Set(prev);
-    next.has(id) ? next.delete(id) : next.add(id);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     return next;
   });
   const expand = (id: string) => setExpanded((prev) => new Set(prev).add(id));
+
+  const syncCabinets = useCallback(async () => {
+    const res = await fetch("/api/notes/cabinets");
+    if (!res.ok) return;
+    const d = await res.json();
+    const list: Cabinet[] = d.cabinets ?? [];
+    setCabinets(list);
+    setSelectedId((current) => {
+      if (current && findPageCabinet(list, current)) return current;
+      const next = list[0]?.pages[0]?.id ?? null;
+      if (next) {
+        try { window.localStorage.setItem(STORAGE_KEY, next); } catch {}
+        const cab = findPageCabinet(list, next);
+        if (cab) setExpanded((prev) => new Set([...prev, ...expandPath(cab, next)]));
+      }
+      return next;
+    });
+  }, []);
 
   const select = useCallback((id: string) => {
     setSelectedId(id);
@@ -85,6 +121,15 @@ export function NotesWorkspace() {
       .catch(() => setCabinets([]))
       .finally(() => setLoading(false));
   }, []);
+
+  // Keep the sidebar tree fresh when teammates add, rename, or delete pages.
+  useEffect(() => {
+    if (loading) return;
+    const id = setInterval(() => {
+      if (!rename) syncCabinets().catch(() => {});
+    }, TREE_SYNC_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [loading, rename, syncCabinets]);
 
   const createCabinet = async () => {
     setBusy(true);
@@ -168,8 +213,6 @@ export function NotesWorkspace() {
     for (const cab of cabinets) for (const p of cab.pages) if (p.title.toLowerCase().includes(q)) hits.push({ cabinet: cab, page: p });
     return hits;
   }, [query, cabinets]);
-
-  const totalPages = cabinets.reduce((n, c) => n + c.pages.length, 0);
 
   function RenameInput({ initial }: { initial: string }) {
     return (
@@ -342,7 +385,7 @@ export function NotesWorkspace() {
           <button type="button" onClick={() => setTreeOpen(true)} className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 lg:hidden"><PanelLeftOpen className="h-4 w-4" /></button>
         )}
         {selectedId ? (
-          <NoteEditor pageId={selectedId} onMeta={onEditorMeta} />
+          <NoteEditor pageId={selectedId} user={user} onMeta={onEditorMeta} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center px-6 text-center">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)]/12 text-[var(--accent)]"><FolderPlus className="h-6 w-6" /></div>

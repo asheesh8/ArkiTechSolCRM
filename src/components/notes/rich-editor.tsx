@@ -7,11 +7,44 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type SlashItem = { key: string; label: string; hint: string; icon: LucideIcon; run: () => void };
+type SlashItem = { key: string; label: string; hint: string; icon: LucideIcon };
+type ToolItem = { key: string; label: string; icon: LucideIcon };
 
 const TODO_HTML = '<ul class="todo-list"><li data-checked="false"><br></li></ul>';
+const SLASH_ITEMS: SlashItem[] = [
+  { key: "text", label: "Text", hint: "Plain paragraph", icon: Pilcrow },
+  { key: "h1", label: "Heading 1", hint: "Big section title", icon: Heading1 },
+  { key: "h2", label: "Heading 2", hint: "Medium heading", icon: Heading2 },
+  { key: "h3", label: "Heading 3", hint: "Small heading", icon: Heading3 },
+  { key: "todo", label: "To-do list", hint: "Track tasks with checkboxes", icon: ListChecks },
+  { key: "bullet", label: "Bulleted list", hint: "Simple bullet list", icon: List },
+  { key: "number", label: "Numbered list", hint: "Ordered list", icon: ListOrdered },
+  { key: "quote", label: "Quote", hint: "Capture a callout", icon: Quote },
+  { key: "code", label: "Code", hint: "Monospaced block", icon: Code },
+  { key: "divider", label: "Divider", hint: "Visual separator", icon: Minus },
+];
 
-export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onChange: (html: string) => void }) {
+const TOOLS: Array<ToolItem | "sep"> = [
+  { key: "h1", label: "Heading 1", icon: Heading1 },
+  { key: "h2", label: "Heading 2", icon: Heading2 },
+  { key: "h3", label: "Heading 3", icon: Heading3 },
+  "sep",
+  { key: "bold", label: "Bold", icon: Bold },
+  { key: "italic", label: "Italic", icon: Italic },
+  { key: "underline", label: "Underline", icon: Underline },
+  { key: "strike", label: "Strikethrough", icon: Strikethrough },
+  "sep",
+  { key: "bullet", label: "Bulleted list", icon: List },
+  { key: "number", label: "Numbered list", icon: ListOrdered },
+  { key: "todo", label: "To-do list", icon: ListChecks },
+  "sep",
+  { key: "quote", label: "Quote", icon: Quote },
+  { key: "code", label: "Code block", icon: Code },
+  { key: "divider", label: "Divider", icon: Minus },
+  { key: "link", label: "Link", icon: Link2 },
+];
+
+export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHTML: string; onChange: (html: string) => void; onFocusChange?: (focused: boolean) => void }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const slashAnchor = useRef<{ node: Node; offset: number } | null>(null);
@@ -21,6 +54,13 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
   const [slashPos, setSlashPos] = useState({ top: 0, left: 0 });
   const [activeIdx, setActiveIdx] = useState(0);
 
+  const refreshEmpty = useCallback(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    const empty = !el.textContent?.trim() && !el.querySelector("img, hr, li");
+    el.dataset.empty = empty ? "true" : "false";
+  }, []);
+
   // Seed the editable surface once; React never re-renders this DOM afterward.
   useEffect(() => {
     if (editorRef.current) {
@@ -28,13 +68,6 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
       refreshEmpty();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const refreshEmpty = useCallback(() => {
-    const el = editorRef.current;
-    if (!el) return;
-    const empty = !el.textContent?.trim() && !el.querySelector("img, hr, li");
-    el.dataset.empty = empty ? "true" : "false";
   }, []);
 
   const emit = useCallback(() => {
@@ -63,19 +96,6 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
     const url = window.prompt("Link URL");
     if (url) exec("createLink", url.trim());
   }, [exec]);
-
-  const SLASH_ITEMS: SlashItem[] = [
-    { key: "text", label: "Text", hint: "Plain paragraph", icon: Pilcrow, run: () => format("P") },
-    { key: "h1", label: "Heading 1", hint: "Big section title", icon: Heading1, run: () => format("H1") },
-    { key: "h2", label: "Heading 2", hint: "Medium heading", icon: Heading2, run: () => format("H2") },
-    { key: "h3", label: "Heading 3", hint: "Small heading", icon: Heading3, run: () => format("H3") },
-    { key: "todo", label: "To-do list", hint: "Track tasks with checkboxes", icon: ListChecks, run: insertTodo },
-    { key: "bullet", label: "Bulleted list", hint: "Simple bullet list", icon: List, run: () => exec("insertUnorderedList") },
-    { key: "number", label: "Numbered list", hint: "Ordered list", icon: ListOrdered, run: () => exec("insertOrderedList") },
-    { key: "quote", label: "Quote", hint: "Capture a callout", icon: Quote, run: () => format("BLOCKQUOTE") },
-    { key: "code", label: "Code", hint: "Monospaced block", icon: Code, run: () => format("PRE") },
-    { key: "divider", label: "Divider", hint: "Visual separator", icon: Minus, run: () => exec("insertHorizontalRule") },
-  ];
 
   const filtered = slashQuery
     ? SLASH_ITEMS.filter((i) => i.label.toLowerCase().includes(slashQuery.toLowerCase()))
@@ -128,6 +148,24 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
     positionSlash();
   }, [slashOpen, closeSlash, positionSlash]);
 
+  const runCommand = useCallback((key: string) => {
+    if (key === "text") format("P");
+    else if (key === "h1") format("H1");
+    else if (key === "h2") format("H2");
+    else if (key === "h3") format("H3");
+    else if (key === "todo") insertTodo();
+    else if (key === "bullet") exec("insertUnorderedList");
+    else if (key === "number") exec("insertOrderedList");
+    else if (key === "quote") format("BLOCKQUOTE");
+    else if (key === "code") format("PRE");
+    else if (key === "divider") exec("insertHorizontalRule");
+    else if (key === "bold") exec("bold");
+    else if (key === "italic") exec("italic");
+    else if (key === "underline") exec("underline");
+    else if (key === "strike") exec("strikeThrough");
+    else if (key === "link") insertLink();
+  }, [exec, format, insertLink, insertTodo]);
+
   const runSlashItem = useCallback((item: SlashItem) => {
     const anchor = slashAnchor.current;
     const sel = window.getSelection();
@@ -144,8 +182,8 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
       sel.addRange(collapsed);
     }
     closeSlash();
-    item.run();
-  }, [closeSlash]);
+    runCommand(item.key);
+  }, [closeSlash, runCommand]);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (slashOpen && filtered.length > 0) {
@@ -186,30 +224,10 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
     }
   }, [emit]);
 
-  const tools: Array<{ icon: LucideIcon; label: string; run: () => void } | "sep"> = [
-    { icon: Heading1, label: "Heading 1", run: () => format("H1") },
-    { icon: Heading2, label: "Heading 2", run: () => format("H2") },
-    { icon: Heading3, label: "Heading 3", run: () => format("H3") },
-    "sep",
-    { icon: Bold, label: "Bold", run: () => exec("bold") },
-    { icon: Italic, label: "Italic", run: () => exec("italic") },
-    { icon: Underline, label: "Underline", run: () => exec("underline") },
-    { icon: Strikethrough, label: "Strikethrough", run: () => exec("strikeThrough") },
-    "sep",
-    { icon: List, label: "Bulleted list", run: () => exec("insertUnorderedList") },
-    { icon: ListOrdered, label: "Numbered list", run: () => exec("insertOrderedList") },
-    { icon: ListChecks, label: "To-do list", run: insertTodo },
-    "sep",
-    { icon: Quote, label: "Quote", run: () => format("BLOCKQUOTE") },
-    { icon: Code, label: "Code block", run: () => format("PRE") },
-    { icon: Minus, label: "Divider", run: () => exec("insertHorizontalRule") },
-    { icon: Link2, label: "Link", run: insertLink },
-  ];
-
   return (
     <div ref={wrapRef} className="relative">
       <div className="sticky top-0 z-10 -mx-1 mb-3 flex flex-wrap items-center gap-0.5 rounded-xl border border-zinc-200 bg-white/90 px-1.5 py-1 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
-        {tools.map((t, i) =>
+        {TOOLS.map((t, i) =>
           t === "sep" ? (
             <span key={i} className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
           ) : (
@@ -219,7 +237,7 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
               title={t.label}
               aria-label={t.label}
               onMouseDown={(e) => e.preventDefault()}
-              onClick={t.run}
+              onClick={() => runCommand(t.key)}
               className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
               <t.icon className="h-4 w-4" />
@@ -239,7 +257,8 @@ export function RichEditor({ initialHTML, onChange }: { initialHTML: string; onC
         onKeyDown={onKeyDown}
         onPaste={onPaste}
         onClick={onClick}
-        onBlur={() => setTimeout(() => setSlashOpen(false), 120)}
+        onFocus={() => onFocusChange?.(true)}
+        onBlur={() => { onFocusChange?.(false); setTimeout(() => setSlashOpen(false), 120); }}
         className="note-content min-h-[60vh] pb-24"
       />
 
