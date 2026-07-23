@@ -179,6 +179,52 @@ a {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+.note-content a.note-file-attachment {
+  display: inline-flex;
+  align-items: center;
+  max-width: min(100%, 28rem);
+  gap: 0.65rem;
+  margin: 0.35rem 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #d4d4d8;
+  border-radius: 0.5rem;
+  background: #fafafa;
+  color: #27272a;
+  text-decoration: none;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.dark .note-content a.note-file-attachment {
+  border-color: #3f3f46;
+  background: #18181b;
+  color: #e4e7ec;
+}
+.note-content a.note-file-attachment::before {
+  content: "";
+  width: 1.9rem;
+  height: 1.9rem;
+  flex: 0 0 auto;
+  border-radius: 0.4rem;
+  background:
+    linear-gradient(135deg, transparent 0 68%, rgba(255,255,255,0.75) 69% 100%),
+    var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+.note-content .note-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.note-content .note-file-action {
+  flex: 0 0 auto;
+  color: #71717a;
+  font-size: 0.75rem;
+}
+.dark .note-content .note-file-action {
+  color: #a1a1aa;
+}
 .note-content hr {
   margin: 1.4rem 0;
   border: none;

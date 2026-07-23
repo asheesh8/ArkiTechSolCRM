@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Bold, Code, Heading1, Heading2, Heading3, Italic, Link2, List, ListChecks,
+  Bold, Code, Heading1, Heading2, Heading3, Italic, Link2, List, ListChecks, Loader2,
   ListOrdered, Minus, Pilcrow, Quote, Strikethrough, Underline, type LucideIcon,
+  Paperclip,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const SLASH_ITEMS: SlashItem[] = [
   { key: "h2", label: "Heading 2", hint: "Medium heading", icon: Heading2 },
   { key: "h3", label: "Heading 3", hint: "Small heading", icon: Heading3 },
   { key: "todo", label: "To-do list", hint: "Track tasks with checkboxes", icon: ListChecks },
+  { key: "file", label: "File", hint: "Attach a clickable file", icon: Paperclip },
   { key: "bullet", label: "Bulleted list", hint: "Simple bullet list", icon: List },
   { key: "number", label: "Numbered list", hint: "Ordered list", icon: ListOrdered },
   { key: "quote", label: "Quote", hint: "Capture a callout", icon: Quote },
@@ -37,6 +39,7 @@ const TOOLS: Array<ToolItem | "sep"> = [
   { key: "bullet", label: "Bulleted list", icon: List },
   { key: "number", label: "Numbered list", icon: ListOrdered },
   { key: "todo", label: "To-do list", icon: ListChecks },
+  { key: "file", label: "Attach file", icon: Paperclip },
   "sep",
   { key: "quote", label: "Quote", icon: Quote },
   { key: "code", label: "Code block", icon: Code },
@@ -44,15 +47,23 @@ const TOOLS: Array<ToolItem | "sep"> = [
   { key: "link", label: "Link", icon: Link2 },
 ];
 
+const escapeHTML = (value: string) => value
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;");
+
 export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHTML: string; onChange: (html: string) => void; onFocusChange?: (focused: boolean) => void }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const slashAnchor = useRef<{ node: Node; offset: number } | null>(null);
 
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [slashPos, setSlashPos] = useState({ top: 0, left: 0 });
   const [activeIdx, setActiveIdx] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   const refreshEmpty = useCallback(() => {
     const el = editorRef.current;
@@ -97,15 +108,48 @@ export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHT
     if (url) exec("createLink", url.trim());
   }, [exec]);
 
-  const filtered = slashQuery
-    ? SLASH_ITEMS.filter((i) => i.label.toLowerCase().includes(slashQuery.toLowerCase()))
-    : SLASH_ITEMS;
-
   const closeSlash = useCallback(() => {
     setSlashOpen(false);
     setSlashQuery("");
     slashAnchor.current = null;
   }, []);
+
+  const insertFileAttachment = useCallback((file: { name: string; url: string }) => {
+    focusEditor();
+    const name = escapeHTML(file.name || "Attachment");
+    const url = escapeHTML(file.url);
+    document.execCommand("insertHTML", false, `<p><a class="note-file-attachment" href="${url}" target="_blank" rel="noopener noreferrer" data-note-file="true" contenteditable="false"><span class="note-file-name">${name}</span><span class="note-file-action">Open file</span></a></p><p><br></p>`);
+    refreshEmpty();
+    emit();
+  }, [emit, refreshEmpty]);
+
+  const uploadFile = useCallback(async (file: File) => {
+    setUploading(true);
+    try {
+      const res = await fetch(`/api/notes/files/upload?filename=${encodeURIComponent(file.name)}`, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.url) throw new Error(data?.error ?? "Could not upload file");
+      insertFileAttachment({ name: data.name ?? file.name, url: data.url });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Could not upload file");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, [insertFileAttachment]);
+
+  const pickFile = useCallback(() => {
+    closeSlash();
+    fileInputRef.current?.click();
+  }, [closeSlash]);
+
+  const filtered = slashQuery
+    ? SLASH_ITEMS.filter((i) => i.label.toLowerCase().includes(slashQuery.toLowerCase()))
+    : SLASH_ITEMS;
 
   const positionSlash = useCallback(() => {
     const sel = window.getSelection();
@@ -154,6 +198,7 @@ export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHT
     else if (key === "h2") format("H2");
     else if (key === "h3") format("H3");
     else if (key === "todo") insertTodo();
+    else if (key === "file") pickFile();
     else if (key === "bullet") exec("insertUnorderedList");
     else if (key === "number") exec("insertOrderedList");
     else if (key === "quote") format("BLOCKQUOTE");
@@ -164,7 +209,7 @@ export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHT
     else if (key === "underline") exec("underline");
     else if (key === "strike") exec("strikeThrough");
     else if (key === "link") insertLink();
-  }, [exec, format, insertLink, insertTodo]);
+  }, [exec, format, insertLink, insertTodo, pickFile]);
 
   const runSlashItem = useCallback((item: SlashItem) => {
     const anchor = slashAnchor.current;
@@ -213,6 +258,13 @@ export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHT
 
   // Toggle a checklist item when its left-hand checkbox gutter is clicked.
   const onClick = useCallback((e: React.MouseEvent) => {
+    const fileLink = (e.target as HTMLElement).closest<HTMLAnchorElement>("a[data-note-file='true']");
+    if (fileLink?.href) {
+      e.preventDefault();
+      window.open(fileLink.href, "_blank", "noopener,noreferrer");
+      return;
+    }
+
     const li = (e.target as HTMLElement).closest("li");
     if (li && li.parentElement?.classList.contains("todo-list")) {
       const rect = li.getBoundingClientRect();
@@ -227,6 +279,15 @@ export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHT
   return (
     <div ref={wrapRef} className="relative">
       <div className="sticky top-0 z-10 -mx-1 mb-3 flex flex-wrap items-center gap-0.5 rounded-xl border border-zinc-200 bg-white/90 px-1.5 py-1 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void uploadFile(file);
+          }}
+        />
         {TOOLS.map((t, i) =>
           t === "sep" ? (
             <span key={i} className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
@@ -236,11 +297,12 @@ export function RichEditor({ initialHTML, onChange, onFocusChange }: { initialHT
               type="button"
               title={t.label}
               aria-label={t.label}
+              disabled={uploading}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => runCommand(t.key)}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
-              <t.icon className="h-4 w-4" />
+              {uploading && t.key === "file" ? <Loader2 className="h-4 w-4 animate-spin" /> : <t.icon className="h-4 w-4" />}
             </button>
           ),
         )}

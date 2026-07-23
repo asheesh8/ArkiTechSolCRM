@@ -38,6 +38,7 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const activePageRef = useRef(pageId);
   const updatedAtRef = useRef<string>("");    // server version of the content we currently hold
+  const localEditingRef = useRef(false);
   const localEditQuietUntil = useRef(0);
   const pendingRemote = useRef<RemoteSnapshot | null>(null); // teammate change waiting until we're idle
   const flushSaveRef = useRef<(() => Promise<void>) | null>(null);
@@ -65,7 +66,7 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
   }, [pageId, onMeta, growTitle]);
 
   const canApplyRemote = useCallback(() => (
-    !dirty.current && !saveInFlight.current && Date.now() >= localEditQuietUntil.current
+    !localEditingRef.current && !dirty.current && !saveInFlight.current && Date.now() >= localEditQuietUntil.current
   ), []);
 
   const schedulePendingApply = useCallback(() => {
@@ -98,6 +99,7 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
     setLoaded(false);
     setNotFound(false);
     setPickerOpen(false);
+    localEditingRef.current = false;
     localEditQuietUntil.current = 0;
     pendingRemote.current = null;
     if (pendingApplyTimer.current) { clearTimeout(pendingApplyTimer.current); pendingApplyTimer.current = null; }
@@ -261,6 +263,11 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
     queueSave();
   }, [queueSave]);
 
+  const onFocusChange = useCallback((focused: boolean) => {
+    localEditingRef.current = focused;
+    if (!focused) schedulePendingApply();
+  }, [schedulePendingApply]);
+
   if (notFound) {
     return <div className="flex h-full items-center justify-center text-sm text-zinc-400">This page could not be found.</div>;
   }
@@ -310,6 +317,8 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
           value={title}
           rows={1}
           onChange={(e) => onTitle(e.target.value)}
+          onFocus={() => { localEditingRef.current = true; }}
+          onBlur={() => { localEditingRef.current = false; schedulePendingApply(); }}
           onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
           placeholder="Untitled"
           className="mt-1 w-full resize-none border-none bg-transparent text-3xl font-bold leading-tight tracking-tight text-zinc-900 outline-none placeholder:text-zinc-300 dark:text-zinc-50 dark:placeholder:text-zinc-700"
@@ -317,7 +326,7 @@ export function NoteEditor({ pageId, user, onMeta }: { pageId: string; user: Wor
       </div>
 
       <div className="mt-6">
-        <RichEditor key={`${pageId}:${contentVersion}`} initialHTML={editorHTML} onChange={onContent} />
+        <RichEditor key={`${pageId}:${contentVersion}`} initialHTML={editorHTML} onChange={onContent} onFocusChange={onFocusChange} />
       </div>
     </div>
   );
