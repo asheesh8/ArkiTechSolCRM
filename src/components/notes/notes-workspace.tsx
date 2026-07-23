@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import {
   ChevronDown, ChevronRight, FolderPlus, Loader2, MoreHorizontal, PanelLeftClose,
   PanelLeftOpen, Plus, Search, Trash2, X,
@@ -11,6 +11,11 @@ import { cn } from "@/lib/utils";
 
 type FlatPage = { id: string; title: string; icon: string; parentId: string | null; sortOrder: number; updatedAt?: string };
 type Cabinet = { id: string; name: string; icon: string; color: string; sortOrder: number; pages: FlatPage[] };
+type DropPosition = "before" | "inside" | "after";
+type DropTarget =
+  | { kind: "page"; pageId: string; cabinetId: string; position: DropPosition }
+  | { kind: "cabinet"; cabinetId: string };
+type MoveDestination = { cabinetId: string; parentId: string | null; index: number };
 
 const COLORS: Record<string, { chip: string; dot: string }> = {
   blue: { chip: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300", dot: "bg-blue-500" },
@@ -39,6 +44,14 @@ function findPageCabinet(cabinets: Cabinet[], pageId: string) {
   return cabinets.find((cab) => cab.pages.some((p) => p.id === pageId)) ?? null;
 }
 
+function sortedChildren(pages: FlatPage[], parentId: string | null) {
+  return pages
+    .map((page, index) => ({ page, index }))
+    .filter(({ page }) => page.parentId === parentId)
+    .sort((a, b) => a.page.sortOrder - b.page.sortOrder || a.index - b.index)
+    .map(({ page }) => page);
+}
+
 function expandPath(cabinet: Cabinet, pageId: string) {
   const exp = new Set<string>([cabinet.id]);
   let cur = cabinet.pages.find((p) => p.id === pageId);
@@ -49,6 +62,48 @@ function expandPath(cabinet: Cabinet, pageId: string) {
     cur = cabinet.pages.find((p) => p.id === cur?.parentId);
   }
   return exp;
+}
+
+function sameDropTarget(a: DropTarget | null, b: DropTarget | null) {
+  if (!a || !b) return a === b;
+  if (a.kind !== b.kind || a.cabinetId !== b.cabinetId) return false;
+  if (a.kind === "cabinet" || b.kind === "cabinet") return true;
+  return a.pageId === b.pageId && a.position === b.position;
+}
+
+function movePageInTree(cabinets: Cabinet[], pageId: string, destination: MoveDestination) {
+  const sourceCabinet = findPageCabinet(cabinets, pageId);
+  const targetCabinet = cabinets.find((cab) => cab.id === destination.cabinetId);
+  if (!sourceCabinet || !targetCabinet) return cabinets;
+
+  const movingIds = new Set(descendantIds(sourceCabinet.pages, pageId));
+  if (destination.parentId && movingIds.has(destination.parentId)) return cabinets;
+
+  const movingPages = sourceCabinet.pages
+    .filter((page) => movingIds.has(page.id))
+    .map((page) => page.id === pageId ? { ...page, parentId: destination.parentId } : page);
+
+  const normalizeGroup = (pages: FlatPage[], parentId: string | null) => {
+    const order = new Map(sortedChildren(pages, parentId).map((page, i) => [page.id, i]));
+    return pages.map((page) => order.has(page.id) ? { ...page, sortOrder: order.get(page.id)! } : page);
+  };
+
+  return cabinets.map((cab) => {
+    let pages = cab.pages.filter((page) => !movingIds.has(page.id));
+    if (cab.id === sourceCabinet.id && (sourceCabinet.id !== destination.cabinetId || sourceCabinet.pages.find((p) => p.id === pageId)?.parentId !== destination.parentId)) {
+      pages = normalizeGroup(pages, sourceCabinet.pages.find((p) => p.id === pageId)?.parentId ?? null);
+    }
+
+    if (cab.id !== destination.cabinetId) return { ...cab, pages };
+
+    pages = [...pages, ...movingPages];
+    const siblings = sortedChildren(pages, destination.parentId).filter((page) => page.id !== pageId);
+    const index = Math.max(0, Math.min(destination.index, siblings.length));
+    const ordered = [...siblings.slice(0, index), movingPages.find((page) => page.id === pageId)!, ...siblings.slice(index)];
+    const order = new Map(ordered.map((page, i) => [page.id, i]));
+    pages = pages.map((page) => order.has(page.id) ? { ...page, sortOrder: order.get(page.id)! } : page);
+    return { ...cab, pages };
+  });
 }
 
 export function NotesWorkspace({ user }: { user: { id: string; name: string } }) {
@@ -62,7 +117,10 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   const [iconFor, setIconFor] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [treeOpen, setTreeOpen] = useState(true);
+  const [draggingPageId, setDraggingPageId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const renameValue = useRef("");
+  const dropTargetRef = useRef<DropTarget | null>(null);
 
   const toggle = (id: string) => setExpanded((prev) => {
     const next = new Set(prev);
@@ -166,6 +224,124 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
     await fetch(`/api/notes/pages/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }).catch(() => {});
   };
 
+  const setDropTargetIfChanged = useCallback((target: DropTarget | null) => {
+    dropTargetRef.current = target;
+    setDropTarget((prev) => sameDropTarget(prev, target) ? prev : target);
+  }, []);
+
+  const destinationForDrop = useCallback((target: DropTarget): MoveDestination | null => {
+    if (!draggingPageId) return null;
+    const sourceCab = findPageCabinet(cabinets, draggingPageId);
+    if (!sourceCab) return null;
+    const movingIds = new Set(descendantIds(sourceCab.pages, draggingPageId));
+
+    if (target.kind === "cabinet") {
+      const cab = cabinets.find((c) => c.id === target.cabinetId);
+      if (!cab) return null;
+      return { cabinetId: cab.id, parentId: null, index: sortedChildren(cab.pages, null).filter((p) => p.id !== draggingPageId).length };
+    }
+
+    const cab = cabinets.find((c) => c.id === target.cabinetId);
+    const targetPage = cab?.pages.find((p) => p.id === target.pageId);
+    if (!cab || !targetPage || movingIds.has(targetPage.id)) return null;
+
+    const parentId = target.position === "inside" ? targetPage.id : targetPage.parentId;
+    if (parentId && movingIds.has(parentId)) return null;
+
+    const siblings = sortedChildren(cab.pages, parentId).filter((p) => p.id !== draggingPageId);
+    if (target.position === "inside") return { cabinetId: cab.id, parentId, index: siblings.length };
+
+    const targetIndex = siblings.findIndex((p) => p.id === targetPage.id);
+    if (targetIndex === -1) return null;
+    return { cabinetId: cab.id, parentId, index: targetIndex + (target.position === "after" ? 1 : 0) };
+  }, [cabinets, draggingPageId]);
+
+  const positionFromDrag = (event: DragEvent<HTMLDivElement>): DropPosition => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const y = event.clientY - rect.top;
+    if (y < rect.height * 0.28) return "before";
+    if (y > rect.height * 0.72) return "after";
+    return "inside";
+  };
+
+  const commitPageMove = useCallback(async (target: DropTarget | null) => {
+    if (!draggingPageId || !target) return;
+    const destination = destinationForDrop(target);
+    if (!destination) return;
+
+    const movedPageId = draggingPageId;
+    const previous = cabinets;
+    setCabinets((prev) => movePageInTree(prev, movedPageId, destination));
+    setExpanded((prev) => {
+      const next = new Set(prev).add(destination.cabinetId);
+      if (destination.parentId) next.add(destination.parentId);
+      return next;
+    });
+
+    try {
+      const res = await fetch(`/api/notes/pages/${movedPageId}/move`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(destination),
+      });
+      if (!res.ok) throw new Error("Move failed");
+      await syncCabinets();
+    } catch {
+      setCabinets(previous);
+    } finally {
+      setDraggingPageId(null);
+      dropTargetRef.current = null;
+      setDropTarget(null);
+    }
+  }, [cabinets, destinationForDrop, draggingPageId, syncCabinets]);
+
+  const onPageDragStart = (event: DragEvent<HTMLDivElement>, pageId: string) => {
+    if (rename?.id === pageId) {
+      event.preventDefault();
+      return;
+    }
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", pageId);
+    setDraggingPageId(pageId);
+    dropTargetRef.current = null;
+    setDropTarget(null);
+  };
+
+  const onPageDragOver = (event: DragEvent<HTMLDivElement>, cabinetId: string, pageId: string) => {
+    if (!draggingPageId) return;
+    const position = positionFromDrag(event);
+    const target: DropTarget = { kind: "page", cabinetId, pageId, position };
+    if (!destinationForDrop(target)) {
+      setDropTargetIfChanged(null);
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDropTargetIfChanged(target);
+    if (position === "inside") expand(pageId);
+  };
+
+  const onCabinetDragOver = (event: DragEvent<HTMLDivElement>, cabinetId: string) => {
+    if (!draggingPageId) return;
+    const target: DropTarget = { kind: "cabinet", cabinetId };
+    if (!destinationForDrop(target)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDropTargetIfChanged(target);
+    expand(cabinetId);
+  };
+
+  const onDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    void commitPageMove(dropTargetRef.current);
+  };
+
+  const onDragEnd = () => {
+    setDraggingPageId(null);
+    dropTargetRef.current = null;
+    setDropTarget(null);
+  };
+
   const deleteCabinet = async (id: string) => {
     const cab = cabinets.find((c) => c.id === id);
     if (!cab) return;
@@ -229,18 +405,29 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   }
 
   function renderPage(cab: Cabinet, page: FlatPage, depth: number): React.ReactNode {
-    const kids = cab.pages.filter((p) => p.parentId === page.id).sort((a, b) => a.sortOrder - b.sortOrder);
+    const kids = sortedChildren(cab.pages, page.id);
     const isOpen = expanded.has(page.id);
     const isSelected = selectedId === page.id;
+    const dropPosition = dropTarget?.kind === "page" && dropTarget.pageId === page.id ? dropTarget.position : null;
+    const isDragging = draggingPageId === page.id;
     return (
       <div key={page.id}>
         <div
+          draggable={rename?.id !== page.id}
+          onDragStart={(event) => onPageDragStart(event, page.id)}
+          onDragOver={(event) => onPageDragOver(event, cab.id, page.id)}
+          onDrop={onDrop}
+          onDragEnd={onDragEnd}
           className={cn(
-            "group/row flex h-8 items-center gap-1 rounded-lg pr-1.5 text-sm transition",
+            "group/row relative flex h-8 cursor-grab items-center gap-1 rounded-lg pr-1.5 text-sm transition active:cursor-grabbing",
             isSelected ? "bg-[var(--accent)]/12 font-medium text-[var(--accent)]" : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800/70",
+            dropPosition === "inside" && "bg-[var(--accent)]/14 ring-1 ring-[var(--accent)]/40",
+            isDragging && "opacity-45",
           )}
           style={{ paddingLeft: `${depth * 14 + 4}px` }}
         >
+          {dropPosition === "before" && <span className="pointer-events-none absolute left-2 right-2 top-0 h-0.5 rounded-full bg-[var(--accent)]" />}
+          {dropPosition === "after" && <span className="pointer-events-none absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--accent)]" />}
           <button
             type="button"
             onClick={() => (kids.length ? toggle(page.id) : select(page.id))}
@@ -274,12 +461,20 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   }
 
   function renderCabinet(cab: Cabinet): React.ReactNode {
-    const roots = cab.pages.filter((p) => !p.parentId).sort((a, b) => a.sortOrder - b.sortOrder);
+    const roots = sortedChildren(cab.pages, null);
     const isOpen = expanded.has(cab.id);
     const color = COLORS[cab.color] ?? COLORS.blue;
+    const cabinetDropActive = dropTarget?.kind === "cabinet" && dropTarget.cabinetId === cab.id;
     return (
       <div key={cab.id} className="mb-1">
-        <div className="group/cab relative flex h-9 items-center gap-1.5 rounded-lg px-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800/70">
+        <div
+          onDragOver={(event) => onCabinetDragOver(event, cab.id)}
+          onDrop={onDrop}
+          className={cn(
+            "group/cab relative flex h-9 items-center gap-1.5 rounded-lg px-1.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-800/70",
+            cabinetDropActive && "bg-[var(--accent)]/12 ring-1 ring-[var(--accent)]/40",
+          )}
+        >
           <button type="button" onClick={() => toggle(cab.id)} className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700">
             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
