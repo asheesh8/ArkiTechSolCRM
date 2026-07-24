@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Building2, ChevronDown, ChevronRight, Filter, Loader2, MapPin, Phone, Plus, Search, Star, UserCheck, UserPlus, Users, X } from "lucide-react";
+import { AlertTriangle, Building2, ChevronDown, ChevronRight, ClipboardList, Filter, Loader2, MapPin, Phone, Plus, Search, Star, UserCheck, UserPlus, Users, X } from "lucide-react";
 import { LeadTable } from "@/components/crm/lead-table";
 import { ManualClientForm } from "@/components/crm/manual-client-form";
 import { CsvImportCard } from "@/components/crm/csv-import-card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/field";
 import { cn, formatStatus } from "@/lib/utils";
 import { leadStatuses } from "@/lib/schemas";
@@ -135,7 +136,8 @@ export default function ClientsPage() {
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -187,6 +189,13 @@ export default function ClientsPage() {
   const featuredClients = filteredClients.filter((l) => ["FAVORITE", "PRIORITY"].includes(l.priority));
   const regularClients = filteredClients.filter((l) => !["FAVORITE", "PRIORITY"].includes(l.priority));
   const hasFilters = !!(search || status || city || assigneeFilter);
+  const [staleCutoff] = useState(() => Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const staleLeads = useMemo(() => {
+    return scopedPipeline
+      .filter((lead) => ["SAVED", "CALLED", "FOLLOW_UP"].includes(lead.status))
+      .filter((lead) => new Date(lead.updatedAt ?? lead.createdAt).getTime() < staleCutoff)
+      .slice(0, 5);
+  }, [scopedPipeline, staleCutoff]);
 
   const assigneeName = assigneeFilter === "unassigned" ? "Unassigned" : users.find((u) => u.id === assigneeFilter)?.name;
 
@@ -343,6 +352,48 @@ export default function ClientsPage() {
 
         /* ══════════ LEADS TAB ══════════ */
         <div className="space-y-5">
+          <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
+            <Card className={cn(staleLeads.length ? "border-amber-200 dark:border-amber-900" : "")}>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <CardTitle>Stale lead alerts</CardTitle>
+                  <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">{staleLeads.length}</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {staleLeads.length ? staleLeads.map((lead) => (
+                  <Link key={lead.id} href={`/clients/${lead.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{lead.businessName}</p>
+                      <p className="text-xs text-zinc-500">{formatStatus(lead.status)} · last touched {new Date(lead.updatedAt ?? lead.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-zinc-400" />
+                  </Link>
+                )) : <p className="rounded-lg border border-dashed border-zinc-300 py-8 text-center text-sm text-zinc-400 dark:border-zinc-700">No stale leads in this view.</p>}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-zinc-500" />
+                  <CardTitle>Sales scripts</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-zinc-500">
+                <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                  <p className="font-medium text-zinc-900 dark:text-zinc-100">First touch</p>
+                  <p className="mt-1 leading-5">I noticed one website opportunity for your business and had a quick idea that could help more people contact you.</p>
+                </div>
+                <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                  <p className="font-medium text-zinc-900 dark:text-zinc-100">Follow-up</p>
+                  <p className="mt-1 leading-5">Based on what you shared, the clearest next step is a focused plan for timeline, scope, and what changes first.</p>
+                </div>
+                <Link href="/resources" className="inline-flex text-sm font-medium text-[var(--accent)] hover:underline">Open all templates</Link>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Bulk assign bar (managers) */}
           {isManager && selected.size > 0 && (

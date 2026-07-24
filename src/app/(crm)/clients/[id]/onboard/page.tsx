@@ -56,7 +56,7 @@ const PLAN_PRESETS = [
 type LineItem = { description: string; amount: number };
 type Lead = { id: string; businessName: string; email: string | null; phone: string | null; name?: string };
 
-const STEPS = ["Choose Plan", "Build Contract", "Send & Sign", "Stripe Setup"];
+const STEPS = ["Choose Draft", "Build Agreement", "Send & Sign", "Portal Handoff"];
 
 export default function OnboardPage() {
   const { id } = useParams<{ id: string }>();
@@ -263,7 +263,7 @@ export default function OnboardPage() {
         <div className="space-y-4">
           <div>
             <h2 className="text-xl font-bold">Choose a plan</h2>
-            <p className="mt-1 text-sm text-zinc-500">Select a preset or build a custom price for {lead.businessName}.</p>
+            <p className="mt-1 text-sm text-zinc-500">Select a draft agreement, then customize scope, terms, and the signing flow for {lead.businessName}.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {PLAN_PRESETS.map((plan, i) => (
@@ -444,13 +444,13 @@ export default function OnboardPage() {
 
               <div className="flex items-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
                 <div className="space-y-1.5">
-                  <Label>Contract amount <span className="font-normal text-zinc-400">(for billing)</span></Label>
+              <Label>Contract value <span className="font-normal text-zinc-400">(internal reference)</span></Label>
                   <div className="flex items-center gap-1">
                     <span className="text-zinc-500">$</span>
                     <Input type="number" min="0" value={docAmount || ""} onChange={(e) => setDocAmount(Number(e.target.value))} className="w-32" placeholder="0.00" />
                   </div>
                 </div>
-                <p className="pb-2.5 text-xs text-zinc-500">Sets the invoice amount created when they sign. Leave 0 if this contract has no charge.</p>
+                <p className="pb-2.5 text-xs text-zinc-500">Used for the client packet and internal reporting. No invoice or Stripe payment is created.</p>
               </div>
             </CardContent>
           </Card>
@@ -552,28 +552,28 @@ export default function OnboardPage() {
             <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="h-4 w-4" /> Back</Button>
             {signUrl && (
               <Button onClick={() => setStep(3)}>
-                Next — Stripe setup <ArrowRight className="h-4 w-4" />
+                Next — Portal handoff <ArrowRight className="h-4 w-4" />
               </Button>
             )}
           </div>
         </div>
       )}
 
-      {/* ── Step 3: Stripe Setup ── */}
+      {/* ── Step 3: Portal Handoff ── */}
       {step === 3 && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold">Stripe billing setup</h2>
-            <p className="mt-1 text-sm text-zinc-500">The first invoice has been created and will appear in the client portal. Stripe invoicing kicks in when they pay.</p>
+            <h2 className="text-xl font-bold">Portal handoff</h2>
+            <p className="mt-1 text-sm text-zinc-500">The contract is ready for signature. Once signed, the client portal becomes their hub for files, requests, approvals, and updates.</p>
           </div>
 
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center gap-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#635BFF]/10 text-[#635BFF] font-bold text-lg">S</div>
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 font-bold text-lg dark:bg-indigo-950 dark:text-indigo-300">A</div>
                 <div>
-                  <p className="font-semibold">Stripe connected</p>
-                  <p className="text-sm text-zinc-500">Add your Stripe keys in <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs dark:bg-zinc-800">STRIPE_SECRET_KEY</code> to activate live payments.</p>
+                  <p className="font-semibold">Client portal workflow ready</p>
+                  <p className="text-sm text-zinc-500">No Stripe setup is required. Keep payment collection outside this CRM while the portal handles delivery communication.</p>
                 </div>
               </div>
 
@@ -581,10 +581,10 @@ export default function OnboardPage() {
                 <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">What happens next:</p>
                 {[
                   "Client receives the contract signing email",
-                  "When they sign, a first invoice is auto-created ($" + displayTotal.toFixed(2) + ")",
-                  "They get portal access to pay, view invoices & submit requests",
-                  "You get notified when payment lands",
-                  "Monthly reminders send automatically before each due date",
+                  "ArkiTech counter-signs from the client profile",
+                  "The signed agreement stays attached to the client packet",
+                  "Client uses the portal to submit requests and share files",
+                  "Developer work is tracked on the internal work board with estimates, repos, and due dates",
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 text-sm text-zinc-600 dark:text-zinc-400">
                     <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">{i + 1}</div>

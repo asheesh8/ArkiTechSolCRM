@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, ArrowRight, CalendarCheck, CheckCircle2, ChevronDown, Clock, CreditCard, FileSignature, Inbox, MessageSquarePlus, PhoneCall, Trash2, UserPlus, Users } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarCheck, CheckCircle2, ChevronDown, Clock, FileSignature, Inbox, MessageSquarePlus, PhoneCall, Trash2, UserPlus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,11 +20,10 @@ const statusDetails: Record<string, { description: string; next: string }> = {
 
 type Notif = {
   workRequests: any[];
-  overdueInvoices: any[];
-  upcomingInvoices: any[];
   unsignedContracts: any[];
   followUps: any[];
   meetings: any[];
+  deliveryDue: any[];
 };
 
 function Section({ icon: Icon, title, color, count, children }: { icon: any; title: string; color: string; count: number; children: React.ReactNode }) {
@@ -93,7 +92,7 @@ export default function DashboardPage() {
   }
 
   const totalActions = notifs
-    ? notifs.workRequests.length + notifs.overdueInvoices.length + notifs.unsignedContracts.length + notifs.followUps.length
+    ? notifs.workRequests.length + notifs.deliveryDue.length + notifs.unsignedContracts.length + notifs.followUps.length
     : 0;
 
   return (
@@ -148,15 +147,15 @@ export default function DashboardPage() {
                   ))}
                 </Section>
 
-                <Section icon={AlertCircle} title="Overdue invoices" color="bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400" count={notifs.overdueInvoices.length}>
-                  {notifs.overdueInvoices.map((inv: any) => (
+                <Section icon={AlertCircle} title="Delivery due soon" color="bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400" count={notifs.deliveryDue.length}>
+                  {notifs.deliveryDue.map((r: any) => (
                     <NotifRow
-                      key={inv.id}
-                      href={inv.client.leadId ? `/clients/${inv.client.leadId}` : `/clients`}
-                      primary={`$${inv.amount.toFixed(2)} overdue`}
-                      secondary={`${inv.client.businessName} · due ${new Date(inv.dueDate).toLocaleDateString()}`}
-                      tag="Overdue"
-                      tagColor="bg-red-100 text-red-700"
+                      key={r.id}
+                      href="/requests"
+                      primary={r.title}
+                      secondary={`${r.client.businessName} · due ${r.dueDate ? new Date(r.dueDate).toLocaleDateString() : "soon"}${r.assignedDeveloper ? ` · ${r.assignedDeveloper.name}` : ""}`}
+                      tag={r.dueDate && new Date(r.dueDate) < new Date() ? "Overdue" : "Due soon"}
+                      tagColor={r.dueDate && new Date(r.dueDate) < new Date() ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}
                     />
                   ))}
                 </Section>
@@ -191,25 +190,24 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* ── Right column: upcoming + meetings ── */}
+        {/* ── Right column: delivery + meetings ── */}
         <div className="space-y-4">
-          {/* Upcoming invoices */}
-          {notifs && notifs.upcomingInvoices.length > 0 && (
+          {notifs && notifs.workRequests.length > 0 && (
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-zinc-500" />
-                  <CardTitle className="text-base">Payments due this week</CardTitle>
+                  <MessageSquarePlus className="h-4 w-4 text-zinc-500" />
+                  <CardTitle className="text-base">Delivery queue</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                {notifs.upcomingInvoices.map((inv: any) => (
-                  <div key={inv.id} className="flex items-center justify-between text-sm">
+                {notifs.workRequests.slice(0, 5).map((req: any) => (
+                  <div key={req.id} className="flex items-center justify-between gap-3 text-sm">
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{inv.client.businessName}</p>
-                      <p className="text-xs text-zinc-500">Due {new Date(inv.dueDate).toLocaleDateString()}</p>
+                      <p className="truncate font-medium">{req.title}</p>
+                      <p className="text-xs text-zinc-500">{req.client.businessName}{req.assignedDeveloper ? ` · ${req.assignedDeveloper.name}` : ""}</p>
                     </div>
-                    <span className="ml-3 shrink-0 font-semibold text-zinc-900 dark:text-zinc-100">${inv.amount.toFixed(2)}</span>
+                    <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{req.status.replace("_", " ")}</span>
                   </div>
                 ))}
               </CardContent>
@@ -400,10 +398,10 @@ export default function DashboardPage() {
       </Card>
 
       {/* ── Clock widget ── */}
-      {notifs && notifs.upcomingInvoices.length === 0 && notifs.meetings.length === 0 && (
+      {notifs && notifs.deliveryDue.length === 0 && notifs.meetings.length === 0 && (
         <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/40">
           <Clock className="h-4 w-4 shrink-0" />
-          No upcoming payments or meetings in the next 7 days.
+          No delivery deadlines or meetings need attention in the next 7 days.
         </div>
       )}
     </div>

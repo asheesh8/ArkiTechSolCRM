@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Activity, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronRight,
-  CreditCard, Download, Edit3, ExternalLink, FileCode2, FileJson, FileText, Folder, Globe2,
-  Loader2, Mail, MapPin, MessageSquareQuote, Navigation, PenLine, Phone, PhoneCall,
-  PhoneMissed, Save, Send, ShieldCheck, Sparkles, Star, Terminal, ThumbsDown, ThumbsUp, Trash2,
+  Download, Edit3, ExternalLink, FileText, Folder, Globe2,
+  Loader2, Mail, MapPin, Navigation, PenLine, Phone, PhoneCall,
+  PhoneMissed, Save, Send, ShieldCheck, Sparkles, Star, ThumbsDown, ThumbsUp, Trash2,
   Upload, UserCheck, X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { ScoreCard } from "@/components/crm/score-card";
-import { leadPriorities, leadStatuses, noteTypes, callOutcomes } from "@/lib/schemas";
+import { leadStatuses } from "@/lib/schemas";
 import { kitSlug } from "@/lib/website-kit";
 import { cn, formatStatus } from "@/lib/utils";
 
@@ -283,13 +283,12 @@ const CONTRACT_TONE: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
 };
 
-// The signed "client packet": every contract with its signature, PDF and billing.
+// The signed "client packet": every agreement with signatures, PDFs, and operational notes.
 function ClientPacket({ client }: { client: any }) {
   const [contracts, setContracts] = useState<any[]>(client.contracts ?? []);
   const [signingId, setSigningId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [signError, setSignError] = useState("");
-  const invoices: any[] = client.invoices ?? [];
   const executedCount = contracts.filter((c) => c.signedAt && c.providerSignedAt).length;
 
   async function providerSign(contractId: string, signatureData: string) {
@@ -386,7 +385,7 @@ function ClientPacket({ client }: { client: any }) {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900"><ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" /></span>
           <div>
             <CardTitle>Client Packet</CardTitle>
-            <p className="text-xs text-zinc-500">Signed agreements, signatures & billing on file</p>
+            <p className="text-xs text-zinc-500">Signed agreements, signatures, terms, and delivery handoff</p>
           </div>
           <span className="ml-auto text-xs text-zinc-400">{executedCount}/{contracts.length} fully executed</span>
         </div>
@@ -432,7 +431,7 @@ function ClientPacket({ client }: { client: any }) {
                       </div>
                       <div className="space-y-1.5"><Label>Contract name</Label><Input value={editForm.planName} onChange={(e) => setEditForm((f) => ({ ...f, planName: e.target.value }))} /></div>
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-1.5"><Label>Amount (for billing)</Label>
+                          <div className="space-y-1.5"><Label>Contract value</Label>
                           <div className="flex items-center gap-1"><span className="text-zinc-500">$</span><Input type="number" min="0" value={editForm.amount} onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))} /></div>
                         </div>
                         <div className="space-y-1.5"><Label>Billing cycle</Label>
@@ -542,26 +541,6 @@ function ClientPacket({ client }: { client: any }) {
           );
         })}
 
-        {/* Invoices */}
-        {invoices.length > 0 && (
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800">
-            <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800">
-              <CreditCard className="h-4 w-4 text-zinc-400" /><span className="text-sm font-medium">Invoices</span>
-              <span className="ml-auto text-xs text-zinc-400">{invoices.length}</span>
-            </div>
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {invoices.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                  <span className="text-zinc-600 dark:text-zinc-400">{inv.description ?? "Invoice"}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium">{money(inv.amount)}</span>
-                    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", inv.status === "PAID" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : inv.status === "OVERDUE" ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300")}>{formatStatus(inv.status)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

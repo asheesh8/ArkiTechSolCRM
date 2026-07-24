@@ -63,6 +63,7 @@ model User {
   noteCabinets NoteCabinet[]
   notePages    NotePage[]
   notePresences NotePresence[]
+  devWorkRequests WorkRequest[] @relation("AssignedDevWorkRequests")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -291,20 +292,30 @@ model Invoice {
 }
 
 model WorkRequest {
-  id          String     @id @default(cuid())
-  clientId    String
-  title       String
-  description String?
-  status      WorkStatus @default(OPEN)
-  staffNote   String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id                  String     @id @default(cuid())
+  clientId            String
+  title               String
+  description         String?
+  status              WorkStatus @default(OPEN)
+  requestType         String     @default("CLIENT_REQUEST")
+  priority            String     @default("NORMAL")
+  estimateHours       Float?
+  actualHours         Float?
+  repositoryUrl       String?
+  dueDate             DateTime?
+  assignedDeveloperId String?
+  staffNote           String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
-  client Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  files  WorkFile[]
+  client            Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedDeveloper User?      @relation("AssignedDevWorkRequests", fields: [assignedDeveloperId], references: [id], onDelete: SetNull)
+  files             WorkFile[]
 
   @@index([clientId])
   @@index([status])
+  @@index([assignedDeveloperId])
+  @@index([dueDate])
 }
 
 model WorkFile {

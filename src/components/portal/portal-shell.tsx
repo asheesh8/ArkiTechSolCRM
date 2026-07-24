@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Home, LogOut, MessageSquarePlus } from "lucide-react";
+import { Home, LogOut, MessageSquarePlus } from "lucide-react";
 
 type Props = {
   client: { name: string; businessName: string; email: string };
@@ -12,7 +12,6 @@ type Props = {
 const NAV = [
   { href: "/portal", label: "Dashboard", icon: Home },
   { href: "/portal/requests", label: "Requests", icon: MessageSquarePlus },
-  { href: "/portal/invoices", label: "Invoices & Billing", icon: FileText },
 ];
 
 export default function PortalShell({ client, children }: Props) {

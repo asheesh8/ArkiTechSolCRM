@@ -10,9 +10,10 @@ export async function GET() {
   const requests = await prisma.workRequest.findMany({
     include: {
       client: { select: { id: true, name: true, businessName: true, email: true } },
+      assignedDeveloper: { select: { id: true, name: true, email: true, role: true } },
       files: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
   });
 
   return NextResponse.json({ requests });
@@ -22,7 +23,7 @@ export async function PATCH(req: Request) {
   const session = await getCurrentUser();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id, status, staffNote } = await req.json();
+  const { id, status, staffNote, requestType, priority, estimateHours, actualHours, repositoryUrl, dueDate, assignedDeveloperId } = await req.json();
 
   const previous = await prisma.workRequest.findUnique({
     where: { id },
@@ -34,8 +35,19 @@ export async function PATCH(req: Request) {
     data: {
       ...(status ? { status } : {}),
       ...(staffNote !== undefined ? { staffNote } : {}),
+      ...(requestType !== undefined ? { requestType: requestType || "CLIENT_REQUEST" } : {}),
+      ...(priority !== undefined ? { priority: priority || "NORMAL" } : {}),
+      ...(estimateHours !== undefined ? { estimateHours: estimateHours === "" || estimateHours == null ? null : Number(estimateHours) } : {}),
+      ...(actualHours !== undefined ? { actualHours: actualHours === "" || actualHours == null ? null : Number(actualHours) } : {}),
+      ...(repositoryUrl !== undefined ? { repositoryUrl: repositoryUrl || null } : {}),
+      ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}),
+      ...(assignedDeveloperId !== undefined ? { assignedDeveloperId: assignedDeveloperId || null } : {}),
     },
-    include: { client: { select: { id: true, name: true, businessName: true, email: true } }, files: true },
+    include: {
+      client: { select: { id: true, name: true, businessName: true, email: true } },
+      assignedDeveloper: { select: { id: true, name: true, email: true, role: true } },
+      files: true,
+    },
   });
 
   // Email client when marked complete

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpenText, Building2, CalendarDays, Gauge, Headphones, Inbox, LayoutDashboard, MessageSquare, NotebookText, Search, Settings, Sparkles, type LucideIcon } from "lucide-react";
+import { BarChart3, BookOpenText, Building2, CalendarDays, ClipboardCheck, Gauge, Headphones, Inbox, LayoutDashboard, MessageSquare, NotebookText, Search, Settings, Sparkles, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
@@ -24,6 +24,7 @@ const navSections: NavSection[] = [
     label: "Pipeline",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/accountability", label: "Accountability", icon: ClipboardCheck },
       { href: "/leads", label: "Leads / Scraper", icon: Search },
       { href: "/outreach", label: "Cold Text", icon: MessageSquare },
     ],
