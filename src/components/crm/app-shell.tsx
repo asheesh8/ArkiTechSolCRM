@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpenText, Building2, CalendarDays, ClipboardCheck, Gauge, Headphones, Inbox, LayoutDashboard, MessageSquare, NotebookText, Search, Settings, Sparkles, type LucideIcon } from "lucide-react";
+import { BarChart3, Building2, CalendarDays, ClipboardCheck, Headphones, Inbox, LayoutDashboard, MessageSquare, NotebookText, Search, Settings, Sparkles, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
@@ -13,35 +13,37 @@ type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  managerOnly?: boolean;
+  // Roles allowed to see this item. Undefined = visible to everyone.
+  roles?: string[];
 };
 
 type NavSection = { label: string; items: NavItem[] };
 
 // Grouped so the sidebar reads as sections instead of one long flat list.
+// Developers get a lean workspace (their work + shared notes); agents keep the
+// sales pipeline; owners see everything.
 const navSections: NavSection[] = [
   {
     label: "Pipeline",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/accountability", label: "Accountability", icon: ClipboardCheck },
-      { href: "/leads", label: "Leads / Scraper", icon: Search },
-      { href: "/outreach", label: "Cold Text", icon: MessageSquare },
+      { href: "/accountability", label: "Accountability", icon: ClipboardCheck, roles: ["OWNER", "MEMBER"] },
+      { href: "/leads", label: "Leads / Scraper", icon: Search, roles: ["OWNER", "MEMBER"] },
+      { href: "/outreach", label: "Cold Text", icon: MessageSquare, roles: ["OWNER", "MEMBER"] },
     ],
   },
   {
     label: "Clients & Work",
     items: [
-      { href: "/receptionist", label: "AI Receptionist", icon: Headphones, managerOnly: true },
-      { href: "/clients", label: "CRM Clients", icon: Building2 },
-      { href: "/requests", label: "Work Requests", icon: Inbox },
+      { href: "/receptionist", label: "AI Receptionist", icon: Headphones, roles: ["OWNER"] },
+      { href: "/clients", label: "CRM Clients", icon: Building2, roles: ["OWNER", "MEMBER"] },
+      { href: "/requests", label: "Work Requests", icon: Inbox, roles: ["OWNER", "DEV"] },
     ],
   },
   {
     label: "Insights",
     items: [
-      { href: "/audits", label: "PageSpeed Audit", icon: Gauge },
-      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/analytics", label: "Analytics", icon: BarChart3, roles: ["OWNER"] },
     ],
   },
   {
@@ -49,8 +51,7 @@ const navSections: NavSection[] = [
     items: [
       { href: "/calendar", label: "Calendar", icon: CalendarDays },
       { href: "/notes", label: "Notes", icon: NotebookText },
-      { href: "/resources", label: "Templates & Scripts", icon: BookOpenText },
-      { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/settings", label: "Team", icon: Settings, roles: ["OWNER"] },
     ],
   },
 ];
@@ -70,7 +71,9 @@ const ROLE_LABELS: Record<string, string> = {
 export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser }) {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const canSee = (item: NavItem) => !item.managerOnly || user.role === "OWNER";
+  const canSee = (item: NavItem) => !item.roles || item.roles.includes(user.role);
+  // Developers see their own board as "My Work" rather than the owner-facing label.
+  const labelFor = (item: NavItem) => (item.href === "/requests" && user.role === "DEV" ? "My Work" : item.label);
 
   const visibleSections = navSections
     .map((section) => ({ ...section, items: section.items.filter(canSee) }))
@@ -108,7 +111,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
                       )}
                     >
                       <Icon className="h-4 w-4" />
-                      {item.label}
+                      {labelFor(item)}
                     </Link>
                   );
                 })}
@@ -162,7 +165,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.label}
+                  {labelFor(item)}
                 </Link>
               );
             })}

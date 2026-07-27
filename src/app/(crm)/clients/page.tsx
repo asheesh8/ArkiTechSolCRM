@@ -390,7 +390,6 @@ export default function ClientsPage() {
                   <p className="font-medium text-zinc-900 dark:text-zinc-100">Follow-up</p>
                   <p className="mt-1 leading-5">Based on what you shared, the clearest next step is a focused plan for timeline, scope, and what changes first.</p>
                 </div>
-                <Link href="/resources" className="inline-flex text-sm font-medium text-[var(--accent)] hover:underline">Open all templates</Link>
               </CardContent>
             </Card>
           </div>
