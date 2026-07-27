@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Clock, Download,
-  FileText, GitBranch, Loader2, MessageSquare, Paperclip, RefreshCw,
-  Timer, UserCheck,
+  FileText, GitBranch, Loader2, MessageSquare, Paperclip, Plus, RefreshCw,
+  Timer, UserCheck, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
 type TeamUser = { id: string; name: string; email?: string; role: string };
+type ClientOption = { id: string; name: string; businessName: string };
 type WorkFile = { id: string; name: string; r2Key: string; size: string; mimeType: string | null };
 type WorkRequest = {
   id: string;
@@ -29,7 +30,7 @@ type WorkRequest = {
   createdAt: string;
   files: WorkFile[];
   assignedDeveloper: TeamUser | null;
-  client: { id: string; name: string; businessName: string; email: string };
+  client: { id: string; name: string; businessName: string; email: string } | null;
 };
 
 const STATUSES = ["OPEN", "IN_PROGRESS", "REVIEW", "COMPLETED"];
@@ -60,7 +61,9 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
-function RequestCard({ req, users, onUpdate }: { req: WorkRequest; users: TeamUser[]; onUpdate: (updated: WorkRequest) => void }) {
+const devs = (users: TeamUser[]) => users.filter((u) => u.role === "DEV" || u.role === "OWNER");
+
+function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; users: TeamUser[]; isOwner: boolean; onUpdate: (updated: WorkRequest) => void }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState("");
   const [form, setForm] = useState({
@@ -102,9 +105,13 @@ function RequestCard({ req, users, onUpdate }: { req: WorkRequest; users: TeamUs
             <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", PRIORITY_STYLE[req.priority] ?? PRIORITY_STYLE.NORMAL)}>{label(req.priority)}</span>
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
-            <Link href={`/clients/${req.client.id}`} onClick={(e) => e.stopPropagation()} className="font-medium text-zinc-700 hover:underline dark:text-zinc-300">
-              {req.client.businessName}
-            </Link>
+            {req.client ? (
+              <Link href={`/clients/${req.client.id}`} onClick={(e) => e.stopPropagation()} className="font-medium text-zinc-700 hover:underline dark:text-zinc-300">
+                {req.client.businessName}
+              </Link>
+            ) : (
+              <span className="font-medium text-zinc-500">Internal</span>
+            )}
             <span>{label(req.requestType)}</span>
             {req.assignedDeveloper && <span className="flex items-center gap-1"><UserCheck className="h-3 w-3" />{req.assignedDeveloper.name}</span>}
             {req.estimateHours != null && <span className="flex items-center gap-1"><Timer className="h-3 w-3" />{req.estimateHours}h est.</span>}
@@ -113,6 +120,19 @@ function RequestCard({ req, users, onUpdate }: { req: WorkRequest; users: TeamUs
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          {/* One-click (re)assignment without expanding — owners only. */}
+          {isOwner && (
+            <Select
+              value={form.assignedDeveloperId}
+              onChange={(e) => { setForm((f) => ({ ...f, assignedDeveloperId: e.target.value })); patch({ assignedDeveloperId: e.target.value }, "assignee"); }}
+              className="hidden h-8 w-36 py-0 text-xs sm:block"
+              title="Assign developer"
+            >
+              <option value="">Unassigned</option>
+              {devs(users).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </Select>
+          )}
+          {saving === "assignee" && <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />}
           {req.repositoryUrl && (
             <a href={req.repositoryUrl} target="_blank" rel="noopener noreferrer" className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" title="Open GitHub repo">
               <GitBranch className="h-4 w-4" />
@@ -127,7 +147,7 @@ function RequestCard({ req, users, onUpdate }: { req: WorkRequest; users: TeamUs
           <div className="space-y-5">
             {req.description ? (
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-400">Client request</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-400">{req.client ? "Client request" : "Task detail"}</p>
                 <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">{req.description}</p>
               </div>
             ) : (
@@ -162,26 +182,40 @@ function RequestCard({ req, users, onUpdate }: { req: WorkRequest; users: TeamUs
               ))}
             </div>
 
-            <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-400">Developer delivery</p>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Type</Label><Select value={form.requestType} onChange={(e) => setForm((f) => ({ ...f, requestType: e.target.value }))}>{REQUEST_TYPES.map((t) => <option key={t} value={t}>{label(t)}</option>)}</Select></div>
-                  <div className="space-y-1.5"><Label>Priority</Label><Select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}>{PRIORITIES.map((p) => <option key={p} value={p}>{label(p)}</option>)}</Select></div>
+            {isOwner ? (
+              <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-400">Delivery plan</p>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5"><Label>Type</Label><Select value={form.requestType} onChange={(e) => setForm((f) => ({ ...f, requestType: e.target.value }))}>{REQUEST_TYPES.map((t) => <option key={t} value={t}>{label(t)}</option>)}</Select></div>
+                    <div className="space-y-1.5"><Label>Priority</Label><Select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}>{PRIORITIES.map((p) => <option key={p} value={p}>{label(p)}</option>)}</Select></div>
+                  </div>
+                  <div className="space-y-1.5"><Label>Assigned developer</Label><Select value={form.assignedDeveloperId} onChange={(e) => setForm((f) => ({ ...f, assignedDeveloperId: e.target.value }))}><option value="">Unassigned</option>{devs(users).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</Select></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5"><Label>Estimate hours</Label><Input type="number" min="0" step="0.25" value={form.estimateHours} onChange={(e) => setForm((f) => ({ ...f, estimateHours: e.target.value }))} /></div>
+                    <div className="space-y-1.5"><Label>Actual hours</Label><Input type="number" min="0" step="0.25" value={form.actualHours} onChange={(e) => setForm((f) => ({ ...f, actualHours: e.target.value }))} /></div>
+                  </div>
+                  <div className="space-y-1.5"><Label>Due date</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} /></div>
+                  <div className="space-y-1.5"><Label>GitHub repo</Label><Input value={form.repositoryUrl} onChange={(e) => setForm((f) => ({ ...f, repositoryUrl: e.target.value }))} placeholder="https://github.com/org/repo" /></div>
+                  <Button size="sm" className="w-full" disabled={!!saving} onClick={() => patch(form, "meta")}>
+                    {saving === "meta" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitBranch className="h-4 w-4" />}
+                    Save delivery plan
+                  </Button>
                 </div>
-                <div className="space-y-1.5"><Label>Assigned developer</Label><Select value={form.assignedDeveloperId} onChange={(e) => setForm((f) => ({ ...f, assignedDeveloperId: e.target.value }))}><option value="">Unassigned</option>{users.filter((u) => u.role === "DEV" || u.role === "OWNER").map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</Select></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Estimate hours</Label><Input type="number" min="0" step="0.25" value={form.estimateHours} onChange={(e) => setForm((f) => ({ ...f, estimateHours: e.target.value }))} /></div>
-                  <div className="space-y-1.5"><Label>Actual hours</Label><Input type="number" min="0" step="0.25" value={form.actualHours} onChange={(e) => setForm((f) => ({ ...f, actualHours: e.target.value }))} /></div>
-                </div>
-                <div className="space-y-1.5"><Label>Due date</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} /></div>
-                <div className="space-y-1.5"><Label>GitHub repo</Label><Input value={form.repositoryUrl} onChange={(e) => setForm((f) => ({ ...f, repositoryUrl: e.target.value }))} placeholder="https://github.com/org/repo" /></div>
-                <Button size="sm" className="w-full" disabled={!!saving} onClick={() => patch(form, "meta")}>
-                  {saving === "meta" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitBranch className="h-4 w-4" />}
-                  Save delivery plan
-                </Button>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-400">Log your work</p>
+                <div className="space-y-3">
+                  <div className="space-y-1.5"><Label>Actual hours</Label><Input type="number" min="0" step="0.25" value={form.actualHours} onChange={(e) => setForm((f) => ({ ...f, actualHours: e.target.value }))} /></div>
+                  <div className="space-y-1.5"><Label>GitHub repo</Label><Input value={form.repositoryUrl} onChange={(e) => setForm((f) => ({ ...f, repositoryUrl: e.target.value }))} placeholder="https://github.com/org/repo" /></div>
+                  <Button size="sm" className="w-full" disabled={!!saving} onClick={() => patch({ actualHours: form.actualHours, repositoryUrl: form.repositoryUrl }, "meta")}>
+                    {saving === "meta" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitBranch className="h-4 w-4" />}
+                    Save
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-400"><MessageSquare className="mr-1 inline h-3 w-3" />Internal note</p>
@@ -197,11 +231,74 @@ function RequestCard({ req, users, onUpdate }: { req: WorkRequest; users: TeamUs
   );
 }
 
+function NewTaskModal({ users, clients, onClose, onCreated }: { users: TeamUser[]; clients: ClientOption[]; onClose: () => void; onCreated: (r: WorkRequest) => void }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    title: "", description: "", clientId: "", assignedDeveloperId: "",
+    requestType: "INTERNAL_TASK", priority: "NORMAL", dueDate: "", estimateHours: "", repositoryUrl: "",
+  });
+
+  async function submit() {
+    if (!form.title.trim()) { setError("A title is required."); return; }
+    setSaving(true);
+    setError("");
+    const res = await fetch("/api/crm/work-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSaving(false);
+    if (res.ok) { onCreated(data.request); onClose(); }
+    else setError(data.error ?? "Could not create the task.");
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">New task</h3>
+          <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="space-y-3">
+          <div className="space-y-1.5"><Label>Title</Label><Input autoFocus value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Rebuild the pricing page" /></div>
+          <div className="space-y-1.5"><Label>Details</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Scope, links, acceptance criteria…" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label>Client (optional)</Label><Select value={form.clientId} onChange={(e) => setForm((f) => ({ ...f, clientId: e.target.value }))}><option value="">Internal — no client</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.businessName}</option>)}</Select></div>
+            <div className="space-y-1.5"><Label>Assign to</Label><Select value={form.assignedDeveloperId} onChange={(e) => setForm((f) => ({ ...f, assignedDeveloperId: e.target.value }))}><option value="">Unassigned</option>{devs(users).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</Select></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label>Type</Label><Select value={form.requestType} onChange={(e) => setForm((f) => ({ ...f, requestType: e.target.value }))}>{REQUEST_TYPES.map((t) => <option key={t} value={t}>{label(t)}</option>)}</Select></div>
+            <div className="space-y-1.5"><Label>Priority</Label><Select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}>{PRIORITIES.map((p) => <option key={p} value={p}>{label(p)}</option>)}</Select></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label>Due date</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} /></div>
+            <div className="space-y-1.5"><Label>Estimate hours</Label><Input type="number" min="0" step="0.25" value={form.estimateHours} onChange={(e) => setForm((f) => ({ ...f, estimateHours: e.target.value }))} /></div>
+          </div>
+          <div className="space-y-1.5"><Label>GitHub repo (optional)</Label><Input value={form.repositoryUrl} onChange={(e) => setForm((f) => ({ ...f, repositoryUrl: e.target.value }))} placeholder="https://github.com/org/repo" /></div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button onClick={submit} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}Create task</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RequestsPage() {
   const [requests, setRequests] = useState<WorkRequest[]>([]);
   const [users, setUsers] = useState<TeamUser[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [me, setMe] = useState<{ id: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
+  const [assignee, setAssignee] = useState("ALL");
+  const [showNew, setShowNew] = useState(false);
+
+  const isOwner = me?.role === "OWNER";
 
   function load() {
     setLoading(true);
@@ -213,7 +310,9 @@ export default function RequestsPage() {
 
   useEffect(() => {
     load();
+    fetch("/api/auth/me").then((r) => r.json()).then((d) => setMe(d.user ?? null)).catch(() => setMe(null));
     fetch("/api/users").then((r) => r.json()).then((d) => setUsers(d.users ?? [])).catch(() => setUsers([]));
+    fetch("/api/clients").then((r) => r.json()).then((d) => setClients(d.clients ?? [])).catch(() => setClients([]));
   }, []);
 
   function handleUpdate(updated: WorkRequest) {
@@ -227,11 +326,9 @@ export default function RequestsPage() {
     return next;
   }, [requests]);
 
-  const filtered = filter === "ALL"
-    ? requests
-    : filter === "OVERDUE"
-      ? requests.filter((r) => r.dueDate && new Date(r.dueDate) < new Date() && r.status !== "COMPLETED")
-      : requests.filter((r) => r.status === filter);
+  const filtered = requests
+    .filter((r) => (filter === "ALL" ? true : filter === "OVERDUE" ? r.dueDate && new Date(r.dueDate) < new Date() && r.status !== "COMPLETED" : r.status === filter))
+    .filter((r) => (assignee === "ALL" ? true : assignee === "UNASSIGNED" ? !r.assignedDeveloper : r.assignedDeveloper?.id === assignee));
 
   const activeHours = requests
     .filter((r) => r.status !== "COMPLETED" && r.status !== "CANCELLED")
@@ -241,12 +338,19 @@ export default function RequestsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Developer Work Board</h2>
-          <p className="mt-1 text-sm text-zinc-500">Client requests, repo links, estimates, deadlines, and delivery ownership in one place.</p>
+          <h2 className="text-2xl font-semibold tracking-tight">{isOwner ? "Developer Work Board" : "My Work"}</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            {isOwner
+              ? "Create and assign work, track repos, estimates, deadlines, and delivery ownership in one place."
+              : "Everything assigned to you. Update status, log hours, and attach your repo."}
+          </p>
         </div>
-        <Button variant="outline" onClick={load} disabled={loading}>
-          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {isOwner && <Button onClick={() => setShowNew(true)}><Plus className="h-4 w-4" /> New task</Button>}
+          <Button variant="outline" onClick={load} disabled={loading}>
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
@@ -256,25 +360,39 @@ export default function RequestsPage() {
         <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">With repos</p><p className="mt-1 text-2xl font-semibold">{requests.filter((r) => r.repositoryUrl).length}</p></CardContent></Card>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {["ALL", ...STATUSES, "OVERDUE"].map((s) => (
           <button key={s} type="button" onClick={() => setFilter(s)} className={cn("rounded-full border px-3 py-1.5 text-xs font-medium transition", filter === s ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]" : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400")}>
             {label(s)} <span className="ml-1 opacity-60">{counts[s] ?? 0}</span>
           </button>
         ))}
+        {isOwner && (
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-zinc-400">Assignee</span>
+            <Select value={assignee} onChange={(e) => setAssignee(e.target.value)} className="h-8 w-40 py-0 text-xs">
+              <option value="ALL">Everyone</option>
+              {me && <option value={me.id}>Me</option>}
+              <option value="UNASSIGNED">Unassigned</option>
+              {devs(users).filter((u) => u.id !== me?.id).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </Select>
+          </div>
+        )}
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="h-7 w-7 animate-spin text-zinc-400" /></div>
       ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 py-20 text-center dark:border-zinc-700">
-          <p className="text-zinc-500">No work requests in this view.</p>
+          <p className="text-zinc-500">{isOwner ? "No work requests in this view." : "Nothing assigned to you right now."}</p>
+          {isOwner && <Button variant="outline" className="mt-4" onClick={() => setShowNew(true)}><Plus className="h-4 w-4" /> Create the first task</Button>}
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((req) => <RequestCard key={req.id} req={req} users={users} onUpdate={handleUpdate} />)}
+          {filtered.map((req) => <RequestCard key={req.id} req={req} users={users} isOwner={!!isOwner} onUpdate={handleUpdate} />)}
         </div>
       )}
+
+      {showNew && <NewTaskModal users={users} clients={clients} onClose={() => setShowNew(false)} onCreated={(r) => setRequests((prev) => [r, ...prev])} />}
     </div>
   );
 }
