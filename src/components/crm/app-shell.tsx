@@ -148,9 +148,11 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
               <LogoutButton />
             </div>
           </div>
-          <div className="border-t border-zinc-200 dark:border-zinc-800">
-            <StatsTicker />
-          </div>
+          {user.role !== "DEV" && (
+            <div className="border-t border-zinc-200 dark:border-zinc-800">
+              <StatsTicker />
+            </div>
+          )}
           <nav className="flex gap-1 overflow-x-auto px-4 pb-3 lg:hidden">
             {flatNav.map((item) => {
               const active = isActive(item.href);

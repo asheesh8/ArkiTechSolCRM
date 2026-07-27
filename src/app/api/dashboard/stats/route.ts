@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 import { demoLeads } from "@/lib/demo-data";
 
 const statuses = ["NEW", "SAVED", "CALLED", "MEETING_BOOKED", "NOT_INTERESTED", "FOLLOW_UP", "CLOSED"];
 
 export async function GET() {
+  // Pipeline stats are sales data — require a session and keep them away from developers.
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.role === "DEV") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

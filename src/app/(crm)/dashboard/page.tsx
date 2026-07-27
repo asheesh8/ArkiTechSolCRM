@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [team, setTeam] = useState<any[] | null>(null);
   const [isManager, setIsManager] = useState(false);
+  const [role, setRole] = useState("");
   const [openStatus, setOpenStatus] = useState("");
   const [statusLeads, setStatusLeads] = useState<any[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -68,6 +69,7 @@ export default function DashboardPage() {
     fetch("/api/dashboard/stats").then((r) => r.json()).then(setStats);
     fetch("/api/dashboard/notifications").then((r) => r.json()).then(setNotifs);
     fetch("/api/auth/me").then((r) => r.json()).then((d) => {
+      setRole(d.user?.role ?? "");
       if (!d.isManager) return;
       setIsManager(true);
       fetch("/api/dashboard/assignments").then((r) => r.json()).then((a) => setTeam(a.team ?? [])).catch(() => setTeam([]));
@@ -95,6 +97,9 @@ export default function DashboardPage() {
     ? notifs.workRequests.length + notifs.deliveryDue.length + notifs.unsignedContracts.length + notifs.followUps.length
     : 0;
 
+  // Developers get a work-only dashboard: no sales pipeline, stats, or onboarding.
+  const isDev = role === "DEV";
+
   return (
     <div className="space-y-8">
 
@@ -104,9 +109,11 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
           <p className="mt-1 text-sm text-zinc-500">Your action items and pipeline at a glance.</p>
         </div>
-        <Link href="/clients">
-          <Button><UserPlus className="h-4 w-4" /> Onboard client</Button>
-        </Link>
+        {!isDev && (
+          <Link href="/clients">
+            <Button><UserPlus className="h-4 w-4" /> Onboard client</Button>
+          </Link>
+        )}
       </div>
 
       {/* ── Notifications / Todo ── */}
@@ -140,7 +147,7 @@ export default function DashboardPage() {
                       key={r.id}
                       href={`/requests`}
                       primary={r.title}
-                      secondary={`${r.client.businessName} · ${new Date(r.createdAt).toLocaleDateString()}`}
+                      secondary={`${r.client?.businessName ?? "Internal"} · ${new Date(r.createdAt).toLocaleDateString()}`}
                       tag={r.status === "OPEN" ? "New" : "In progress"}
                       tagColor={r.status === "OPEN" ? "bg-indigo-100 text-indigo-700" : "bg-blue-100 text-blue-700"}
                     />
@@ -153,7 +160,7 @@ export default function DashboardPage() {
                       key={r.id}
                       href="/requests"
                       primary={r.title}
-                      secondary={`${r.client.businessName} · due ${r.dueDate ? new Date(r.dueDate).toLocaleDateString() : "soon"}${r.assignedDeveloper ? ` · ${r.assignedDeveloper.name}` : ""}`}
+                      secondary={`${r.client?.businessName ?? "Internal"} · due ${r.dueDate ? new Date(r.dueDate).toLocaleDateString() : "soon"}${r.assignedDeveloper ? ` · ${r.assignedDeveloper.name}` : ""}`}
                       tag={r.dueDate && new Date(r.dueDate) < new Date() ? "Overdue" : "Due soon"}
                       tagColor={r.dueDate && new Date(r.dueDate) < new Date() ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}
                     />
@@ -205,7 +212,7 @@ export default function DashboardPage() {
                   <div key={req.id} className="flex items-center justify-between gap-3 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{req.title}</p>
-                      <p className="text-xs text-zinc-500">{req.client.businessName}{req.assignedDeveloper ? ` · ${req.assignedDeveloper.name}` : ""}</p>
+                      <p className="text-xs text-zinc-500">{req.client?.businessName ?? "Internal"}{req.assignedDeveloper ? ` · ${req.assignedDeveloper.name}` : ""}</p>
                     </div>
                     <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{req.status.replace("_", " ")}</span>
                   </div>
@@ -238,10 +245,12 @@ export default function DashboardPage() {
           )}
 
           {/* Quick tip */}
-          <div className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
-            <p className="font-medium text-zinc-700 dark:text-zinc-300">Pipeline focus</p>
-            <p className="mt-1 text-xs leading-5 text-zinc-500">Prioritize low-review, high-rating businesses with weak or missing websites.</p>
-          </div>
+          {!isDev && (
+            <div className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
+              <p className="font-medium text-zinc-700 dark:text-zinc-300">Pipeline focus</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">Prioritize low-review, high-rating businesses with weak or missing websites.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -308,7 +317,8 @@ export default function DashboardPage() {
       </Card>
       )}
 
-      {/* ── Pipeline by status ── */}
+      {/* ── Pipeline by status (sales only) ── */}
+      {!isDev && (
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -396,6 +406,7 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* ── Clock widget ── */}
       {notifs && notifs.deliveryDue.length === 0 && notifs.meetings.length === 0 && (
