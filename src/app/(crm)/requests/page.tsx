@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Clock, Download,
-  FileText, GitBranch, Loader2, MessageSquare, Paperclip, Plus, RefreshCw,
+  AlertTriangle, CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Clock, Download,
+  FileText, GitBranch, Inbox, Loader2, MessageSquare, Paperclip, Plus, RefreshCw,
   Timer, UserCheck, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
+import { MetricTile } from "@/components/crm/metric-tile";
+import { PageHeader } from "@/components/crm/page-header";
 import { cn } from "@/lib/utils";
 
 type TeamUser = { id: string; name: string; email?: string; role: string; isActive?: boolean };
@@ -93,8 +94,8 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
   const overdue = due && due < new Date() && req.status !== "COMPLETED";
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-start gap-4 p-5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+    <div className="crm-card overflow-hidden rounded-lg border">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-start gap-4 p-5 text-left transition hover:bg-white/70 dark:hover:bg-white/10">
         <div className="mt-0.5">
           {req.status === "COMPLETED" ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <Clock className="h-5 w-5 text-amber-500" />}
         </div>
@@ -143,7 +144,7 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
       </button>
 
       {open && (
-        <div className="grid gap-6 border-t border-zinc-200 p-5 dark:border-zinc-800 lg:grid-cols-[1fr_360px]">
+        <div className="grid gap-6 border-t border-[var(--border)] p-5 lg:grid-cols-[1fr_360px]">
           <div className="space-y-5">
             {req.description ? (
               <div>
@@ -159,7 +160,7 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
                 <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-400">Attached files</p>
                 <div className="space-y-2">
                   {req.files.map((f) => (
-                    <a key={f.id} href={`/api/portal/files/${encodeURIComponent(f.r2Key)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 transition hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800">
+                    <a key={f.id} href={`/api/portal/files/${encodeURIComponent(f.r2Key)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 transition hover:bg-white dark:hover:bg-white/10">
                       <FileText className="h-4 w-4 text-zinc-400" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{f.name}</p>
@@ -183,7 +184,7 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
             </div>
 
             {isOwner ? (
-              <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+              <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
                 <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-400">Delivery plan</p>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
@@ -204,7 +205,7 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+              <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
                 <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-400">Log your work</p>
                 <div className="space-y-3">
                   <div className="space-y-1.5"><Label>Actual hours</Label><Input type="number" min="0" step="0.25" value={form.actualHours} onChange={(e) => setForm((f) => ({ ...f, actualHours: e.target.value }))} /></div>
@@ -256,7 +257,7 @@ function NewTaskModal({ users, clients, onClose, onCreated }: { users: TeamUser[
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950" onClick={(e) => e.stopPropagation()}>
+      <div className="crm-card-strong w-full max-w-lg rounded-lg border p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold">New task</h3>
           <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600"><X className="h-5 w-5" /></button>
@@ -336,33 +337,32 @@ export default function RequestsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">{isOwner ? "Developer Work Board" : "My Work"}</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            {isOwner
-              ? "Create and assign work, track repos, estimates, deadlines, and delivery ownership in one place."
-              : "Everything assigned to you. Update status, log hours, and attach your repo."}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        eyebrow="Delivery"
+        title={isOwner ? "Developer Work Board" : "My Work"}
+        description={isOwner
+          ? "Create and assign work, track repos, estimates, deadlines, and delivery ownership in one place."
+          : "Everything assigned to you. Update status, log hours, and attach your repo."}
+        actions={(
+          <>
           {isOwner && <Button onClick={() => setShowNew(true)}><Plus className="h-4 w-4" /> New task</Button>}
           <Button variant="outline" onClick={load} disabled={loading}>
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> Refresh
           </Button>
-        </div>
-      </div>
+          </>
+        )}
+      />
 
       <div className="grid gap-3 md:grid-cols-4">
-        <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">Open delivery</p><p className="mt-1 text-2xl font-semibold">{counts.OPEN + counts.IN_PROGRESS + counts.REVIEW}</p></CardContent></Card>
-        <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">Estimated load</p><p className="mt-1 text-2xl font-semibold">{activeHours.toFixed(1)}h</p></CardContent></Card>
-        <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">Overdue</p><p className="mt-1 text-2xl font-semibold text-red-600">{counts.OVERDUE}</p></CardContent></Card>
-        <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">With repos</p><p className="mt-1 text-2xl font-semibold">{requests.filter((r) => r.repositoryUrl).length}</p></CardContent></Card>
+        <MetricTile icon={Inbox} label="Open delivery" value={(counts.OPEN + counts.IN_PROGRESS + counts.REVIEW).toLocaleString()} detail="Active, in progress, or in review." tone="cyan" />
+        <MetricTile icon={Timer} label="Estimated load" value={`${activeHours.toFixed(1)}h`} detail="Open delivery estimate." tone="emerald" />
+        <MetricTile icon={AlertTriangle} label="Overdue" value={counts.OVERDUE.toLocaleString()} detail="Past due and not completed." tone="amber" />
+        <MetricTile icon={GitBranch} label="With repos" value={requests.filter((r) => r.repositoryUrl).length.toLocaleString()} detail="Tasks linked to GitHub." tone="rose" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         {["ALL", ...STATUSES, "OVERDUE"].map((s) => (
-          <button key={s} type="button" onClick={() => setFilter(s)} className={cn("rounded-full border px-3 py-1.5 text-xs font-medium transition", filter === s ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]" : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400")}>
+          <button key={s} type="button" onClick={() => setFilter(s)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", filter === s ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]" : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-600 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
             {label(s)} <span className="ml-1 opacity-60">{counts[s] ?? 0}</span>
           </button>
         ))}
@@ -382,7 +382,7 @@ export default function RequestsPage() {
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="h-7 w-7 animate-spin text-zinc-400" /></div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 py-20 text-center dark:border-zinc-700">
+        <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] py-20 text-center">
           <p className="text-zinc-500">{isOwner ? "No work requests in this view." : "Nothing assigned to you right now."}</p>
           {isOwner && <Button variant="outline" className="mt-4" onClick={() => setShowNew(true)}><Plus className="h-4 w-4" /> Create the first task</Button>}
         </div>

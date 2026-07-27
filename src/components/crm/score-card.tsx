@@ -12,8 +12,8 @@ export function ScoreCard({ label, value }: { label: string; value?: number | nu
   return (
     <Card>
       <CardContent className="pt-5">
-        <p className="text-sm text-zinc-500">{label}</p>
-        <p className={cn("mt-2 text-3xl font-semibold", tones[scoreTone(value)])}>{value ?? "--"}</p>
+        <p className="text-sm font-semibold text-[var(--muted)]">{label}</p>
+        <p className={cn("mt-2 text-3xl font-bold tabular-nums", tones[scoreTone(value)])}>{value ?? "--"}</p>
       </CardContent>
     </Card>
   );

@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, ArrowRight, CalendarCheck, CheckCircle2, ChevronDown, Clock, FileSignature, Inbox, MessageSquarePlus, PhoneCall, Trash2, UserPlus, Users } from "lucide-react";
+import { AlertCircle, ArrowRight, BarChart3, CalendarCheck, CheckCircle2, ChevronDown, Clock, FileSignature, Inbox, MessageSquarePlus, PhoneCall, Target, Trash2, UserPlus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MetricTile } from "@/components/crm/metric-tile";
+import { OwnerTimeClock } from "@/components/crm/owner-time-clock";
+import { PageHeader } from "@/components/crm/page-header";
 import { cn } from "@/lib/utils";
 
 const statusDetails: Record<string, { description: string; next: string }> = {
@@ -44,7 +47,7 @@ function Section({ icon: Icon, title, color, count, children }: { icon: any; tit
 
 function NotifRow({ href, primary, secondary, tag, tagColor }: { href: string; primary: string; secondary: string; tag?: string; tagColor?: string }) {
   return (
-    <Link href={href} className="group flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 transition hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700">
+    <Link href={href} className="group flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 transition hover:bg-white dark:hover:bg-white/10">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{primary}</p>
         <p className="mt-0.5 truncate text-xs text-zinc-500">{secondary}</p>
@@ -99,22 +102,29 @@ export default function DashboardPage() {
 
   // Developers get a work-only dashboard: no sales pipeline, stats, or onboarding.
   const isDev = role === "DEV";
+  const metric = (value: number | null | undefined, suffix = "") => value == null ? "—" : `${value.toLocaleString()}${suffix}`;
 
   return (
     <div className="space-y-8">
-
-      {/* ── Header row ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
-          <p className="mt-1 text-sm text-zinc-500">Your action items and pipeline at a glance.</p>
-        </div>
-        {!isDev && (
+      <PageHeader
+        eyebrow={isDev ? "Delivery desk" : "Mission control"}
+        title={isDev ? "My work dashboard" : "Dashboard"}
+        description={isDev ? "Your assigned delivery work and the deadlines that need attention." : "Action items, pipeline health, and team momentum at a glance."}
+        actions={!isDev ? (
           <Link href="/clients">
             <Button><UserPlus className="h-4 w-4" /> Onboard client</Button>
           </Link>
-        )}
-      </div>
+        ) : null}
+      />
+
+      {!isDev && (
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <MetricTile icon={Users} label="Total leads" value={metric(stats?.totalLeads)} detail="All prospects and clients in the CRM." tone="cyan" />
+          <MetricTile icon={PhoneCall} label="Calls today" value={metric(stats?.callsMadeToday)} detail="Fresh activity logged by the team." tone="emerald" />
+          <MetricTile icon={Target} label="Follow-ups due" value={metric(stats?.followUpsDue)} detail="Warm opportunities waiting for the next touch." tone="amber" />
+          <MetricTile icon={BarChart3} label="Close rate" value={metric(stats?.closeRate, "%")} detail="Closed clients versus active pipeline." tone="rose" />
+        </section>
+      )}
 
       {/* ── Notifications / Todo ── */}
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
@@ -199,6 +209,8 @@ export default function DashboardPage() {
 
         {/* ── Right column: delivery + meetings ── */}
         <div className="space-y-4">
+          {isManager && <OwnerTimeClock />}
+
           {notifs && notifs.workRequests.length > 0 && (
             <Card>
               <CardHeader>
@@ -246,10 +258,10 @@ export default function DashboardPage() {
 
           {/* Quick tip */}
           {!isDev && (
-            <div className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
-              <p className="font-medium text-zinc-700 dark:text-zinc-300">Pipeline focus</p>
-              <p className="mt-1 text-xs leading-5 text-zinc-500">Prioritize low-review, high-rating businesses with weak or missing websites.</p>
-            </div>
+              <div className="crm-card rounded-lg border p-4 text-sm">
+                <p className="font-medium text-zinc-700 dark:text-zinc-300">Pipeline focus</p>
+                <p className="mt-1 text-xs leading-5 text-zinc-500">Prioritize low-review, high-rating businesses with weak or missing websites.</p>
+              </div>
           )}
         </div>
       </div>
@@ -282,7 +294,7 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {team.filter((m) => m.assigned > 0 || m.callsThisWeek > 0).map((m) => (
-                <div key={m.id} className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+                <div key={m.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-[var(--accent-foreground)]">
@@ -300,7 +312,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
                     <div
-                      className={cn("h-2 rounded-full transition-all", m.remaining === 0 ? "bg-emerald-500" : "bg-[var(--accent)]")}
+                      className={cn("h-2 rounded-full transition-all", m.remaining === 0 ? "bg-emerald-500" : "bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]")}
                       style={{ width: `${m.progress}%` }}
                     />
                   </div>
@@ -344,7 +356,7 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setOpenStatus(active ? "" : item.status)}
                       className={cn(
-                        "rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950",
+                        "rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:hover:bg-white/10",
                         active && "border-[var(--accent)] bg-zinc-50 ring-2 ring-[var(--accent)]/25 dark:bg-zinc-900/60",
                       )}
                     >
@@ -355,8 +367,8 @@ export default function DashboardPage() {
                           <ChevronDown className={cn("h-4 w-4 text-zinc-400 transition", active && "rotate-180 text-[var(--accent)]")} />
                         </span>
                       </div>
-                      <div className="mt-4 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900">
-                        <div className="h-1.5 rounded-full bg-[var(--accent)]" style={{ width: `${Math.min(100, item.count * 24)}%` }} />
+                      <div className="mt-4 h-1.5 rounded-full bg-zinc-900/10 dark:bg-white/10">
+                        <div className="h-1.5 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]" style={{ width: `${Math.min(100, item.count * 24)}%` }} />
                       </div>
                       <p className="mt-3 min-h-10 text-xs leading-5 text-zinc-500">{detail?.description}</p>
                       <p className="mt-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">{detail?.next}</p>
@@ -366,8 +378,8 @@ export default function DashboardPage() {
               </div>
 
               {openStatus && (
-                <div className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/40">
-                  <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+                <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-strong)]">
+                  <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
                     <div>
                       <p className="font-medium">Leads in this stage</p>
                       <p className="text-xs text-zinc-500">{statusLeads.length} businesses currently marked here</p>
@@ -410,7 +422,7 @@ export default function DashboardPage() {
 
       {/* ── Clock widget ── */}
       {notifs && notifs.deliveryDue.length === 0 && notifs.meetings.length === 0 && (
-        <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="crm-card flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-[var(--muted)]">
           <Clock className="h-4 w-4 shrink-0" />
           No delivery deadlines or meetings need attention in the next 7 days.
         </div>

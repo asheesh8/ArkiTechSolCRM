@@ -10,6 +10,8 @@ import { CsvImportCard } from "@/components/crm/csv-import-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/field";
+import { MetricTile } from "@/components/crm/metric-tile";
+import { PageHeader } from "@/components/crm/page-header";
 import { cn, formatStatus } from "@/lib/utils";
 import { leadStatuses } from "@/lib/schemas";
 
@@ -36,15 +38,15 @@ function ActiveClientCard({ lead }: { lead: any }) {
     <Link
       href={`/clients/${lead.id}`}
       className={cn(
-        "group relative flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-zinc-950",
-        isPriority ? "border-amber-200 dark:border-amber-800" : "border-zinc-200 dark:border-zinc-800",
+        "crm-card group relative flex flex-col rounded-lg border p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:hover:bg-white/10",
+        isPriority ? "border-amber-300 dark:border-amber-800" : "border-[var(--border)]",
       )}
     >
       {isPriority && (
         <span className="absolute right-4 top-4"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /></span>
       )}
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-700 dark:text-cyan-300">
           <Building2 className="h-5 w-5" />
         </div>
         <div className="min-w-0">
@@ -59,7 +61,7 @@ function ActiveClientCard({ lead }: { lead: any }) {
       </div>
 
       <div className="mt-4 flex items-center justify-between">
-        <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+        <span className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold text-cyan-700 dark:text-cyan-300">
           Active client
         </span>
         {lead.assignedTo ? (
@@ -201,20 +203,14 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* ── Header ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">CRM</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            {!isManager
-              ? `${pipeline.length} lead${pipeline.length !== 1 ? "s" : ""} assigned to you`
-              : tab === "clients"
-                ? `${activeClients.length} active client${activeClients.length !== 1 ? "s" : ""}`
-                : `${pipeline.length} leads in pipeline`}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        eyebrow="Relationship desk"
+        title="CRM"
+        description={!isManager
+          ? `${pipeline.length} lead${pipeline.length !== 1 ? "s" : ""} assigned to you.`
+          : "Manage active clients, pipeline stages, teammate ownership, and stale opportunities."}
+        actions={(
+          <>
           {isManager && users.length > 0 && (
             <div className="relative">
               <Users className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -229,25 +225,32 @@ export default function ClientsPage() {
               </Select>
             </div>
           )}
-          <button
+          <Button
             type="button"
             onClick={() => { setShowImport((v) => !v); setShowAdd(false); }}
-            className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+            variant="outline"
           >
             <Plus className="h-4 w-4" /> Import CSV
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => { setShowAdd((v) => !v); setShowImport(false); }}
-            className="flex items-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90"
           >
             <UserPlus className="h-4 w-4" /> Add lead
-          </button>
-        </div>
-      </div>
+          </Button>
+          </>
+        )}
+      />
+
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <MetricTile icon={Building2} label="Active clients" value={activeClients.length.toLocaleString()} detail="Closed and currently served." tone="cyan" />
+        <MetricTile icon={ClipboardList} label="Pipeline leads" value={pipeline.length.toLocaleString()} detail="Working opportunities." tone="emerald" />
+        <MetricTile icon={AlertTriangle} label="Stale leads" value={staleLeads.length.toLocaleString()} detail="Need a fresh touch." tone="amber" />
+        <MetricTile icon={Star} label="Priority clients" value={featuredClients.length.toLocaleString()} detail="Favorites and priority accounts." tone="rose" />
+      </section>
 
       {/* ── Tabs ── */}
-      <div className="flex gap-1 rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-900 sm:w-fit">
+      <div className="flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 sm:w-fit">
         {(["clients", "leads"] as const).map((t) => (
           <button
             key={t}
@@ -255,18 +258,18 @@ export default function ClientsPage() {
             onClick={() => switchTab(t)}
             className={cn(
               "rounded-lg px-5 py-2 text-sm font-semibold transition",
-              tab === t ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300",
+              tab === t ? "bg-[var(--surface-strong)] text-zinc-900 shadow-sm dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300",
             )}
           >
             {t === "clients" ? (
               <span className="flex items-center gap-2">
                 Active Clients
-                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "clients" ? "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{activeClients.length}</span>
+                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "clients" ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{activeClients.length}</span>
               </span>
             ) : (
               <span className="flex items-center gap-2">
                 Leads
-                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "leads" ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{pipeline.length}</span>
+                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "leads" ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{pipeline.length}</span>
               </span>
             )}
           </button>
@@ -298,7 +301,7 @@ export default function ClientsPage() {
           <Input placeholder="Filter by city…" value={city} onChange={(e) => setCity(e.target.value)} className="pl-9" />
         </div>
         {hasFilters && (
-          <button type="button" onClick={() => { setSearch(""); setStatus(""); setCity(""); setAssigneeFilter(""); }} className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900">
+          <button type="button" onClick={() => { setSearch(""); setStatus(""); setCity(""); setAssigneeFilter(""); }} className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-sm font-semibold text-zinc-500 hover:bg-white dark:hover:bg-white/10">
             <X className="h-3.5 w-3.5" /> Clear
           </button>
         )}
@@ -310,7 +313,7 @@ export default function ClientsPage() {
 
       {loading ? (
         <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-900" />)}
+          {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-20 animate-pulse rounded-lg bg-zinc-100/80 dark:bg-white/10" />)}
         </div>
       ) : tab === "clients" ? (
 
@@ -330,7 +333,7 @@ export default function ClientsPage() {
           )}
 
           {filteredClients.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-zinc-300 py-20 text-center dark:border-zinc-700">
+            <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] py-20 text-center">
               <p className="font-semibold text-zinc-500">No active clients{hasFilters ? " match these filters" : " yet"}</p>
               <p className="mt-1 text-sm text-zinc-400">Mark a lead as Closed to move them here.</p>
             </div>
@@ -363,14 +366,14 @@ export default function ClientsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {staleLeads.length ? staleLeads.map((lead) => (
-                  <Link key={lead.id} href={`/clients/${lead.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900">
+                  <Link key={lead.id} href={`/clients/${lead.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2.5 text-sm transition hover:bg-white dark:hover:bg-white/10">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{lead.businessName}</p>
                       <p className="text-xs text-zinc-500">{formatStatus(lead.status)} · last touched {new Date(lead.updatedAt ?? lead.createdAt).toLocaleDateString()}</p>
                     </div>
                     <ChevronRight className="h-4 w-4 text-zinc-400" />
                   </Link>
-                )) : <p className="rounded-lg border border-dashed border-zinc-300 py-8 text-center text-sm text-zinc-400 dark:border-zinc-700">No stale leads in this view.</p>}
+                )) : <p className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface-strong)] py-8 text-center text-sm text-zinc-400">No stale leads in this view.</p>}
               </CardContent>
             </Card>
 
@@ -382,11 +385,11 @@ export default function ClientsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-zinc-500">
-                <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-3">
                   <p className="font-medium text-zinc-900 dark:text-zinc-100">First touch</p>
                   <p className="mt-1 leading-5">I noticed one website opportunity for your business and had a quick idea that could help more people contact you.</p>
                 </div>
-                <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-3">
                   <p className="font-medium text-zinc-900 dark:text-zinc-100">Follow-up</p>
                   <p className="mt-1 leading-5">Based on what you shared, the clearest next step is a focused plan for timeline, scope, and what changes first.</p>
                 </div>
@@ -420,11 +423,11 @@ export default function ClientsPage() {
 
           {/* Status filter pills */}
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setStatus("")} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", !status ? "border-zinc-400 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400")}>
+            <button type="button" onClick={() => setStatus("")} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", !status ? "border-zinc-400 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-500 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
               All <span className="ml-1 opacity-60">{scopedPipeline.length}</span>
             </button>
             {PIPELINE_STATUSES.map((s) => (
-              <button key={s} type="button" onClick={() => setStatus(status === s ? "" : s)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", status === s ? STATUS_COLORS[s] : "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400")}>
+              <button key={s} type="button" onClick={() => setStatus(status === s ? "" : s)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", status === s ? STATUS_COLORS[s] : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-500 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
                 {formatStatus(s)}{counts[s] != null && <span className="ml-1.5 opacity-60">{counts[s]}</span>}
               </button>
             ))}
@@ -441,7 +444,7 @@ export default function ClientsPage() {
 
           {/* Not interested — tucked away in its own collapsible area */}
           {filteredDead.length > 0 && (
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)]">
               <button type="button" onClick={() => setShowDead((v) => !v)} className="flex w-full items-center gap-2 px-4 py-3 text-left">
                 {showDead ? <ChevronDown className="h-4 w-4 text-zinc-400" /> : <ChevronRight className="h-4 w-4 text-zinc-400" />}
                 <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Not interested</span>
@@ -449,7 +452,7 @@ export default function ClientsPage() {
                 <span className="ml-auto text-xs text-zinc-400">Kept out of the active list</span>
               </button>
               {showDead && (
-                <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+                <div className="border-t border-[var(--border)] p-4">
                   <LeadTable
                     leads={filteredDead}
                     onStatus={updateStatus}

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Globe2, MapPin, Phone, Star, UserCheck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ChevronRight, ExternalLink, Globe2, MapPin, Phone, Star, UserCheck } from "lucide-react";
 import { Select } from "@/components/ui/field";
 import { cn, formatStatus } from "@/lib/utils";
 import { leadStatuses } from "@/lib/schemas";
@@ -49,7 +48,7 @@ export function LeadTable({
   const selectable = !!onToggleSelect;
   if (!leads.length) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 p-12 text-center dark:border-zinc-800">
+      <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] p-12 text-center">
         <p className="font-semibold text-zinc-600 dark:text-zinc-400">No leads match these filters</p>
         <p className="mt-1 text-sm text-zinc-400">Try a broader search or save leads from the scraper.</p>
       </div>
@@ -69,10 +68,10 @@ export function LeadTable({
           <div
             key={lead.id}
             className={cn(
-              "group relative overflow-hidden rounded-xl border bg-white transition hover:shadow-sm dark:bg-zinc-950",
+              "group relative overflow-hidden rounded-lg border bg-[var(--surface-strong)] transition hover:bg-white hover:shadow-sm dark:hover:bg-white/10",
               checked
                 ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/40"
-                : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700",
+                : "border-[var(--border)]",
             )}
           >
             <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
@@ -94,7 +93,7 @@ export function LeadTable({
                     {lead.businessName}
                   </Link>
                   {!hasWebsite && (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
                       No website
                     </span>
                   )}
@@ -120,7 +119,7 @@ export function LeadTable({
                 {lead.phone && (
                   <a
                     href={`tel:${lead.phone}`}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10"
                   >
                     <Phone className="h-3.5 w-3.5" />
                     {lead.phone}
@@ -131,7 +130,7 @@ export function LeadTable({
                     href={lead.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10"
                   >
                     <Globe2 className="h-3.5 w-3.5" />
                     Website <ExternalLink className="h-3 w-3 opacity-60" />
@@ -170,7 +169,7 @@ export function LeadTable({
                         type="button"
                         onClick={() => onStatus(lead.id, s)}
                         className={cn(
-                          "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition",
+                          "rounded-full px-2.5 py-1 text-[10px] font-semibold transition",
                           lead.status === s
                             ? STAGE_COLORS[s]
                             : "bg-transparent text-zinc-300 hover:text-zinc-500 dark:text-zinc-700 dark:hover:text-zinc-400",
@@ -183,9 +182,9 @@ export function LeadTable({
                 )}
                 <Link
                   href={`/clients/${lead.id}`}
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10"
                 >
-                  Open →
+                  Open <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>

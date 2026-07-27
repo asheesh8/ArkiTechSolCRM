@@ -61,6 +61,7 @@ model User {
   callNotes    CallNote[]
   scrapeUsages ScrapeUsage[]
   staffSessions StaffSession[]
+  ownerWorkLogs OwnerWorkLog[]
   noteCabinets NoteCabinet[]
   noteCabinetShares NoteCabinetShare[]
   notePages    NotePage[]
@@ -80,6 +81,21 @@ model StaffSession {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model OwnerWorkLog {
+  id          String    @id @default(cuid())
+  userId      String
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  workSummary String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startedAt])
+  @@index([endedAt])
 }
 
 model Lead {

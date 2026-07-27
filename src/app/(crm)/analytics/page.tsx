@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { TrendingUp, Users, Eye, Globe } from "lucide-react";
+import { MetricTile } from "@/components/crm/metric-tile";
+import { PageHeader } from "@/components/crm/page-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/field";
 
 type SiteStat = { site: string; views: number; unique: number };
 type DayBucket = { date: string; count: number };
@@ -40,26 +44,13 @@ function Sparkline({ data }: { data: DayBucket[] }) {
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full" preserveAspectRatio="none" style={{ height: 64 }}>
       <defs>
         <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#sg)" />
-      <path d={line} fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={line} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
-  );
-}
-
-function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
-        <Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-      </div>
-      <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{value.toLocaleString()}</p>
-      <p className="mt-0.5 text-xs font-medium text-zinc-500">{label}</p>
-      {sub && <p className="mt-1 text-xs text-zinc-400">{sub}</p>}
-    </div>
   );
 }
 
@@ -84,40 +75,42 @@ export default function AnalyticsPage() {
   }, [days]);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">Site Analytics</h1>
-          <p className="mt-1 text-sm text-zinc-500">Visitor tracking across all ArkiTech properties</p>
-        </div>
-        <select
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Insights"
+        title="Site Analytics"
+        description="Visitor tracking across ArkiTech sites and client-facing properties."
+        actions={(
+          <Select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-        >
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-        </select>
-      </div>
+            className="w-40"
+          >
+            <option value={7}>Last 7 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+          </Select>
+        )}
+      />
 
       {loading ? (
         <div className="flex h-64 items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
         </div>
       ) : data ? (
         <>
-          {/* Stat cards */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatCard icon={Eye} label="Total page views" value={data.total} sub={`last ${days} days`} />
-            <StatCard icon={Users} label="Unique visitors" value={data.uniqueVisitors} />
-            <StatCard icon={Globe} label="Sites tracked" value={data.sites.length} />
-            <StatCard icon={TrendingUp} label="Avg / day" value={data.total ? Math.round(data.total / days) : 0} />
+            <MetricTile icon={Eye} label="Total views" value={data.total.toLocaleString()} detail={`Last ${days} days`} tone="cyan" />
+            <MetricTile icon={Users} label="Unique visitors" value={data.uniqueVisitors.toLocaleString()} detail="Estimated visitor count" tone="emerald" />
+            <MetricTile icon={Globe} label="Sites tracked" value={data.sites.length.toLocaleString()} detail="Active properties" tone="amber" />
+            <MetricTile icon={TrendingUp} label="Avg / day" value={(data.total ? Math.round(data.total / days) : 0).toLocaleString()} detail="Daily traffic pace" tone="rose" />
           </div>
 
-          {/* Sparkline */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="mb-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Daily page views</p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Daily page views</CardTitle>
+            </CardHeader>
+            <CardContent>
             {data.total === 0 ? (
               <div className="flex h-16 items-center justify-center text-sm text-zinc-400">No data yet — embed the tracker on your sites</div>
             ) : (
@@ -127,23 +120,23 @@ export default function AnalyticsPage() {
               <span>{data.daily[0]?.date}</span>
               <span>{data.daily[data.daily.length - 1]?.date}</span>
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Per-site table */}
-          <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Breakdown by site</p>
-            </div>
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b border-[var(--border)]">
+              <CardTitle>Breakdown by site</CardTitle>
+            </CardHeader>
             {data.sites.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-zinc-400">No visits tracked yet</div>
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 dark:border-zinc-800">
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">Site</th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">Views</th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">Unique</th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-zinc-400">% Unique</th>
+                  <tr className="border-b border-[var(--border)]">
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-zinc-400">Site</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-zinc-400">Views</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-zinc-400">Unique</th>
+                    <th className="px-5 py-3 text-right text-xs font-semibold text-zinc-400">% Unique</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -162,13 +155,15 @@ export default function AnalyticsPage() {
                 </tbody>
               </table>
             )}
-          </div>
+          </Card>
 
-          {/* Embed snippet */}
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/50">
-            <p className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">Embed tracker on any site</p>
-            <p className="mb-3 text-xs text-zinc-500">Add this script to the &lt;head&gt; of any site you want to track. Change the <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">site</code> value per property.</p>
-            <pre className="overflow-x-auto rounded-lg border border-zinc-200 bg-white p-4 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+          <Card>
+            <CardHeader>
+              <CardTitle>Embed tracker on any site</CardTitle>
+            </CardHeader>
+            <CardContent>
+            <p className="mb-3 text-xs text-[var(--muted)]">Add this script to the &lt;head&gt; of any site you want to track. Change the <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">site</code> value per property.</p>
+            <pre className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4 text-xs text-zinc-700 dark:text-zinc-300">
 {`<script>
   fetch('https://arkitech-sol.vercel.app/api/track', {
     method: 'POST',
@@ -181,7 +176,8 @@ export default function AnalyticsPage() {
   });
 </script>`}
             </pre>
-          </div>
+            </CardContent>
+          </Card>
         </>
       ) : null}
     </div>
