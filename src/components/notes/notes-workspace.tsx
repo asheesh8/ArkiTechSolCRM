@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 type FlatPage = { id: string; title: string; icon: string; parentId: string | null; sortOrder: number; updatedAt?: string };
 type ShareUser = { id: string; name: string };
 type Cabinet = { id: string; name: string; icon: string; color: string; sortOrder: number; pages: FlatPage[]; createdById?: string | null; sharedWith?: ShareUser[] };
-type TeamMember = { id: string; name: string; email?: string; role: string };
+type TeamMember = { id: string; name: string; email?: string; role: string; isActive?: boolean };
 type DropPosition = "before" | "inside" | "after";
 type DropTarget =
   | { kind: "page"; pageId: string; cabinetId: string; position: DropPosition }
@@ -269,7 +269,7 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string; rol
       try {
         const res = await fetch("/api/users");
         const d = await res.json();
-        setTeam(((d.users ?? []) as TeamMember[]).filter((u) => u.role !== "OWNER"));
+        setTeam(((d.users ?? []) as TeamMember[]).filter((u) => u.role !== "OWNER" && u.isActive !== false));
       } catch { setTeam([]); }
     }
   };

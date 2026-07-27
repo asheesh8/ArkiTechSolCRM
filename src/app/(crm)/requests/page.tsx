@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
-type TeamUser = { id: string; name: string; email?: string; role: string };
+type TeamUser = { id: string; name: string; email?: string; role: string; isActive?: boolean };
 type ClientOption = { id: string; name: string; businessName: string };
 type WorkFile = { id: string; name: string; r2Key: string; size: string; mimeType: string | null };
 type WorkRequest = {
@@ -61,7 +61,7 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
-const devs = (users: TeamUser[]) => users.filter((u) => u.role === "DEV" || u.role === "OWNER");
+const devs = (users: TeamUser[]) => users.filter((u) => (u.role === "DEV" || u.role === "OWNER") && u.isActive !== false);
 
 function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; users: TeamUser[]; isOwner: boolean; onUpdate: (updated: WorkRequest) => void }) {
   const [open, setOpen] = useState(false);
