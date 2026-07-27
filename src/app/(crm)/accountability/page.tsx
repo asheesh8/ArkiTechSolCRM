@@ -116,7 +116,7 @@ export default async function AccountabilityPage() {
           <CardHeader><div className="flex items-center gap-2"><MessageSquarePlus className="h-4 w-4 text-zinc-500" /><CardTitle>Delivery due</CardTitle></div></CardHeader>
           <CardContent className="space-y-2">
             {dueWork.length ? dueWork.map((item) => (
-              <ActionRow key={item.id} href="/requests" title={item.title} meta={`${item.client.businessName} · due ${dateLabel(item.dueDate)} · ${item.assignedDeveloper?.name ?? "Unassigned"}`} tone={item.dueDate && item.dueDate < todayStart ? "danger" : "default"} />
+              <ActionRow key={item.id} href="/requests" title={item.title} meta={`${item.client?.businessName ?? "Internal"} · due ${dateLabel(item.dueDate)} · ${item.assignedDeveloper?.name ?? "Unassigned"}`} tone={item.dueDate && item.dueDate < todayStart ? "danger" : "default"} />
             )) : <EmptyState label="No delivery deadlines due this week." />}
           </CardContent>
         </Card>

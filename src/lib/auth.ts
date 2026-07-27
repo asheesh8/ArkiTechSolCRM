@@ -44,6 +44,8 @@ export async function getCurrentUser() {
     await prisma.staffSession.delete({ where: { id: session.id } });
     return null;
   }
+  // Deactivated teammates are treated as logged out everywhere.
+  if (!session.user.isActive) return null;
 
   return session.user;
 }
@@ -51,5 +53,12 @@ export async function getCurrentUser() {
 // Managers (currently OWNER role) see and assign every lead/client.
 // Everyone else is an agent who only sees leads delegated to them.
 export function isManager(user: { role?: string | null } | null | undefined) {
+  return user?.role === "OWNER";
+}
+
+// Owners are the only role that can manage the team, share note cabinets, and
+// create/assign work. Currently identical to isManager, kept as its own name so
+// intent reads clearly at call sites that gate ownership rather than lead access.
+export function isOwner(user: { role?: string | null } | null | undefined) {
   return user?.role === "OWNER";
 }

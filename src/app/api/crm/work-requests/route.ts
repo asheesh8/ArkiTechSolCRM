@@ -50,8 +50,8 @@ export async function PATCH(req: Request) {
     },
   });
 
-  // Email client when marked complete
-  if (status === "COMPLETED" && previous?.status !== "COMPLETED") {
+  // Email client when marked complete (skip for internal tasks with no client).
+  if (status === "COMPLETED" && previous?.status !== "COMPLETED" && updated.client) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://arkitech-sol.com";
     await sendWorkComplete({
       to: updated.client.email,

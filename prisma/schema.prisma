@@ -56,11 +56,13 @@ model User {
   email        String     @unique
   passwordHash String?
   role         Role       @default(MEMBER)
+  isActive     Boolean    @default(true)
   leads        Lead[]     @relation("AssignedLeads")
   callNotes    CallNote[]
   scrapeUsages ScrapeUsage[]
   staffSessions StaffSession[]
   noteCabinets NoteCabinet[]
+  noteCabinetShares NoteCabinetShare[]
   notePages    NotePage[]
   notePresences NotePresence[]
   devWorkRequests WorkRequest[] @relation("AssignedDevWorkRequests")
@@ -293,7 +295,7 @@ model Invoice {
 
 model WorkRequest {
   id                  String     @id @default(cuid())
-  clientId            String
+  clientId            String?
   title               String
   description         String?
   status              WorkStatus @default(OPEN)
@@ -308,7 +310,7 @@ model WorkRequest {
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
 
-  client            Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client            Client?    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   assignedDeveloper User?      @relation("AssignedDevWorkRequests", fields: [assignedDeveloperId], references: [id], onDelete: SetNull)
   files             WorkFile[]
 
@@ -438,10 +440,26 @@ model NoteCabinet {
   createdById String?
   createdBy   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
   pages       NotePage[]
+  shares      NoteCabinetShare[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
   @@index([sortOrder])
+}
+
+// Per-cabinet delegation. Owners (Role.OWNER) always see every cabinet; other
+// roles see a cabinet only if they created it or a share row grants them access.
+model NoteCabinetShare {
+  id        String      @id @default(cuid())
+  cabinetId String
+  userId    String
+  createdAt DateTime    @default(now())
+
+  cabinet NoteCabinet @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cabinetId, userId])
+  @@index([userId])
 }
 
 model NotePage {
