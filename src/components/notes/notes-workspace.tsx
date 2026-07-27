@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import {
-  ChevronDown, ChevronRight, FolderPlus, Loader2, MoreHorizontal, PanelLeftClose,
-  PanelLeftOpen, Plus, Search, Trash2, X,
+  Check, ChevronDown, ChevronRight, FolderPlus, Loader2, MoreHorizontal, PanelLeftClose,
+  PanelLeftOpen, Plus, Search, Share2, Trash2, Users, X,
 } from "lucide-react";
 import { NoteEditor, type PageMeta } from "@/components/notes/note-editor";
 import { EmojiPicker } from "@/components/notes/emoji-picker";
 import { cn } from "@/lib/utils";
 
 type FlatPage = { id: string; title: string; icon: string; parentId: string | null; sortOrder: number; updatedAt?: string };
-type Cabinet = { id: string; name: string; icon: string; color: string; sortOrder: number; pages: FlatPage[] };
+type ShareUser = { id: string; name: string };
+type Cabinet = { id: string; name: string; icon: string; color: string; sortOrder: number; pages: FlatPage[]; createdById?: string | null; sharedWith?: ShareUser[] };
+type TeamMember = { id: string; name: string; email?: string; role: string };
 type DropPosition = "before" | "inside" | "after";
 type DropTarget =
   | { kind: "page"; pageId: string; cabinetId: string; position: DropPosition }
@@ -132,7 +134,8 @@ function moveCabinetInTree(cabinets: Cabinet[], cabinetId: string, target: Cabin
   return cabinets.map((cabinet) => byId.get(cabinet.id) ?? cabinet);
 }
 
-export function NotesWorkspace({ user }: { user: { id: string; name: string } }) {
+export function NotesWorkspace({ user }: { user: { id: string; name: string; role?: string | null } }) {
+  const isOwner = user.role === "OWNER";
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -140,6 +143,8 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [rename, setRename] = useState<{ id: string; kind: "cabinet" | "page" } | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [shareFor, setShareFor] = useState<string | null>(null);
+  const [team, setTeam] = useState<TeamMember[] | null>(null);
   const [iconFor, setIconFor] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [treeOpen, setTreeOpen] = useState(true);
@@ -251,6 +256,30 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   const patchPage = async (cabinetId: string, id: string, data: Partial<Pick<FlatPage, "title" | "icon">>) => {
     setCabinets((prev) => prev.map((c) => c.id === cabinetId ? { ...c, pages: c.pages.map((p) => p.id === id ? { ...p, ...data } : p) } : c));
     await fetch(`/api/notes/pages/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }).catch(() => {});
+  };
+
+  // Owners manage every cabinet; other roles manage only cabinets they created.
+  const canManageCabinet = (cab: Cabinet) => isOwner || cab.createdById === user.id;
+
+  // Load the (non-owner) team roster lazily the first time a share panel opens.
+  const openShare = async (cabinetId: string) => {
+    setMenuFor(null);
+    setShareFor(cabinetId);
+    if (team === null) {
+      try {
+        const res = await fetch("/api/users");
+        const d = await res.json();
+        setTeam(((d.users ?? []) as TeamMember[]).filter((u) => u.role !== "OWNER"));
+      } catch { setTeam([]); }
+    }
+  };
+
+  const setCabinetShares = async (cabinetId: string, userIds: string[]) => {
+    const members = (team ?? []).filter((m) => userIds.includes(m.id)).map((m) => ({ id: m.id, name: m.name }));
+    setCabinets((prev) => prev.map((c) => c.id === cabinetId ? { ...c, sharedWith: members } : c));
+    await fetch(`/api/notes/cabinets/${cabinetId}/shares`, {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userIds }),
+    }).catch(() => {});
   };
 
   const setCabinetDropTargetIfChanged = useCallback((target: CabinetDropTarget | null) => {
@@ -371,7 +400,7 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
   };
 
   const onCabinetDragStart = (event: DragEvent<HTMLDivElement>, cabinetId: string) => {
-    if (rename?.id === cabinetId || menuFor === cabinetId || iconFor === cabinetId) {
+    if (rename?.id === cabinetId || menuFor === cabinetId || iconFor === cabinetId || shareFor === cabinetId) {
       event.preventDefault();
       return;
     }
@@ -559,6 +588,8 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
     const cabinetDropActive = dropTarget?.kind === "cabinet" && dropTarget.cabinetId === cab.id;
     const cabinetDropPosition = cabinetDropTarget?.cabinetId === cab.id ? cabinetDropTarget.position : null;
     const isDraggingCabinet = draggingCabinetId === cab.id;
+    const canManage = canManageCabinet(cab);
+    const shareCount = cab.sharedWith?.length ?? 0;
     return (
       <div key={cab.id} className="mb-1">
         <div
@@ -587,16 +618,28 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
           {rename?.id === cab.id ? (
             <RenameInput initial={cab.name} />
           ) : (
-            <button type="button" onClick={() => toggle(cab.id)} onDoubleClick={() => setRename({ id: cab.id, kind: "cabinet" })} className="flex-1 truncate py-1 text-left text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+            <button type="button" onClick={() => toggle(cab.id)} onDoubleClick={() => canManage && setRename({ id: cab.id, kind: "cabinet" })} className="flex-1 truncate py-1 text-left text-sm font-semibold text-zinc-800 dark:text-zinc-100">
               {cab.name}
             </button>
+          )}
+          {isOwner && shareCount > 0 && (
+            <span title={`Shared with ${cab.sharedWith?.map((u) => u.name).join(", ")}`} className="flex shrink-0 items-center gap-0.5 rounded-full bg-zinc-100 px-1.5 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+              <Users className="h-3 w-3" />{shareCount}
+            </span>
           )}
           <button type="button" title="New page" onClick={() => createPage(cab.id)} className="hidden h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 group-hover/cab:flex dark:hover:bg-zinc-700 dark:hover:text-zinc-200">
             <Plus className="h-4 w-4" />
           </button>
-          <button type="button" title="Cabinet options" onClick={() => setMenuFor(menuFor === cab.id ? null : cab.id)} className={cn("h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200", menuFor === cab.id ? "flex" : "hidden group-hover/cab:flex")}>
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+          {isOwner && (
+            <button type="button" title="Share cabinet" onClick={() => openShare(cab.id)} className={cn("h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200", shareCount > 0 ? "flex text-[var(--accent)]" : "hidden group-hover/cab:flex")}>
+              <Share2 className="h-4 w-4" />
+            </button>
+          )}
+          {canManage && (
+            <button type="button" title="Cabinet options" onClick={() => setMenuFor(menuFor === cab.id ? null : cab.id)} className={cn("h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200", menuFor === cab.id ? "flex" : "hidden group-hover/cab:flex")}>
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          )}
           {menuFor === cab.id && (
             <>
               <div className="fixed inset-0 z-30" onClick={() => setMenuFor(null)} />
@@ -607,12 +650,58 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string } })
                     <button key={key} type="button" onClick={() => { patchCabinet(cab.id, { color: key }); }} className={cn("h-5 w-5 rounded-full ring-offset-1 transition", COLORS[key].dot, cab.color === key && "ring-2 ring-zinc-400 dark:ring-zinc-500")} title={key} />
                   ))}
                 </div>
+                {isOwner && (
+                  <button type="button" onClick={() => openShare(cab.id)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <Share2 className="h-4 w-4 text-zinc-400" /> Share…
+                  </button>
+                )}
                 <button type="button" onClick={() => { setMenuFor(null); setRename({ id: cab.id, kind: "cabinet" }); renameValue.current = cab.name; }} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
                   <MoreHorizontal className="h-4 w-4 text-zinc-400" /> Rename
                 </button>
                 <button type="button" onClick={() => deleteCabinet(cab.id)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50">
                   <Trash2 className="h-4 w-4" /> Delete cabinet
                 </button>
+              </div>
+            </>
+          )}
+          {shareFor === cab.id && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setShareFor(null)} />
+              <div className="absolute right-1 top-9 z-40 w-64 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="flex items-center justify-between px-1 pb-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Share with teammates</p>
+                  <button type="button" onClick={() => setShareFor(null)} className="text-zinc-400 hover:text-zinc-600"><X className="h-3.5 w-3.5" /></button>
+                </div>
+                {team === null ? (
+                  <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-zinc-400" /></div>
+                ) : team.length === 0 ? (
+                  <p className="px-2 py-3 text-xs text-zinc-400">No teammates to share with yet. Add people on the Team page.</p>
+                ) : (
+                  <div className="max-h-64 overflow-y-auto">
+                    {team.map((m) => {
+                      const current = new Set((cab.sharedWith ?? []).map((u) => u.id));
+                      const on = current.has(m.id);
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            const next = new Set(current);
+                            if (on) next.delete(m.id); else next.add(m.id);
+                            setCabinetShares(cab.id, [...next]);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                          <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded border", on ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]" : "border-zinc-300 dark:border-zinc-600")}>
+                            {on && <Check className="h-3 w-3" />}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                          <span className="shrink-0 text-[10px] uppercase text-zinc-400">{m.role === "DEV" ? "Dev" : "Agent"}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </>
           )}

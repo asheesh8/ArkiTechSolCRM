@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { canAccessCabinet, canAccessPage } from "@/lib/notes-access";
 
 const PAGE_SELECT = {
   id: true,
@@ -48,6 +49,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       : Number.MAX_SAFE_INTEGER;
 
     if (!cabinetId) return NextResponse.json({ error: "cabinetId is required" }, { status: 400 });
+
+    // Must be able to reach both the page's current cabinet and the destination.
+    const [sourceAccess, canReachDestination] = await Promise.all([
+      canAccessPage(user, id),
+      canAccessCabinet(user, cabinetId),
+    ]);
+    if (!sourceAccess.cabinetId) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    if (!sourceAccess.ok || !canReachDestination) {
+      return NextResponse.json({ error: "You don't have access to move this page here." }, { status: 403 });
+    }
 
     const [page, cabinet, descendants] = await Promise.all([
       prisma.notePage.findUnique({ where: { id }, select: { id: true, cabinetId: true, parentId: true } }),

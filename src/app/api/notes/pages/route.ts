@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { canAccessCabinet } from "@/lib/notes-access";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -10,6 +11,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const cabinetId = body.cabinetId as string;
     if (!cabinetId) return NextResponse.json({ error: "cabinetId is required" }, { status: 400 });
+    if (!(await canAccessCabinet(user, cabinetId))) {
+      return NextResponse.json({ error: "You don't have access to this cabinet." }, { status: 403 });
+    }
 
     const parentId = (body.parentId as string) || null;
     // New pages land at the bottom of their sibling group.

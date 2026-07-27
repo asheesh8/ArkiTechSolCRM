@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { canAccessPage } from "@/lib/notes-access";
 import { subscribeToNotePage, type NotePageEvent } from "@/lib/notes-realtime";
 
 export const runtime = "nodejs";
@@ -22,8 +23,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const page = await prisma.notePage.findUnique({ where: { id }, select: { id: true } });
-  if (!page) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  const access = await canAccessPage(user, id);
+  if (!access.cabinetId) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  if (!access.ok) return NextResponse.json({ error: "You don't have access to this page." }, { status: 403 });
 
   const encoder = new TextEncoder();
   let cleanup: (() => void) | null = null;

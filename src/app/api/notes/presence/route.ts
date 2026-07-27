@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { canAccessPage } from "@/lib/notes-access";
 
 // A teammate counts as "present" if they've sent a heartbeat recently; rows
 // older than STALE_MS are treated as gone and swept on the next request.
@@ -18,6 +19,10 @@ export async function POST(req: Request) {
     const pageId = body.pageId as string | undefined;
     const version = body.version as string | undefined;
     if (!pageId) return NextResponse.json({ error: "pageId is required" }, { status: 400 });
+
+    const access = await canAccessPage(user, pageId);
+    if (!access.cabinetId) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    if (!access.ok) return NextResponse.json({ error: "You don't have access to this page." }, { status: 403 });
 
     const page = await prisma.notePage.findUnique({
       where: { id: pageId },

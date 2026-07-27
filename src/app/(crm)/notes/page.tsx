@@ -14,7 +14,7 @@ export default async function NotesPage() {
         <h2 className="text-2xl font-semibold tracking-tight">Notes</h2>
         <p className="mt-1 text-sm text-zinc-500">Filing cabinets and pages for everything the team keeps track of.</p>
       </div>
-      <NotesWorkspace user={{ id: user.id, name: user.name }} />
+      <NotesWorkspace user={{ id: user.id, name: user.name, role: user.role }} />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isOwner } from "@/lib/auth";
 
-// Notes are a team-shared workspace, so every signed-in staff member sees the
-// same cabinets and pages — mirroring how leads/clients are shared in Neon.
+// Owners see every cabinet. Other roles (agents, developers) see only cabinets
+// they created or that an owner has explicitly shared with them.
 
 const PAGE_SELECT = {
   id: true,
@@ -18,13 +18,25 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const owner = isOwner(user);
   const cabinets = await prisma.noteCabinet.findMany({
+    where: owner
+      ? undefined
+      : { OR: [{ createdById: user.id }, { shares: { some: { userId: user.id } } }] },
     orderBy: { sortOrder: "asc" },
     include: {
       pages: { select: PAGE_SELECT, orderBy: { sortOrder: "asc" } },
+      shares: { select: { user: { select: { id: true, name: true } } } },
     },
   });
-  return NextResponse.json({ cabinets });
+
+  // Only owners drive the share picker, so only they receive the member list.
+  const shaped = cabinets.map(({ shares, ...cabinet }) => ({
+    ...cabinet,
+    sharedWith: owner ? shares.map((s) => s.user) : [],
+  }));
+
+  return NextResponse.json({ cabinets: shaped });
 }
 
 export async function POST(req: Request) {

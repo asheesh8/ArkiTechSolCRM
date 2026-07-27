@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { canAccessPage } from "@/lib/notes-access";
 import { publishNotePage } from "@/lib/notes-realtime";
 
 // Full page fetch — includes the heavy `content` field the list endpoint omits.
@@ -9,6 +10,10 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const access = await canAccessPage(user, id);
+  if (!access.cabinetId) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  if (!access.ok) return NextResponse.json({ error: "You don't have access to this page." }, { status: 403 });
+
   const page = await prisma.notePage.findUnique({ where: { id } });
   if (!page) return NextResponse.json({ error: "Page not found" }, { status: 404 });
   return NextResponse.json({ page });
@@ -19,6 +24,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const access = await canAccessPage(user, id);
+  if (!access.cabinetId) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  if (!access.ok) return NextResponse.json({ error: "You don't have access to this page." }, { status: 403 });
   try {
     const body = await request.json();
     const data: Record<string, unknown> = {};
@@ -54,6 +62,9 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const access = await canAccessPage(user, id);
+  if (!access.cabinetId) return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  if (!access.ok) return NextResponse.json({ error: "You don't have access to this page." }, { status: 403 });
   try {
     // Nested sub-pages cascade via the self-relation.
     await prisma.notePage.delete({ where: { id } });
