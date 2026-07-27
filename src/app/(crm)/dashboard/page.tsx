@@ -105,7 +105,7 @@ export default function DashboardPage() {
   const metric = (value: number | null | undefined, suffix = "") => value == null ? "—" : `${value.toLocaleString()}${suffix}`;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <PageHeader
         eyebrow={isDev ? "Delivery desk" : "Mission control"}
         title={isDev ? "My work dashboard" : "Dashboard"}
@@ -127,8 +127,9 @@ export default function DashboardPage() {
       )}
 
       {/* ── Notifications / Todo ── */}
-      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
-        <Card className="self-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+        <div className="space-y-5">
+        <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Inbox className="h-4 w-4 text-zinc-500" />
@@ -207,8 +208,170 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* ── Team call progress (managers only) ── */}
+        {isManager && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-zinc-500" />
+                <div>
+                  <CardTitle>Team call progress</CardTitle>
+                  <p className="text-sm text-zinc-500">Who&apos;s assigned what, and how many they&apos;ve worked through this week.</p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!team ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />)}
+              </div>
+            ) : team.filter((m) => m.assigned > 0 || m.callsThisWeek > 0).length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center text-zinc-400">
+                <Users className="h-8 w-8 opacity-30" />
+                <p className="text-sm">No leads assigned yet.</p>
+                <p className="text-xs">Assign leads to teammates from the CRM or a lead&apos;s page to track their calling.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {team.filter((m) => m.assigned > 0 || m.callsThisWeek > 0).map((m) => (
+                  <div key={m.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-[var(--accent-foreground)]">
+                          {m.name.split(/\s+/).slice(0, 2).map((p: string) => p[0]).join("").toUpperCase()}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold">{m.name}</p>
+                          <p className="text-[11px] uppercase tracking-wide text-zinc-400">{m.role}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="flex items-center gap-1.5 text-zinc-500"><PhoneCall className="h-3.5 w-3.5" />{m.callsThisWeek} this week</span>
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">{m.contacted}/{m.assigned} done</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
+                      <div
+                        className={cn("h-2 rounded-full transition-all", m.remaining === 0 ? "bg-emerald-500" : "bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]")}
+                        style={{ width: `${m.progress}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-zinc-500">
+                      {m.remaining === 0
+                        ? m.assigned > 0 ? "All assigned leads have been called — nice work." : "No leads assigned."
+                        : `${m.remaining} still to call.`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        )}
+
+        {/* ── Pipeline by status (sales only) ── */}
+        {!isDev && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <CardTitle>Pipeline by status</CardTitle>
+                <p className="text-sm text-zinc-500">Click a stage to see the leads sitting there.</p>
+              </div>
+              {openStatus && <Badge value={openStatus} />}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!stats ? (
+              <div className="h-48 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-900" />
+            ) : (
+              <div className="space-y-5">
+                <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
+                  {stats.pipeline.map((item: any) => {
+                    const active = openStatus === item.status;
+                    const detail = statusDetails[item.status];
+                    return (
+                      <button
+                        key={item.status}
+                        type="button"
+                        onClick={() => setOpenStatus(active ? "" : item.status)}
+                        className={cn(
+                          "rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:hover:bg-white/10",
+                          active && "border-[var(--accent)] bg-zinc-50 ring-2 ring-[var(--accent)]/25 dark:bg-zinc-900/60",
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <Badge value={item.status} />
+                          <span className="flex items-center gap-2 text-2xl font-semibold">
+                            {item.count}
+                            <ChevronDown className={cn("h-4 w-4 text-zinc-400 transition", active && "rotate-180 text-[var(--accent)]")} />
+                          </span>
+                        </div>
+                        <div className="mt-4 h-1.5 rounded-full bg-zinc-900/10 dark:bg-white/10">
+                          <div className="h-1.5 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]" style={{ width: `${Math.min(100, item.count * 24)}%` }} />
+                        </div>
+                        <p className="mt-3 min-h-10 text-xs leading-5 text-zinc-500">{detail?.description}</p>
+                        <p className="mt-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">{detail?.next}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {openStatus && (
+                  <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-strong)]">
+                    <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+                      <div>
+                        <p className="font-medium">Leads in this stage</p>
+                        <p className="text-xs text-zinc-500">{statusLeads.length} businesses currently marked here</p>
+                      </div>
+                      <Link href={`/clients?status=${openStatus}`}>
+                        <Button variant="outline" size="sm">Open CRM</Button>
+                      </Link>
+                    </div>
+                    {loadingLeads ? (
+                      <div className="p-4"><div className="h-28 animate-pulse rounded-md bg-white dark:bg-zinc-950" /></div>
+                    ) : statusLeads.length ? (
+                      <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                        {statusLeads.slice(0, 6).map((lead) => (
+                          <div key={lead.id} className="grid gap-3 px-4 py-3 transition hover:bg-white dark:hover:bg-zinc-950 sm:grid-cols-[1fr_150px_100px_172px] sm:items-center">
+                            <div>
+                              <p className="font-medium">{lead.businessName}</p>
+                              <p className="mt-1 text-xs text-zinc-500">{lead.category ?? "Uncategorized"} · {[lead.city, lead.state].filter(Boolean).join(", ") || "No location"}</p>
+                            </div>
+                            <p className="text-sm text-zinc-500">{lead.phone ?? "No phone"}</p>
+                            <p className="text-sm text-zinc-500">{lead.googleRating ?? "--"} rating</p>
+                            <div className="flex gap-2 sm:justify-end">
+                              <Link href={`/clients/${lead.id}`}><Button variant="outline" size="sm">View</Button></Link>
+                              <Button variant="danger" size="sm" onClick={() => deleteLead(lead.id)}>
+                                <Trash2 className="h-3.5 w-3.5" /> Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-sm text-zinc-500">No leads in this status yet.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        )}
+
+        {notifs && notifs.deliveryDue.length === 0 && notifs.meetings.length === 0 && (
+          <div className="crm-card flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-[var(--muted)]">
+            <Clock className="h-4 w-4 shrink-0" />
+            No delivery deadlines or meetings need attention in the next 7 days.
+          </div>
+        )}
+        </div>
+
         {/* ── Right column: delivery + meetings ── */}
-        <div className="space-y-4">
+        <div className="space-y-4 xl:sticky xl:top-32">
           {isManager && <OwnerTimeClock />}
 
           {notifs && notifs.workRequests.length > 0 && (
@@ -266,167 +429,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Team call progress (managers only) ── */}
-      {isManager && (
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-zinc-500" />
-              <div>
-                <CardTitle>Team call progress</CardTitle>
-                <p className="text-sm text-zinc-500">Who&apos;s assigned what, and how many they&apos;ve worked through this week.</p>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!team ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />)}
-            </div>
-          ) : team.filter((m) => m.assigned > 0 || m.callsThisWeek > 0).length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-center text-zinc-400">
-              <Users className="h-8 w-8 opacity-30" />
-              <p className="text-sm">No leads assigned yet.</p>
-              <p className="text-xs">Assign leads to teammates from the CRM or a lead&apos;s page to track their calling.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {team.filter((m) => m.assigned > 0 || m.callsThisWeek > 0).map((m) => (
-                <div key={m.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-[var(--accent-foreground)]">
-                        {m.name.split(/\s+/).slice(0, 2).map((p: string) => p[0]).join("").toUpperCase()}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold">{m.name}</p>
-                        <p className="text-[11px] uppercase tracking-wide text-zinc-400">{m.role}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="flex items-center gap-1.5 text-zinc-500"><PhoneCall className="h-3.5 w-3.5" />{m.callsThisWeek} this week</span>
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{m.contacted}/{m.assigned} done</span>
-                    </div>
-                  </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
-                    <div
-                      className={cn("h-2 rounded-full transition-all", m.remaining === 0 ? "bg-emerald-500" : "bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]")}
-                      style={{ width: `${m.progress}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    {m.remaining === 0
-                      ? m.assigned > 0 ? "All assigned leads have been called — nice work." : "No leads assigned."
-                      : `${m.remaining} still to call.`}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      )}
-
-      {/* ── Pipeline by status (sales only) ── */}
-      {!isDev && (
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <CardTitle>Pipeline by status</CardTitle>
-              <p className="text-sm text-zinc-500">Click a stage to see the leads sitting there.</p>
-            </div>
-            {openStatus && <Badge value={openStatus} />}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!stats ? (
-            <div className="h-48 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-900" />
-          ) : (
-            <div className="space-y-5">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {stats.pipeline.map((item: any) => {
-                  const active = openStatus === item.status;
-                  const detail = statusDetails[item.status];
-                  return (
-                    <button
-                      key={item.status}
-                      type="button"
-                      onClick={() => setOpenStatus(active ? "" : item.status)}
-                      className={cn(
-                        "rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:hover:bg-white/10",
-                        active && "border-[var(--accent)] bg-zinc-50 ring-2 ring-[var(--accent)]/25 dark:bg-zinc-900/60",
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <Badge value={item.status} />
-                        <span className="flex items-center gap-2 text-2xl font-semibold">
-                          {item.count}
-                          <ChevronDown className={cn("h-4 w-4 text-zinc-400 transition", active && "rotate-180 text-[var(--accent)]")} />
-                        </span>
-                      </div>
-                      <div className="mt-4 h-1.5 rounded-full bg-zinc-900/10 dark:bg-white/10">
-                        <div className="h-1.5 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]" style={{ width: `${Math.min(100, item.count * 24)}%` }} />
-                      </div>
-                      <p className="mt-3 min-h-10 text-xs leading-5 text-zinc-500">{detail?.description}</p>
-                      <p className="mt-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">{detail?.next}</p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {openStatus && (
-                <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-strong)]">
-                  <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-                    <div>
-                      <p className="font-medium">Leads in this stage</p>
-                      <p className="text-xs text-zinc-500">{statusLeads.length} businesses currently marked here</p>
-                    </div>
-                    <Link href={`/clients?status=${openStatus}`}>
-                      <Button variant="outline" size="sm">Open CRM</Button>
-                    </Link>
-                  </div>
-                  {loadingLeads ? (
-                    <div className="p-4"><div className="h-28 animate-pulse rounded-md bg-white dark:bg-zinc-950" /></div>
-                  ) : statusLeads.length ? (
-                    <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                      {statusLeads.slice(0, 6).map((lead) => (
-                        <div key={lead.id} className="grid gap-3 px-4 py-3 transition hover:bg-white dark:hover:bg-zinc-950 sm:grid-cols-[1fr_150px_100px_172px] sm:items-center">
-                          <div>
-                            <p className="font-medium">{lead.businessName}</p>
-                            <p className="mt-1 text-xs text-zinc-500">{lead.category ?? "Uncategorized"} · {[lead.city, lead.state].filter(Boolean).join(", ") || "No location"}</p>
-                          </div>
-                          <p className="text-sm text-zinc-500">{lead.phone ?? "No phone"}</p>
-                          <p className="text-sm text-zinc-500">{lead.googleRating ?? "--"} rating</p>
-                          <div className="flex gap-2 sm:justify-end">
-                            <Link href={`/clients/${lead.id}`}><Button variant="outline" size="sm">View</Button></Link>
-                            <Button variant="danger" size="sm" onClick={() => deleteLead(lead.id)}>
-                              <Trash2 className="h-3.5 w-3.5" /> Delete
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-8 text-center text-sm text-zinc-500">No leads in this status yet.</div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      )}
-
-      {/* ── Clock widget ── */}
-      {notifs && notifs.deliveryDue.length === 0 && notifs.meetings.length === 0 && (
-        <div className="crm-card flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-[var(--muted)]">
-          <Clock className="h-4 w-4 shrink-0" />
-          No delivery deadlines or meetings need attention in the next 7 days.
-        </div>
-      )}
     </div>
   );
 }

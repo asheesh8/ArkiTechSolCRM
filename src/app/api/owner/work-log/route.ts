@@ -67,6 +67,12 @@ function parseIsoDate(value: unknown) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function normalizeManualRange(startedAt: Date, endedAt: Date) {
+  const normalizedEndedAt = new Date(endedAt);
+  if (normalizedEndedAt < startedAt) normalizedEndedAt.setDate(normalizedEndedAt.getDate() + 1);
+  return { startedAt, endedAt: normalizedEndedAt };
+}
+
 function buildInsights(ownerUsers: Array<{ id: string; name: string; email: string }>, entries: EntryWithUser[]) {
   const todayStart = startOfDay();
   const weekStart = startOfWeek();
@@ -263,11 +269,12 @@ export async function POST(request: Request) {
     }
 
     if (action === "manual-entry") {
-      const startedAt = parseIsoDate(body.startedAt);
-      const endedAt = parseIsoDate(body.endedAt);
+      const rawStartedAt = parseIsoDate(body.startedAt);
+      const rawEndedAt = parseIsoDate(body.endedAt);
       const summary = cleanSummary(body.workSummary);
 
-      if (!startedAt || !endedAt) return NextResponse.json({ error: "Start and end times are required" }, { status: 400 });
+      if (!rawStartedAt || !rawEndedAt) return NextResponse.json({ error: "Start and end times are required" }, { status: 400 });
+      const { startedAt, endedAt } = normalizeManualRange(rawStartedAt, rawEndedAt);
       if (startedAt >= endedAt) return NextResponse.json({ error: "End time must be after start time" }, { status: 400 });
       if (endedAt.getTime() > Date.now() + 5 * 60 * 1000) return NextResponse.json({ error: "Manual work cannot end in the future" }, { status: 400 });
       if (durationSeconds({ startedAt, endedAt }) > 24 * 60 * 60) return NextResponse.json({ error: "Manual work entries must be 24 hours or less" }, { status: 400 });

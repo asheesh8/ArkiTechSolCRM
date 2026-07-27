@@ -126,6 +126,31 @@ function localDateTime(date: string, time: string) {
   return Number.isNaN(value.getTime()) ? null : value;
 }
 
+function resolveManualRange(form: ManualForm) {
+  const startedAt = localDateTime(form.date, form.startTime);
+  const rawEndedAt = localDateTime(form.date, form.endTime);
+  if (!startedAt || !rawEndedAt) return { startedAt, endedAt: rawEndedAt, overnight: false };
+
+  const endedAt = new Date(rawEndedAt);
+  const overnight = endedAt < startedAt;
+  if (overnight) endedAt.setDate(endedAt.getDate() + 1);
+
+  return { startedAt, endedAt, overnight };
+}
+
+function manualFormFromFormData(formData: FormData): ManualForm {
+  return {
+    date: String(formData.get("manualDate") ?? ""),
+    startTime: String(formData.get("startTime") ?? ""),
+    endTime: String(formData.get("endTime") ?? ""),
+    workSummary: String(formData.get("workSummary") ?? ""),
+  };
+}
+
+function formatShortDate(value: Date) {
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(value);
+}
+
 async function readError(response: Response) {
   const body = await response.json().catch(() => null);
   return body?.error ?? "Something went wrong.";
@@ -182,6 +207,7 @@ export function OwnerTimeClock() {
   const activeEntry = data?.activeEntry ?? null;
   const activeEntryId = activeEntry?.id ?? "";
   const insights = data?.insights;
+  const manualRange = useMemo(() => resolveManualRange(manualForm), [manualForm]);
 
   useEffect(() => {
     if (!activeEntryId) return;
@@ -245,8 +271,10 @@ export function OwnerTimeClock() {
 
   async function postManualEntry(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const startedAt = localDateTime(manualForm.date, manualForm.startTime);
-    const endedAt = localDateTime(manualForm.date, manualForm.endTime);
+    const submittedForm = manualFormFromFormData(new FormData(event.currentTarget));
+    setManualForm(submittedForm);
+
+    const { startedAt, endedAt } = resolveManualRange(submittedForm);
     if (!startedAt || !endedAt) {
       setError("Start and end times are required.");
       return;
@@ -263,7 +291,7 @@ export function OwnerTimeClock() {
           action: "manual-entry",
           startedAt: startedAt.toISOString(),
           endedAt: endedAt.toISOString(),
-          workSummary: manualForm.workSummary,
+          workSummary: submittedForm.workSummary,
         }),
       });
       if (!response.ok) throw new Error(await readError(response));
@@ -459,6 +487,7 @@ export function OwnerTimeClock() {
                     <Label htmlFor="manual-work-date">Date</Label>
                     <Input
                       id="manual-work-date"
+                      name="manualDate"
                       type="date"
                       value={manualForm.date}
                       onChange={(event) => setManualForm((form) => ({ ...form, date: event.target.value }))}
@@ -469,6 +498,7 @@ export function OwnerTimeClock() {
                       <Label htmlFor="manual-work-start">Start</Label>
                       <Input
                         id="manual-work-start"
+                        name="startTime"
                         type="time"
                         value={manualForm.startTime}
                         onChange={(event) => setManualForm((form) => ({ ...form, startTime: event.target.value }))}
@@ -478,16 +508,23 @@ export function OwnerTimeClock() {
                       <Label htmlFor="manual-work-end">End</Label>
                       <Input
                         id="manual-work-end"
+                        name="endTime"
                         type="time"
                         value={manualForm.endTime}
                         onChange={(event) => setManualForm((form) => ({ ...form, endTime: event.target.value }))}
                       />
                     </div>
                   </div>
+                  {manualRange.overnight && manualRange.endedAt && (
+                    <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-medium text-cyan-800 dark:border-cyan-900 dark:bg-cyan-950/30 dark:text-cyan-200">
+                      Ends next day, {formatShortDate(manualRange.endedAt)}.
+                    </div>
+                  )}
                   <div className="space-y-1.5">
                     <Label htmlFor="manual-work-summary">Work completed</Label>
                     <Textarea
                       id="manual-work-summary"
+                      name="workSummary"
                       value={manualForm.workSummary}
                       onChange={(event) => setManualForm((form) => ({ ...form, workSummary: event.target.value }))}
                       placeholder="What did you get done?"

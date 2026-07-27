@@ -189,7 +189,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
 
       <div className="lg:pl-72">
         <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-2xl">
-          <div className="mx-auto flex min-h-20 max-w-[1500px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="flex min-h-20 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 2xl:px-10">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-xs font-semibold text-[var(--muted)]">
                 <span>{activeSection?.label ?? "Workspace"}</span>
@@ -207,7 +207,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           </div>
           {user.role !== "DEV" && (
             <div className="overflow-hidden border-t border-[var(--border)]">
-              <div className="mx-auto max-w-[1500px]">
+              <div className="w-full">
                 <StatsTicker />
               </div>
             </div>
@@ -233,7 +233,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
             })}
           </nav>
         </header>
-        <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+        <main className="w-full px-4 py-5 sm:px-6 lg:px-8 2xl:px-10">
           <div>{children}</div>
         </main>
       </div>
