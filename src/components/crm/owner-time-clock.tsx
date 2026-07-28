@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BarChart3, CalendarPlus, Clock3, FileCheck2, Flame, Gauge, LogIn, LogOut, NotebookPen, Plus, Save, TimerReset, UsersRound, X } from "lucide-react";
+import { BarChart3, CalendarPlus, Clock3, FileCheck2, Flame, Gauge, LogIn, LogOut, NotebookPen, Pencil, Plus, Save, TimerReset, UsersRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/field";
@@ -60,13 +60,14 @@ type WorkLogInsights = {
 };
 
 type WorkLogResponse = {
+  viewerId: string;
   activeEntry: WorkLogEntry | null;
   recentEntries: WorkLogEntry[];
   todayByUser: Record<string, TodayOwnerTotal>;
   insights: WorkLogInsights;
 };
 
-type BusyState = "clock-in" | "clock-out" | "manual" | "save" | null;
+type BusyState = "clock-in" | "clock-out" | "manual" | "save" | "edit" | null;
 
 type ManualForm = {
   date: string;
@@ -117,6 +118,17 @@ function defaultManualForm(): ManualForm {
     startTime: inputTime(start),
     endTime: inputTime(end),
     workSummary: "",
+  };
+}
+
+function formFromEntry(entry: WorkLogEntry): ManualForm {
+  const start = new Date(entry.startedAt);
+  const end = entry.endedAt ? new Date(entry.endedAt) : new Date();
+  return {
+    date: inputDate(start),
+    startTime: inputTime(start),
+    endTime: inputTime(end),
+    workSummary: entry.workSummary,
   };
 }
 
@@ -174,6 +186,8 @@ export function OwnerTimeClock() {
   const [summary, setSummary] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
   const [manualForm, setManualForm] = useState<ManualForm>({ date: "", startTime: "", endTime: "", workSummary: "" });
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<ManualForm>({ date: "", startTime: "", endTime: "", workSummary: "" });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<BusyState>(null);
   const [error, setError] = useState("");
@@ -208,6 +222,7 @@ export function OwnerTimeClock() {
   const activeEntryId = activeEntry?.id ?? "";
   const insights = data?.insights;
   const manualRange = useMemo(() => resolveManualRange(manualForm), [manualForm]);
+  const editRange = useMemo(() => resolveManualRange(editForm), [editForm]);
 
   useEffect(() => {
     if (!activeEntryId) return;
@@ -264,6 +279,55 @@ export function OwnerTimeClock() {
       setSavedMessage(`Saved ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the work note.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function startEditingEntry(entry: WorkLogEntry) {
+    setManualOpen(false);
+    setEditingEntryId(entry.id);
+    setEditForm(formFromEntry(entry));
+    setError("");
+    setSavedMessage("");
+  }
+
+  function cancelEditingEntry() {
+    setEditingEntryId(null);
+    setEditForm({ date: "", startTime: "", endTime: "", workSummary: "" });
+  }
+
+  async function saveEditedEntry(event: React.FormEvent<HTMLFormElement>, entryId: string) {
+    event.preventDefault();
+    const submittedForm = manualFormFromFormData(new FormData(event.currentTarget));
+    setEditForm(submittedForm);
+
+    const { startedAt, endedAt } = resolveManualRange(submittedForm);
+    if (!startedAt || !endedAt) {
+      setError("Start and end times are required.");
+      return;
+    }
+
+    setBusy("edit");
+    setError("");
+    setSavedMessage("");
+    try {
+      const response = await fetch("/api/owner/work-log", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: entryId,
+          startedAt: startedAt.toISOString(),
+          endedAt: endedAt.toISOString(),
+          workSummary: submittedForm.workSummary,
+        }),
+      });
+      if (!response.ok) throw new Error(await readError(response));
+      await loadEntries(true);
+      setEditingEntryId(null);
+      setSavedMessage("Updated work entry.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update the work entry.");
     } finally {
       setBusy(null);
     }
@@ -559,29 +623,114 @@ export function OwnerTimeClock() {
               </div>
               {data?.recentEntries.length ? (
                 <div className="space-y-2">
-                  {data.recentEntries.slice(0, 5).map((entry) => (
-                    <div key={entry.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-3">
-                      <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">{entry.user.name}</p>
-                          <p className="mt-0.5 text-xs text-zinc-500">{formatClockTime(entry.startedAt)}</p>
+                  {data.recentEntries.slice(0, 5).map((entry) => {
+                    const isEditing = editingEntryId === entry.id;
+                    const canEdit = entry.user.id === data.viewerId;
+
+                    return (
+                      <div key={entry.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+                        <div className="flex min-w-0 items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold">{entry.user.name}</p>
+                            <p className="mt-0.5 text-xs text-zinc-500">{formatClockTime(entry.startedAt)}</p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            {canEdit && (
+                              <Button
+                                type="button"
+                                variant={isEditing ? "secondary" : "ghost"}
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={Boolean(busy)}
+                                onClick={() => isEditing ? cancelEditingEntry() : startEditingEntry(entry)}
+                                aria-label={isEditing ? "Close edit punch" : "Edit punch"}
+                                title={isEditing ? "Close edit punch" : "Edit punch"}
+                              >
+                                {isEditing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+                              </Button>
+                            )}
+                            <span
+                              className={cn(
+                                "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
+                                entry.endedAt
+                                  ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300"
+                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+                              )}
+                            >
+                              {entry.endedAt ? formatDuration(entry.durationSeconds) : "Live"}
+                            </span>
+                          </div>
                         </div>
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
-                            entry.endedAt
-                              ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300"
-                              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-                          )}
-                        >
-                          {entry.endedAt ? formatDuration(entry.durationSeconds) : "Live"}
-                        </span>
+
+                        {isEditing ? (
+                          <form className="mt-3 space-y-3 border-t border-[var(--border)] pt-3" onSubmit={(event) => void saveEditedEntry(event, entry.id)}>
+                            <div className="space-y-1.5">
+                              <Label htmlFor={`edit-work-date-${entry.id}`}>Date</Label>
+                              <Input
+                                id={`edit-work-date-${entry.id}`}
+                                name="manualDate"
+                                type="date"
+                                value={editForm.date}
+                                onChange={(event) => setEditForm((form) => ({ ...form, date: event.target.value }))}
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`edit-work-start-${entry.id}`}>Start</Label>
+                                <Input
+                                  id={`edit-work-start-${entry.id}`}
+                                  name="startTime"
+                                  type="time"
+                                  value={editForm.startTime}
+                                  onChange={(event) => setEditForm((form) => ({ ...form, startTime: event.target.value }))}
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label htmlFor={`edit-work-end-${entry.id}`}>End</Label>
+                                <Input
+                                  id={`edit-work-end-${entry.id}`}
+                                  name="endTime"
+                                  type="time"
+                                  value={editForm.endTime}
+                                  onChange={(event) => setEditForm((form) => ({ ...form, endTime: event.target.value }))}
+                                />
+                              </div>
+                            </div>
+                            {editRange.overnight && editRange.endedAt && (
+                              <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-medium text-cyan-800 dark:border-cyan-900 dark:bg-cyan-950/30 dark:text-cyan-200">
+                                Ends next day, {formatShortDate(editRange.endedAt)}.
+                              </div>
+                            )}
+                            <div className="space-y-1.5">
+                              <Label htmlFor={`edit-work-summary-${entry.id}`}>Work completed</Label>
+                              <Textarea
+                                id={`edit-work-summary-${entry.id}`}
+                                name="workSummary"
+                                value={editForm.workSummary}
+                                onChange={(event) => setEditForm((form) => ({ ...form, workSummary: event.target.value }))}
+                                placeholder="What did you get done?"
+                                className="min-h-24"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                              <Button type="button" variant="outline" className="w-full sm:flex-1" disabled={Boolean(busy)} onClick={cancelEditingEntry}>
+                                <X className="h-4 w-4" />
+                                Cancel
+                              </Button>
+                              <Button type="submit" className="w-full sm:flex-1" disabled={Boolean(busy)}>
+                                <Save className="h-4 w-4" />
+                                {busy === "edit" ? "Saving..." : "Save punch"}
+                              </Button>
+                            </div>
+                          </form>
+                        ) : (
+                          <p className="mt-2 line-clamp-3 break-words text-xs leading-5 text-zinc-500">
+                            {entry.workSummary || "No note added yet."}
+                          </p>
+                        )}
                       </div>
-                      <p className="mt-2 line-clamp-3 break-words text-xs leading-5 text-zinc-500">
-                        {entry.workSummary || "No note added yet."}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-[var(--border)] px-3 py-5 text-center text-xs text-zinc-500">

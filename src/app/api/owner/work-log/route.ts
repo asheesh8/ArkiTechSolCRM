@@ -217,6 +217,7 @@ export async function GET() {
     const insights = buildInsights(ownerUsers, insightEntries);
 
     return NextResponse.json({
+      viewerId: user.id,
       activeEntry: activeEntry ? serializeEntry(activeEntry) : null,
       recentEntries: recentEntries.map(serializeEntry),
       todayByUser: insights.todayByUser,
@@ -319,9 +320,36 @@ export async function PATCH(request: Request) {
     if (existing.userId !== user.id) return NextResponse.json({ error: "You can only edit your own work log" }, { status: 403 });
 
     const summary = cleanSummary(body.workSummary);
+    const data: Prisma.OwnerWorkLogUpdateInput = { workSummary: summary || null };
+
+    if (body.startedAt !== undefined || body.endedAt !== undefined) {
+      const rawStartedAt = parseIsoDate(body.startedAt);
+      const rawEndedAt = parseIsoDate(body.endedAt);
+      if (!rawStartedAt || !rawEndedAt) return NextResponse.json({ error: "Start and end times are required" }, { status: 400 });
+
+      const { startedAt, endedAt } = normalizeManualRange(rawStartedAt, rawEndedAt);
+      if (startedAt >= endedAt) return NextResponse.json({ error: "End time must be after start time" }, { status: 400 });
+      if (endedAt.getTime() > Date.now() + 5 * 60 * 1000) return NextResponse.json({ error: "Work log cannot end in the future" }, { status: 400 });
+      if (durationSeconds({ startedAt, endedAt }) > 24 * 60 * 60) return NextResponse.json({ error: "Work log entries must be 24 hours or less" }, { status: 400 });
+
+      const overlapping = await prisma.ownerWorkLog.findFirst({
+        where: {
+          id: { not: id },
+          userId: user.id,
+          startedAt: { lt: endedAt },
+          OR: [{ endedAt: null }, { endedAt: { gt: startedAt } }],
+        },
+        select: { id: true },
+      });
+      if (overlapping) return NextResponse.json({ error: "That overlaps with another work log" }, { status: 400 });
+
+      data.startedAt = startedAt;
+      data.endedAt = endedAt;
+    }
+
     const updated = await prisma.ownerWorkLog.update({
       where: { id },
-      data: { workSummary: summary || null },
+      data,
       include: entryInclude,
     });
 
