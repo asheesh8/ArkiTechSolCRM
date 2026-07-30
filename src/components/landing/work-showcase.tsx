@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ExternalLink, Globe, AlertTriangle } from "lucide-react";
 
 // ── Projects ─────────────────────────────────────────────────────────────────
 
 const PROJECTS = [
+  { id: "ohara",    name: "O'Hara & Gercke",        short: "O'Hara",         url: "https://oharagercke.vercel.app",                  color: "#c26a3a", dot: "bg-orange-600" },
+  { id: "maple",    name: "Maple Glow Cleaning",    short: "Maple Glow",     url: "https://maple-glow-cleaning-llc.vercel.app",     color: "#d4a92f", dot: "bg-yellow-500" },
+  { id: "mollie",   name: "Mollie Bachner Dressage", short: "Mollie",         url: "https://mollie-bachner-dressage-llc.vercel.app", color: "#7f67a8", dot: "bg-violet-500" },
+  { id: "jeffrey",  name: "Jeffrey Danaher Property Management", short: "Jeffrey", url: "https://jeffrey-danaher-property-mgmt.vercel.app", color: "#f15a24", dot: "bg-orange-500" },
+  { id: "davis",    name: "Davis Steadman Percy & Sluka", short: "Davis Law", url: "https://davis-steadman-percy-sluka-llc.vercel.app", color: "#bf8a3a", dot: "bg-amber-600" },
   { id: "bb",       name: "BB Open Box",          short: "BB Open Box",    url: "https://bb-openbox.vercel.app",                    color: "#3b82f6", dot: "bg-blue-500" },
   { id: "crm",      name: "ArkiTech CRM",          short: "ArkiTech CRM",   url: "https://arkitech-sol.vercel.app",                   color: "#a855f7", dot: "bg-purple-500" },
   { id: "darkroom", name: "Jon's Darkroom",         short: "Jon's Darkroom", url: "https://jon-darkroom.vercel.app",                   color: "#a16207", dot: "bg-yellow-700" },
@@ -83,7 +88,7 @@ function ParticleField() {
 
 // ── macOS Window ──────────────────────────────────────────────────────────────
 
-function MacWindow({ project, onLoad }: { project: Project; onLoad: () => void }) {
+function MacWindow({ project, onLoad }: { project: Project; onLoad?: () => void }) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -101,7 +106,7 @@ function MacWindow({ project, onLoad }: { project: Project; onLoad: () => void }
 
   function handleLoad() {
     setLoaded(true);
-    onLoad();
+    onLoad?.();
     // Try to detect X-Frame-Options block (works only same-origin, so we rely on timeout above)
   }
 
@@ -259,7 +264,6 @@ const headlineWords = ["Every", "pixel.", "Every", "client.", "Shipped."];
 export function WorkShowcase() {
   const [activeId, setActiveId] = useState<typeof PROJECTS[number]["id"]>(PROJECTS[0].id);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [windowLoaded, setWindowLoaded] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
@@ -270,7 +274,6 @@ export function WorkShowcase() {
     const nextIdx = PROJECTS.findIndex((p) => p.id === id);
     setDirection(nextIdx > currentIdx ? 1 : -1);
     setActiveId(id);
-    setWindowLoaded(false);
   }
 
   const slideVariants = {
@@ -320,7 +323,7 @@ export function WorkShowcase() {
             transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
             className="mt-4 text-lg text-white/40"
           >
-            A few of the things we've built.
+            A few of the things we have built.
           </motion.p>
         </div>
 
@@ -358,10 +361,7 @@ export function WorkShowcase() {
                     transition={{ duration: 0.35, ease: [0.32, 0, 0.67, 0] }}
                     className="absolute inset-0"
                   >
-                    <MacWindow
-                      project={activeProject}
-                      onLoad={() => setWindowLoaded(true)}
-                    />
+                    <MacWindow project={activeProject} />
                   </motion.div>
                 </AnimatePresence>
               </div>
