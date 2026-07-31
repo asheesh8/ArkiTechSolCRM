@@ -49,7 +49,8 @@ function NotifRow({ href, primary, secondary, tag, tagColor }: { href: string; p
   return (
     <Link href={href} className="group flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 transition hover:bg-white dark:hover:bg-white/10">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{primary}</p>
+        {/* A single truncated line loses most of a request title on a phone. */}
+        <p className="line-clamp-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 lg:truncate">{primary}</p>
         <p className="mt-0.5 truncate text-xs text-zinc-500">{secondary}</p>
       </div>
       {tag && <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${tagColor}`}>{tag}</span>}

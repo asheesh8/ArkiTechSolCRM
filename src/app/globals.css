@@ -117,6 +117,16 @@ a {
   }
 }
 
+/* Grid items default to `min-width: auto`, so a one-column mobile grid is sized
+   by its widest child rather than by the viewport — and the shell's
+   overflow-x-hidden then clips whatever spills. Multi-column layouts declare
+   `minmax(0, 1fr)` at their own breakpoint but nothing covers the stacked case.
+   `:where()` keeps this at zero specificity, so an explicit min-w-* utility on
+   a child still wins. */
+.crm-app-background :where(.grid) > * {
+  min-width: 0;
+}
+
 /* Touch rails get momentum scrolling and snap to the nearest item. */
 .crm-rail {
   overscroll-behavior-x: contain;
