@@ -118,7 +118,7 @@ export default function DashboardPage() {
       />
 
       {!isDev && (
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <MetricTile icon={Users} label="Total leads" value={metric(stats?.totalLeads)} detail="All prospects and clients in the CRM." tone="cyan" />
           <MetricTile icon={PhoneCall} label="Calls today" value={metric(stats?.callsMadeToday)} detail="Fresh activity logged by the team." tone="emerald" />
           <MetricTile icon={Target} label="Follow-ups due" value={metric(stats?.followUpsDue)} detail="Warm opportunities waiting for the next touch." tone="amber" />
@@ -342,9 +342,9 @@ export default function DashboardPage() {
                             </div>
                             <p className="text-sm text-zinc-500">{lead.phone ?? "No phone"}</p>
                             <p className="text-sm text-zinc-500">{lead.googleRating ?? "--"} rating</p>
-                            <div className="flex gap-2 sm:justify-end">
-                              <Link href={`/clients/${lead.id}`}><Button variant="outline" size="sm">View</Button></Link>
-                              <Button variant="danger" size="sm" onClick={() => deleteLead(lead.id)}>
+                            <div className="flex gap-2 [&>*]:flex-1 sm:justify-end sm:[&>*]:flex-none">
+                              <Link href={`/clients/${lead.id}`} className="contents"><Button variant="outline" size="sm" className="h-11 w-full sm:h-8 sm:w-auto">View</Button></Link>
+                              <Button variant="danger" size="sm" className="h-11 sm:h-8" onClick={() => deleteLead(lead.id)}>
                                 <Trash2 className="h-3.5 w-3.5" /> Delete
                               </Button>
                             </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import "./globals.css";
@@ -16,6 +16,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ArkiTech Solutions",
   description: "Websites, platforms, automations, and digital systems for growing teams and established organizations.",
+};
+
+// viewport-fit=cover lets the CRM shell paint under the notch and home
+// indicator; the safe-area utilities in globals.css pad it back out.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f8fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#080b10" },
+  ],
 };
 
 export default function RootLayout({

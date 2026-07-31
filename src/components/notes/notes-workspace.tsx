@@ -540,7 +540,7 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string; rol
           onDrop={onDrop}
           onDragEnd={onDragEnd}
           className={cn(
-            "group/row relative flex h-8 cursor-grab items-center gap-1 rounded-lg pr-1.5 text-sm transition active:cursor-grabbing",
+            "group/row relative flex h-11 cursor-grab items-center gap-1 rounded-lg pr-1.5 text-sm transition active:cursor-grabbing lg:h-8",
             isSelected ? "bg-[var(--accent)]/12 font-medium text-[var(--accent)]" : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800/70",
             dropPosition === "inside" && "bg-[var(--accent)]/14 ring-1 ring-[var(--accent)]/40",
             isDragging && "opacity-45",
@@ -569,10 +569,10 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string; rol
               {page.title || "Untitled"}
             </button>
           )}
-          <button type="button" title="Add sub-page" onClick={() => createPage(cab.id, page.id)} className="hidden h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 group-hover/row:flex dark:hover:bg-zinc-700 dark:hover:text-zinc-200">
+          <button type="button" title="Add sub-page" onClick={() => createPage(cab.id, page.id)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 lg:hidden lg:h-6 lg:w-6 lg:group-hover/row:flex">
             <Plus className="h-3.5 w-3.5" />
           </button>
-          <button type="button" title="Delete page" onClick={() => deletePage(cab.id, page.id)} className="hidden h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-red-100 hover:text-red-600 group-hover/row:flex dark:hover:bg-red-950 dark:hover:text-red-400">
+          <button type="button" title="Delete page" onClick={() => deletePage(cab.id, page.id)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400 lg:hidden lg:h-6 lg:w-6 lg:group-hover/row:flex">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -599,7 +599,7 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string; rol
           onDrop={onDrop}
           onDragEnd={onDragEnd}
           className={cn(
-            "group/cab relative flex h-9 cursor-grab items-center gap-1.5 rounded-lg px-1.5 transition active:cursor-grabbing hover:bg-zinc-100 dark:hover:bg-zinc-800/70",
+            "group/cab relative flex h-12 cursor-grab items-center gap-1.5 rounded-lg px-1.5 transition active:cursor-grabbing hover:bg-zinc-100 dark:hover:bg-zinc-800/70 lg:h-9",
             cabinetDropActive && "bg-[var(--accent)]/12 ring-1 ring-[var(--accent)]/40",
             isDraggingCabinet && "opacity-45",
           )}
@@ -627,16 +627,16 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string; rol
               <Users className="h-3 w-3" />{shareCount}
             </span>
           )}
-          <button type="button" title="New page" onClick={() => createPage(cab.id)} className="hidden h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 group-hover/cab:flex dark:hover:bg-zinc-700 dark:hover:text-zinc-200">
+          <button type="button" title="New page" onClick={() => createPage(cab.id)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 lg:hidden lg:h-6 lg:w-6 lg:group-hover/cab:flex">
             <Plus className="h-4 w-4" />
           </button>
           {isOwner && (
-            <button type="button" title="Share cabinet" onClick={() => openShare(cab.id)} className={cn("h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200", shareCount > 0 ? "flex text-[var(--accent)]" : "hidden group-hover/cab:flex")}>
+            <button type="button" title="Share cabinet" onClick={() => openShare(cab.id)} className={cn("h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 lg:h-6 lg:w-6", shareCount > 0 ? "flex text-[var(--accent)]" : "flex lg:hidden lg:group-hover/cab:flex")}>
               <Share2 className="h-4 w-4" />
             </button>
           )}
           {canManage && (
-            <button type="button" title="Cabinet options" onClick={() => setMenuFor(menuFor === cab.id ? null : cab.id)} className={cn("h-6 w-6 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200", menuFor === cab.id ? "flex" : "hidden group-hover/cab:flex")}>
+            <button type="button" title="Cabinet options" onClick={() => setMenuFor(menuFor === cab.id ? null : cab.id)} className={cn("h-8 w-8 shrink-0 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 lg:h-6 lg:w-6", menuFor === cab.id ? "flex" : "flex lg:hidden lg:group-hover/cab:flex")}>
               <MoreHorizontal className="h-4 w-4" />
             </button>
           )}
@@ -720,9 +720,10 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string; rol
   }
 
   return (
-    <div className="flex h-[calc(100vh-10.5rem)] min-h-[560px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      {/* ── Filing-cabinet sidebar ── */}
-      <aside className={cn("flex w-72 shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900/40", treeOpen ? "flex" : "hidden lg:flex")}>
+    <div className="flex h-[calc(100dvh-15rem)] min-h-[440px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 lg:h-[calc(100vh-10.5rem)] lg:min-h-[560px]">
+      {/* ── Filing-cabinet sidebar. Below lg the tree and the editor swap places
+          rather than sharing a 390px screen between a 288px rail and a sliver. ── */}
+      <aside className={cn("w-full shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900/40 lg:w-72", treeOpen ? "flex" : "hidden lg:flex")}>
         <div className="flex items-center gap-2 px-3 pt-3">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
@@ -764,7 +765,7 @@ export function NotesWorkspace({ user }: { user: { id: string; name: string; rol
       </aside>
 
       {/* ── Editor pane ── */}
-      <section className="relative flex min-w-0 flex-1 flex-col overflow-y-auto">
+      <section className={cn("relative min-w-0 flex-1 flex-col overflow-y-auto lg:flex", treeOpen ? "hidden lg:flex" : "flex")}>
         {!treeOpen && (
           <button type="button" onClick={() => setTreeOpen(true)} className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 lg:hidden"><PanelLeftOpen className="h-4 w-4" /></button>
         )}

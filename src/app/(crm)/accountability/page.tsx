@@ -77,7 +77,7 @@ export default async function AccountabilityPage() {
         </p>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">Follow-ups</p><p className="mt-1 text-2xl font-semibold">{followUps.length}</p><p className="mt-1 text-xs text-red-500">{overdueFollowUps} overdue</p></CardContent></Card>
         <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">Meetings</p><p className="mt-1 text-2xl font-semibold">{meetings.length}</p><p className="mt-1 text-xs text-zinc-500">Booked pipeline</p></CardContent></Card>
         <Card><CardContent className="pt-5"><p className="text-xs font-medium uppercase text-zinc-400">Unsigned</p><p className="mt-1 text-2xl font-semibold">{contracts.length}</p><p className="mt-1 text-xs text-zinc-500">Contracts sent</p></CardContent></Card>

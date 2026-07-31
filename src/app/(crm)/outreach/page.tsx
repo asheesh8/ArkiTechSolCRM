@@ -183,7 +183,7 @@ export default function OutreachPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="sticky top-16 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-3">
+        <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--accent)] bg-[var(--accent)]/10 px-3 py-3 backdrop-blur sm:px-4 lg:top-16">
           <p className="text-sm font-medium">
             {selected.size} selected · {selectedRows.filter(({ check }) => check.textable).length} textable
           </p>
@@ -268,13 +268,13 @@ export default function OutreachPage() {
                   </div>
 
                   {check.textable && (
-                    <div className="flex shrink-0 items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => copyMessage(lead)}>
+                    <div className="flex shrink-0 items-center gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
+                      <Button variant="outline" size="sm" onClick={() => copyMessage(lead)} className="h-11 sm:h-9">
                         {copiedId === lead.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                         Copy
                       </Button>
-                      <a href={smsLink(check.e164!, msg)} onClick={() => markSent(lead.id)}>
-                        <Button size="sm">
+                      <a href={smsLink(check.e164!, msg)} onClick={() => markSent(lead.id)} className="contents">
+                        <Button size="sm" className="h-11 w-full sm:h-9 sm:w-auto">
                           <Send className="h-3.5 w-3.5" /> Text
                         </Button>
                       </a>

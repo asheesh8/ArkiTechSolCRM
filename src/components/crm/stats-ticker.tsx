@@ -28,7 +28,7 @@ export function StatsTicker() {
   }, []);
 
   return (
-    <div className="flex w-full max-w-full items-center gap-2 overflow-x-auto px-4 py-2 sm:px-6 lg:px-8">
+    <div className="crm-rail scrollbar-none flex w-full max-w-full items-center gap-2 overflow-x-auto px-3 py-2 sm:px-6 lg:px-8">
       {PILLS.map((pill) => {
         const value = stats ? stats[pill.key] : null;
         const Icon = pill.icon;
@@ -36,7 +36,7 @@ export function StatsTicker() {
           <Link
             key={pill.key}
             href={pill.href}
-            className="group flex h-10 shrink-0 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 transition hover:bg-white dark:hover:bg-white/10"
+            className="group flex h-10 shrink-0 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 transition active:scale-95 hover:bg-white dark:hover:bg-white/10"
           >
             <span className="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-900/5 text-[var(--muted)] dark:bg-white/10">
               <Icon className="h-3.5 w-3.5" />

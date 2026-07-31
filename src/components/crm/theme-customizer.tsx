@@ -49,7 +49,7 @@ export function ThemeCustomizer() {
         <Palette className="h-4 w-4 text-zinc-500" />
         <p className="text-sm text-zinc-500">Pick the accent used for buttons, active navigation, and pipeline highlights.</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {presets.map((preset) => (
           <button
             key={preset.name}

@@ -316,7 +316,7 @@ export default function LeadsPage() {
                       key={item}
                       type="button"
                       onClick={() => setCategory(item)}
-                      className="rounded-full border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-1 text-xs font-semibold text-zinc-600 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10"
+                      className="flex h-9 items-center rounded-full border border-[var(--border)] bg-[var(--surface-strong)] px-3 text-xs font-semibold text-zinc-600 transition active:scale-95 hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10 lg:h-auto lg:py-1 lg:active:scale-100"
                     >
                       {item}
                     </button>
@@ -369,7 +369,7 @@ export default function LeadsPage() {
       </Card>
 
       {leads.length > 0 && (
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <MetricTile icon={Building2} label="Found" value={leads.length.toLocaleString()} detail="Businesses returned in this market." tone="cyan" />
           <MetricTile icon={Globe2} label="No website" value={noWebsiteCount.toLocaleString()} detail="Immediate website opportunity." tone="amber" />
           <MetricTile icon={UsersRound} label="Low review count" value={lowReviewCount.toLocaleString()} detail="25 reviews or fewer." tone="emerald" />
@@ -417,11 +417,11 @@ export default function LeadsPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                   <Button variant="outline" onClick={() => runPageSpeed(lead)}><Gauge className="h-4 w-4" /> Run PageSpeed</Button>
                   <Button onClick={() => saveLead(lead, true)}><Save className="h-4 w-4" /> Save & open CRM</Button>
                   <Button variant="secondary" onClick={() => saveLead(lead)}><Save className="h-4 w-4" /> Save only</Button>
-                  {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank"><Button variant="secondary"><ExternalLink className="h-4 w-4" /> Maps</Button></a> : null}
+                  {lead.googleMapsUrl ? <a href={lead.googleMapsUrl} target="_blank" className="contents"><Button variant="secondary" className="w-full sm:w-auto"><ExternalLink className="h-4 w-4" /> Maps</Button></a> : null}
                   <Button variant="outline" onClick={() => hideLead(lead, "ARCHIVED")}><Archive className="h-4 w-4" /> Archive</Button>
                   <Button variant="danger" onClick={() => hideLead(lead, "DECLINED")}><Ban className="h-4 w-4" /> Decline</Button>
                 </div>

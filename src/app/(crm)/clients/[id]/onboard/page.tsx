@@ -251,9 +251,9 @@ export default function OnboardPage() {
               }`}>
                 {i < step ? <Check className="h-4 w-4" /> : i + 1}
               </div>
-              <span className={`text-xs font-medium whitespace-nowrap ${i === step ? "text-indigo-700 dark:text-indigo-400" : "text-zinc-400"}`}>{label}</span>
+              <span className={`text-center text-[10px] font-medium leading-tight sm:whitespace-nowrap sm:text-xs ${i === step ? "text-indigo-700 dark:text-indigo-400" : "text-zinc-400"}`}>{label}</span>
             </div>
-            {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 mx-2 rounded transition-all ${i < step ? "bg-indigo-600" : "bg-zinc-200 dark:bg-zinc-700"}`} />}
+            {i < STEPS.length - 1 && <div className={`mx-1 h-0.5 flex-1 self-start rounded transition-all sm:mx-2 ${i < step ? "bg-indigo-600" : "bg-zinc-200 dark:bg-zinc-700"}`} />}
           </div>
         ))}
       </div>
@@ -348,9 +348,9 @@ export default function OnboardPage() {
           {contractMode === "build" && (
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div><CardTitle>Plan: {planName}</CardTitle></div>
-                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} className="max-w-[200px] text-sm" />
+                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} className="w-full text-sm sm:max-w-[200px]" />
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -405,9 +405,9 @@ export default function OnboardPage() {
           {contractMode === "upload" && (
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                 <CardTitle>Upload contract</CardTitle>
-                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} placeholder="Contract name" className="max-w-[200px] text-sm" />
+                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} placeholder="Contract name" className="w-full text-sm sm:max-w-[200px]" />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -442,7 +442,7 @@ export default function OnboardPage() {
                 </div>
               )}
 
-              <div className="flex items-end gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+              <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800 sm:flex-row sm:items-end">
                 <div className="space-y-1.5">
               <Label>Contract value <span className="font-normal text-zinc-400">(internal reference)</span></Label>
                   <div className="flex items-center gap-1">
@@ -450,7 +450,7 @@ export default function OnboardPage() {
                     <Input type="number" min="0" value={docAmount || ""} onChange={(e) => setDocAmount(Number(e.target.value))} className="w-32" placeholder="0.00" />
                   </div>
                 </div>
-                <p className="pb-2.5 text-xs text-zinc-500">Used for the client packet and internal reporting. No invoice or Stripe payment is created.</p>
+                <p className="text-xs text-zinc-500 sm:pb-2.5">Used for the client packet and internal reporting. No invoice or Stripe payment is created.</p>
               </div>
             </CardContent>
           </Card>
@@ -507,8 +507,8 @@ export default function OnboardPage() {
                       <p className="text-xs text-green-700 dark:text-green-400">{clientName} will receive the contract at {clientEmail}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input readOnly value={signUrl} className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-mono text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900" />
+                  <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                    <input readOnly value={signUrl} className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 font-mono text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900" />
                     <Button variant="outline" size="sm" onClick={copyLink}>
                       {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                       {copied ? "Copied!" : "Copy"}
@@ -595,7 +595,7 @@ export default function OnboardPage() {
             </CardContent>
           </Card>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button onClick={() => router.push(`/clients/${id}`)} className="flex-1">
               <CheckCircle2 className="h-4 w-4" /> Done — back to client profile
             </Button>

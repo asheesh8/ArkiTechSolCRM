@@ -1,14 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+// Fields render at 16px below lg so iOS Safari doesn't zoom the page when one
+// is focused, and at a 44px height so they're comfortable to tap.
+const fieldBase =
+  "w-full rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] text-base outline-none transition placeholder:text-zinc-400 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] dark:placeholder:text-zinc-500 lg:text-sm";
+
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={cn(
-        "h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 text-sm outline-none transition placeholder:text-zinc-400 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] dark:placeholder:text-zinc-500",
-        props.className,
-      )}
+      className={cn(fieldBase, "h-11 px-3 lg:h-10", props.className)}
     />
   );
 }
@@ -17,10 +19,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return (
     <textarea
       {...props}
-      className={cn(
-        "min-h-24 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-sm outline-none transition placeholder:text-zinc-400 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] dark:placeholder:text-zinc-500",
-        props.className,
-      )}
+      className={cn(fieldBase, "min-h-24 px-3 py-2", props.className)}
     />
   );
 }
@@ -29,10 +28,7 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={cn(
-        "h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 text-sm outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]",
-        props.className,
-      )}
+      className={cn(fieldBase, "h-11 px-3 lg:h-10", props.className)}
     />
   );
 }

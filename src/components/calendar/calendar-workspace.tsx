@@ -146,7 +146,7 @@ export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { em
             <iframe
               title="Ashish and Terri shared Google Calendar"
               src={embedUrl}
-              className="h-[720px] w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-800"
+              className="h-[65vh] min-h-[420px] w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 lg:h-[720px] lg:min-h-0"
             />
             {!nativeAgendaEnabled && (
               <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
@@ -176,7 +176,10 @@ export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { em
             <span className="text-xs text-zinc-500">{events.length} event{events.length === 1 ? "" : "s"}</span>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-2 lg:grid-cols-7">
+            {/* Seven full-height day cards stacked would be ~1100px of scroll on
+                a phone, so touch gets a compact day strip and taps through to the
+                agenda panel below. The lg grid is the original card layout. */}
+            <div className="grid grid-cols-7 gap-1 lg:gap-2">
               {days.map((day) => {
                 const dayEvents = eventsByDay.get(day.toDateString()) ?? [];
                 const active = sameDay(day, selectedDay);
@@ -186,21 +189,26 @@ export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { em
                     key={day.toDateString()}
                     type="button"
                     onClick={() => setSelectedDay(day)}
+                    aria-pressed={active}
                     className={cn(
-                      "min-h-40 rounded-lg border border-zinc-200 bg-white p-3 text-left transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60",
+                      "rounded-lg border border-zinc-200 bg-white p-2 text-left transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60 lg:min-h-40 lg:p-3",
                       active && "border-[var(--accent)] ring-1 ring-[var(--accent)]",
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-medium uppercase text-zinc-400">{day.toLocaleDateString([], { weekday: "short" })}</p>
-                        <p className={cn("mt-0.5 text-lg font-semibold", isToday && "text-[var(--accent)]")}>{day.getDate()}</p>
+                    <div className="flex flex-col items-center gap-0.5 lg:flex-row lg:items-center lg:justify-between lg:gap-2">
+                      <div className="text-center lg:text-left">
+                        <p className="text-[10px] font-medium uppercase text-zinc-400 lg:text-xs">{day.toLocaleDateString([], { weekday: "short" })}</p>
+                        <p className={cn("mt-0.5 text-base font-semibold lg:text-lg", isToday && "text-[var(--accent)]")}>{day.getDate()}</p>
                       </div>
                       {dayEvents.length > 0 && (
-                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{dayEvents.length}</span>
+                        <>
+                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] lg:hidden" />
+                          <span className="hidden rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 lg:inline">{dayEvents.length}</span>
+                        </>
                       )}
+                      {dayEvents.length === 0 && <span className="h-1.5 w-1.5 lg:hidden" />}
                     </div>
-                    <div className="mt-3 space-y-2">
+                    <div className="mt-3 hidden space-y-2 lg:block">
                       {loading ? (
                         <div className="space-y-2">
                           <div className="h-7 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />

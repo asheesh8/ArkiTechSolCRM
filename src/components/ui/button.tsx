@@ -2,8 +2,10 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+// Controls sit at a 44px touch target on phones and tablets and drop back to
+// the 40px desktop rhythm at lg, where the pointer takes over.
 const buttonVariants = cva(
-  "inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex h-11 touch-manipulation select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-semibold shadow-sm transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:pointer-events-none disabled:opacity-50 lg:h-10 lg:active:scale-100",
   {
     variants: {
       variant: {
@@ -14,9 +16,9 @@ const buttonVariants = cva(
         danger: "border border-red-700 bg-red-600 text-white shadow-sm hover:bg-red-700 dark:border-red-500 dark:bg-red-600 dark:hover:bg-red-500",
       },
       size: {
-        sm: "h-8 px-3 text-xs",
-        default: "h-10 px-4",
-        icon: "h-10 w-10 px-0",
+        sm: "h-9 px-3 text-xs lg:h-8",
+        default: "h-11 px-4 lg:h-10",
+        icon: "h-11 w-11 px-0 lg:h-10 lg:w-10",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

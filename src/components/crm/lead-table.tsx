@@ -48,7 +48,7 @@ export function LeadTable({
   const selectable = !!onToggleSelect;
   if (!leads.length) {
     return (
-      <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] p-12 text-center">
+      <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] p-8 text-center sm:p-12">
         <p className="font-semibold text-zinc-600 dark:text-zinc-400">No leads match these filters</p>
         <p className="mt-1 text-sm text-zinc-400">Try a broader search or save leads from the scraper.</p>
       </div>
@@ -74,16 +74,18 @@ export function LeadTable({
                 : "border-[var(--border)]",
             )}
           >
-            <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 p-3 sm:p-4 lg:flex-row lg:items-center lg:gap-4">
 
               {selectable && (
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => onToggleSelect!(lead.id)}
-                  aria-label={`Select ${lead.businessName}`}
-                  className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--accent)]"
-                />
+                <label className="-m-2 flex shrink-0 items-center p-2 lg:m-0 lg:p-0">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggleSelect!(lead.id)}
+                    aria-label={`Select ${lead.businessName}`}
+                    className="h-5 w-5 shrink-0 cursor-pointer accent-[var(--accent)] lg:h-4 lg:w-4"
+                  />
+                </label>
               )}
 
               {/* Left: business info */}
@@ -92,6 +94,10 @@ export function LeadTable({
                   <Link href={`/clients/${lead.id}`} className="font-semibold text-zinc-900 hover:underline dark:text-zinc-100">
                     {lead.businessName}
                   </Link>
+                  {/* At lg the stage lives in the chip row on the right. */}
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold lg:hidden", STAGE_COLORS[lead.status])}>
+                    {formatStatus(lead.status)}
+                  </span>
                   {!hasWebsite && (
                     <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
                       No website
@@ -114,14 +120,15 @@ export function LeadTable({
                 </div>
               </div>
 
-              {/* Middle: quick actions */}
+              {/* Middle: quick actions. Calling is the job on a phone, so the
+                  dial button takes the row and everything else sits beside it. */}
               <div className="flex flex-wrap items-center gap-2">
                 {lead.phone && (
                   <a
                     href={`tel:${lead.phone}`}
-                    className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10"
+                    className="flex h-11 basis-full items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-zinc-700 transition active:scale-[0.98] hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10 lg:h-auto lg:basis-auto lg:justify-start lg:py-1.5 lg:text-xs lg:active:scale-100"
                   >
-                    <Phone className="h-3.5 w-3.5" />
+                    <Phone className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
                     {lead.phone}
                   </a>
                 )}
@@ -130,24 +137,30 @@ export function LeadTable({
                     href={lead.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10"
+                    className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-zinc-700 transition active:scale-[0.98] hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10 lg:h-auto lg:flex-none lg:py-1.5 lg:text-xs lg:active:scale-100"
                   >
-                    <Globe2 className="h-3.5 w-3.5" />
+                    <Globe2 className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
                     Website <ExternalLink className="h-3 w-3 opacity-60" />
                   </a>
                 )}
+                <Link
+                  href={`/clients/${lead.id}`}
+                  className="flex h-11 flex-1 items-center justify-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-zinc-700 transition active:scale-[0.98] hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10 lg:hidden"
+                >
+                  Open <ChevronRight className="h-4 w-4" />
+                </Link>
               </div>
 
               {/* Right: assignee + status chips + view */}
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col gap-2 lg:items-end">
                 {/* Assignee */}
                 {onAssign && users ? (
                   <label className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                    <UserCheck className="h-3.5 w-3.5 text-zinc-400" />
+                    <UserCheck className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
                     <Select
                       value={lead.assignedTo?.id ?? ""}
                       onChange={(e) => onAssign(lead.id, e.target.value)}
-                      className="h-7 w-auto min-w-32 rounded-md py-0 text-xs"
+                      className="w-full rounded-md lg:h-7 lg:w-auto lg:min-w-32 lg:py-0 lg:text-xs"
                     >
                       <option value="">Unassigned</option>
                       {users.map((u) => (
@@ -157,32 +170,43 @@ export function LeadTable({
                   </label>
                 ) : lead.assignedTo ? (
                   <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                    <UserCheck className="h-3.5 w-3.5 text-zinc-400" />{lead.assignedTo.name}
+                    <UserCheck className="h-3.5 w-3.5" />{lead.assignedTo.name}
                   </span>
                 ) : null}
-                {/* Status chip row */}
+                {/* Stage. Seven 10px pills are impossible to hit with a thumb, so
+                    touch layouts get the native picker and lg keeps the chips. */}
                 {onStatus && (
-                  <div className="flex flex-wrap justify-end gap-1">
-                    {leadStatuses.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => onStatus(lead.id, s)}
-                        className={cn(
-                          "rounded-full px-2.5 py-1 text-[10px] font-semibold transition",
-                          lead.status === s
-                            ? STAGE_COLORS[s]
-                            : "bg-transparent text-zinc-300 hover:text-zinc-500 dark:text-zinc-700 dark:hover:text-zinc-400",
-                        )}
-                      >
-                        {formatStatus(s)}
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    <label className="w-full lg:hidden">
+                      <span className="sr-only">Stage for {lead.businessName}</span>
+                      <Select value={lead.status} onChange={(e) => onStatus(lead.id, e.target.value)}>
+                        {leadStatuses.map((s) => (
+                          <option key={s} value={s}>{formatStatus(s)}</option>
+                        ))}
+                      </Select>
+                    </label>
+                    <div className="hidden flex-wrap justify-end gap-1 lg:flex">
+                      {leadStatuses.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => onStatus(lead.id, s)}
+                          className={cn(
+                            "rounded-full px-2.5 py-1 text-[10px] font-semibold transition",
+                            lead.status === s
+                              ? STAGE_COLORS[s]
+                              : "bg-transparent text-zinc-300 hover:text-zinc-500 dark:text-zinc-700 dark:hover:text-zinc-400",
+                          )}
+                        >
+                          {formatStatus(s)}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
                 <Link
                   href={`/clients/${lead.id}`}
-                  className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10"
+                  className="hidden items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-white dark:text-zinc-300 dark:hover:bg-white/10 lg:flex"
                 >
                   Open <ChevronRight className="h-3.5 w-3.5" />
                 </Link>

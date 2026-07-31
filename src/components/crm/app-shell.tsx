@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,11 +12,14 @@ import {
   Headphones,
   Inbox,
   LayoutDashboard,
+  Menu,
   MessageSquare,
+  MoreHorizontal,
   NotebookText,
   Search,
   Settings,
   Sparkles,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -93,6 +97,27 @@ const PAGE_DETAILS: Record<string, string> = {
   "/settings": "Team members, access, and operating preferences.",
 };
 
+// Order the bottom tab bar picks from. Whichever four the signed-in role can
+// actually see become the thumb-reachable tabs; everything else lives in the
+// drawer behind "More".
+const MOBILE_TAB_PRIORITY = ["/dashboard", "/leads", "/clients", "/outreach", "/requests", "/calendar", "/notes"];
+
+// Short labels — the full nav labels ("Leads / Scraper") don't fit a fifth of a
+// phone screen.
+const MOBILE_TAB_LABELS: Record<string, string> = {
+  "/dashboard": "Home",
+  "/leads": "Leads",
+  "/clients": "Clients",
+  "/outreach": "Text",
+  "/requests": "Work",
+  "/calendar": "Calendar",
+  "/notes": "Notes",
+  "/receptionist": "Calls",
+  "/analytics": "Stats",
+  "/accountability": "Today",
+  "/settings": "Team",
+};
+
 function LiquidLogo() {
   return (
     <span className="liquid-logo-mark" aria-hidden="true">
@@ -101,8 +126,13 @@ function LiquidLogo() {
   );
 }
 
+function initialsOf(name: string) {
+  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
 export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser }) {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const canSee = (item: NavItem) => !item.roles || item.roles.includes(user.role);
   const labelFor = (item: NavItem) => (item.href === "/requests" && user.role === "DEV" ? "My Work" : item.label);
@@ -115,6 +145,72 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
   const activeSection = visibleSections.find((section) => section.items.some((item) => item.href === activeItem?.href));
   const pageTitle = activeItem ? labelFor(activeItem) : "Workspace";
   const pageDescription = PAGE_DETAILS[activeItem?.href ?? ""] ?? "Manage the work that keeps the business moving.";
+
+  const tabItems = MOBILE_TAB_PRIORITY
+    .map((href) => flatNav.find((item) => item.href === href))
+    .filter((item): item is NavItem => !!item)
+    .slice(0, 4);
+  // Anything not promoted to a tab still needs to look "current" somewhere, so
+  // More lights up when the open page isn't one of the four tabs.
+  const moreIsActive = !tabItems.some((item) => isActive(item.href));
+
+  // Navigating from inside the drawer should dismiss it.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // Lock the page behind the drawer, and let Escape close it.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
+  const navList = (
+    <>
+      {visibleSections.map((section) => (
+        <div key={section.label}>
+          <p className="px-3 pb-2 text-[11px] font-semibold text-[var(--muted)]">{section.label}</p>
+          <div className="space-y-1">
+            {section.items.map((item) => {
+              const active = isActive(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "group relative flex h-12 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-zinc-600 transition hover:bg-white/70 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-50 lg:h-10",
+                    active && "bg-[var(--surface-strong)] text-zinc-950 shadow-sm ring-1 ring-[var(--border)] dark:text-zinc-50",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition group-hover:text-[var(--accent)]",
+                      active && "bg-[linear-gradient(135deg,var(--accent),var(--brand-emerald))] text-[var(--accent-foreground)] group-hover:text-[var(--accent-foreground)]",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="truncate">{labelFor(item)}</span>
+                  {active && <ChevronRight className="ml-auto h-4 w-4 text-[var(--accent)]" />}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </>
+  );
 
   return (
     <div className="crm-app-background min-h-screen overflow-x-hidden bg-[var(--background)] text-zinc-950 dark:text-zinc-50">
@@ -129,41 +225,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           </Link>
         </div>
 
-        <nav className="mt-5 flex-1 space-y-5 overflow-y-auto px-4 pb-4">
-          {visibleSections.map((section) => (
-            <div key={section.label}>
-              <p className="px-3 pb-2 text-[11px] font-semibold text-[var(--muted)]">{section.label}</p>
-              <div className="space-y-1">
-                {section.items.map((item) => {
-                  const active = isActive(item.href);
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "group relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-zinc-600 transition hover:bg-white/70 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-50",
-                        active && "bg-[var(--surface-strong)] text-zinc-950 shadow-sm ring-1 ring-[var(--border)] dark:text-zinc-50",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition group-hover:text-[var(--accent)]",
-                          active && "bg-[linear-gradient(135deg,var(--accent),var(--brand-emerald))] text-[var(--accent-foreground)] group-hover:text-[var(--accent-foreground)]",
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span className="truncate">{labelFor(item)}</span>
-                      {active && <ChevronRight className="ml-auto h-4 w-4 text-[var(--accent)]" />}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
+        <nav className="mt-5 flex-1 space-y-5 overflow-y-auto px-4 pb-4">{navList}</nav>
 
         <div className="m-4 space-y-3">
           <div className="crm-card rounded-lg border p-4 text-sm">
@@ -177,7 +239,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           </div>
           <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-900 text-xs font-bold text-white dark:bg-white dark:text-zinc-950">
-              {user.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}
+              {initialsOf(user.name)}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold">{user.name}</span>
@@ -187,9 +249,92 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
         </div>
       </aside>
 
+      {/* ── Mobile / tablet nav drawer ── */}
+      <div
+        aria-hidden="true"
+        onClick={() => setMenuOpen(false)}
+        className={cn(
+          "fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-sm transition-opacity duration-200 lg:hidden",
+          menuOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      />
+      <aside
+        id="crm-mobile-nav"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Main navigation"
+        inert={!menuOpen ? true : undefined}
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-[86%] max-w-xs flex-col border-r border-[var(--border)] bg-[var(--surface-strong)] backdrop-blur-2xl transition-transform duration-300 ease-out lg:hidden",
+          menuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full",
+        )}
+      >
+        <div className="pt-safe">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <LiquidLogo />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">ArkiTech CRM</span>
+              <span className="block truncate text-xs text-[var(--muted)]">Growth and delivery OS</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Close navigation"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] text-zinc-500 active:scale-95 dark:text-zinc-300"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <nav className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-4">{navList}</nav>
+
+        <div className="border-t border-[var(--border)] px-4 pt-3 pb-safe">
+          <div className="flex items-center gap-3 pb-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-xs font-bold text-white dark:bg-white dark:text-zinc-950">
+              {initialsOf(user.name)}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{user.name}</span>
+              <span className="block truncate text-xs text-[var(--muted)]">{ROLE_LABELS[user.role] ?? user.role}</span>
+            </span>
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
+        </div>
+      </aside>
+
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-2xl">
-          <div className="flex min-h-20 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 2xl:px-10">
+        {/* The header scrolls away on phones — a pinned title bar plus the stats
+            ticker would eat ~100px of a 390×844 screen, and the bottom tab bar
+            already keeps navigation one thumb away. It stays pinned at lg. */}
+        <header className="border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-2xl lg:sticky lg:top-0 lg:z-10">
+          {/* Mobile / tablet bar */}
+          <div className="pt-safe lg:hidden">
+            <div className="flex items-center gap-2 px-3 py-2.5 sm:px-4">
+              <button
+                type="button"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open navigation"
+                aria-expanded={menuOpen}
+                aria-controls="crm-mobile-nav"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] text-zinc-600 active:scale-95 dark:text-zinc-300"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-semibold text-[var(--muted)]">
+                  {activeSection?.label ?? "Workspace"} · {ROLE_LABELS[user.role] ?? user.role}
+                </p>
+                <h1 className="truncate text-base font-semibold leading-tight">{pageTitle}</h1>
+              </div>
+              <ThemeToggle />
+              <LogoutButton />
+            </div>
+          </div>
+
+          {/* Desktop bar */}
+          <div className="hidden min-h-20 w-full items-center justify-between gap-3 px-4 sm:px-6 lg:flex lg:px-8 2xl:px-10">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-xs font-semibold text-[var(--muted)]">
                 <span>{activeSection?.label ?? "Workspace"}</span>
@@ -205,6 +350,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
               <LogoutButton />
             </div>
           </div>
+
           {user.role !== "DEV" && (
             <div className="overflow-hidden border-t border-[var(--border)]">
               <div className="w-full">
@@ -212,31 +358,64 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
               </div>
             </div>
           )}
-          <nav className="flex w-full max-w-full gap-2 overflow-x-auto px-4 pb-3 lg:hidden">
-            {flatNav.map((item) => {
-              const active = isActive(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex h-9 shrink-0 items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 text-xs font-semibold text-zinc-600 dark:text-zinc-300",
-                    active && "bg-[linear-gradient(135deg,var(--accent),var(--brand-emerald))] text-[var(--accent-foreground)]",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {labelFor(item)}
-                </Link>
-              );
-            })}
-          </nav>
         </header>
-        <main className="w-full px-4 py-5 sm:px-6 lg:px-8 2xl:px-10">
+
+        <main className="w-full px-3 py-4 sm:px-6 sm:py-5 lg:px-8 2xl:px-10">
           <div>{children}</div>
         </main>
+
+        {/* Runs under the fixed tab bar so the last row of content stays reachable. */}
+        <div aria-hidden="true" className="pb-safe lg:hidden">
+          <div className="h-[var(--crm-tabbar-height)]" />
+        </div>
       </div>
+
+      {/* ── Mobile / tablet bottom tab bar ── */}
+      <nav
+        aria-label="Primary"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] backdrop-blur-2xl pb-safe lg:hidden"
+      >
+        <div className="mx-auto grid h-[var(--crm-tabbar-height)] max-w-2xl grid-cols-5">
+          {tabItems.map((item) => {
+            const active = isActive(item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition active:scale-95",
+                  active ? "text-[var(--accent)]" : "text-zinc-500 dark:text-zinc-400",
+                )}
+              >
+                {active && (
+                  <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]" />
+                )}
+                <Icon className="h-5 w-5" />
+                <span className="truncate px-1">{MOBILE_TAB_LABELS[item.href] ?? labelFor(item)}</span>
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open navigation"
+            aria-expanded={menuOpen}
+            aria-controls="crm-mobile-nav"
+            className={cn(
+              "relative flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition active:scale-95",
+              moreIsActive ? "text-[var(--accent)]" : "text-zinc-500 dark:text-zinc-400",
+            )}
+          >
+            {moreIsActive && (
+              <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--brand-emerald))]" />
+            )}
+            <MoreHorizontal className="h-5 w-5" />
+            <span>More</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

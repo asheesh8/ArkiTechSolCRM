@@ -126,7 +126,7 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
             <Select
               value={form.assignedDeveloperId}
               onChange={(e) => { setForm((f) => ({ ...f, assignedDeveloperId: e.target.value })); patch({ assignedDeveloperId: e.target.value }, "assignee"); }}
-              className="hidden h-8 w-36 py-0 text-xs sm:block"
+              className="hidden w-36 py-0 text-xs sm:block sm:h-9 lg:h-8"
               title="Assign developer"
             >
               <option value="">Unassigned</option>
@@ -177,7 +177,7 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               {STATUSES.map((s) => (
-                <button key={s} type="button" disabled={!!saving} onClick={() => patch({ status: s }, "status")} className={cn("rounded-md border px-3 py-2 text-xs font-medium transition", req.status === s ? `${STATUS_STYLE[s]} border-current` : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900")}>
+                <button key={s} type="button" disabled={!!saving} onClick={() => patch({ status: s }, "status")} className={cn("flex min-h-11 items-center justify-center rounded-md border px-3 py-2 text-xs font-medium transition active:scale-95 lg:min-h-0 lg:active:scale-100", req.status === s ? `${STATUS_STYLE[s]} border-current` : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900")}>
                   {saving === "status" && req.status !== s ? <Loader2 className="mx-auto h-3 w-3 animate-spin" /> : label(s)}
                 </button>
               ))}
@@ -187,12 +187,12 @@ function RequestCard({ req, users, isOwner, onUpdate }: { req: WorkRequest; user
               <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
                 <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-400">Delivery plan</p>
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5"><Label>Type</Label><Select value={form.requestType} onChange={(e) => setForm((f) => ({ ...f, requestType: e.target.value }))}>{REQUEST_TYPES.map((t) => <option key={t} value={t}>{label(t)}</option>)}</Select></div>
                     <div className="space-y-1.5"><Label>Priority</Label><Select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}>{PRIORITIES.map((p) => <option key={p} value={p}>{label(p)}</option>)}</Select></div>
                   </div>
                   <div className="space-y-1.5"><Label>Assigned developer</Label><Select value={form.assignedDeveloperId} onChange={(e) => setForm((f) => ({ ...f, assignedDeveloperId: e.target.value }))}><option value="">Unassigned</option>{devs(users).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</Select></div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5"><Label>Estimate hours</Label><Input type="number" min="0" step="0.25" value={form.estimateHours} onChange={(e) => setForm((f) => ({ ...f, estimateHours: e.target.value }))} /></div>
                     <div className="space-y-1.5"><Label>Actual hours</Label><Input type="number" min="0" step="0.25" value={form.actualHours} onChange={(e) => setForm((f) => ({ ...f, actualHours: e.target.value }))} /></div>
                   </div>
@@ -256,8 +256,9 @@ function NewTaskModal({ users, clients, onClose, onCreated }: { users: TeamUser[
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" onClick={onClose}>
-      <div className="crm-card-strong w-full max-w-lg rounded-lg border p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/40 p-0 sm:p-8" onClick={onClose}>
+      {/* Full-bleed sheet on a phone, centred dialog from sm up. */}
+      <div className="crm-card-strong min-h-full w-full max-w-lg rounded-none border-0 p-4 pb-24 shadow-xl sm:min-h-0 sm:rounded-lg sm:border sm:p-6 sm:pb-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold">New task</h3>
           <button type="button" onClick={onClose} className="text-zinc-400 hover:text-zinc-600"><X className="h-5 w-5" /></button>
@@ -265,21 +266,21 @@ function NewTaskModal({ users, clients, onClose, onCreated }: { users: TeamUser[
         <div className="space-y-3">
           <div className="space-y-1.5"><Label>Title</Label><Input autoFocus value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Rebuild the pricing page" /></div>
           <div className="space-y-1.5"><Label>Details</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Scope, links, acceptance criteria…" /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Client (optional)</Label><Select value={form.clientId} onChange={(e) => setForm((f) => ({ ...f, clientId: e.target.value }))}><option value="">Internal — no client</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.businessName}</option>)}</Select></div>
             <div className="space-y-1.5"><Label>Assign to</Label><Select value={form.assignedDeveloperId} onChange={(e) => setForm((f) => ({ ...f, assignedDeveloperId: e.target.value }))}><option value="">Unassigned</option>{devs(users).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</Select></div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Type</Label><Select value={form.requestType} onChange={(e) => setForm((f) => ({ ...f, requestType: e.target.value }))}>{REQUEST_TYPES.map((t) => <option key={t} value={t}>{label(t)}</option>)}</Select></div>
             <div className="space-y-1.5"><Label>Priority</Label><Select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}>{PRIORITIES.map((p) => <option key={p} value={p}>{label(p)}</option>)}</Select></div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Due date</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} /></div>
             <div className="space-y-1.5"><Label>Estimate hours</Label><Input type="number" min="0" step="0.25" value={form.estimateHours} onChange={(e) => setForm((f) => ({ ...f, estimateHours: e.target.value }))} /></div>
           </div>
           <div className="space-y-1.5"><Label>GitHub repo (optional)</Label><Input value={form.repositoryUrl} onChange={(e) => setForm((f) => ({ ...f, repositoryUrl: e.target.value }))} placeholder="https://github.com/org/repo" /></div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex gap-2 pt-1 [&>*]:flex-1 sm:justify-end sm:[&>*]:flex-none">
             <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
             <Button onClick={submit} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}Create task</Button>
           </div>
@@ -353,23 +354,25 @@ export default function RequestsPage() {
         )}
       />
 
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <MetricTile icon={Inbox} label="Open delivery" value={(counts.OPEN + counts.IN_PROGRESS + counts.REVIEW).toLocaleString()} detail="Active, in progress, or in review." tone="cyan" />
         <MetricTile icon={Timer} label="Estimated load" value={`${activeHours.toFixed(1)}h`} detail="Open delivery estimate." tone="emerald" />
         <MetricTile icon={AlertTriangle} label="Overdue" value={counts.OVERDUE.toLocaleString()} detail="Past due and not completed." tone="amber" />
         <MetricTile icon={GitBranch} label="With repos" value={requests.filter((r) => r.repositoryUrl).length.toLocaleString()} detail="Tasks linked to GitHub." tone="rose" />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:gap-2">
+        <div className="crm-rail scrollbar-none -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:-mx-4 sm:px-4 lg:mx-0 lg:contents lg:px-0 lg:pb-0">
         {["ALL", ...STATUSES, "OVERDUE"].map((s) => (
-          <button key={s} type="button" onClick={() => setFilter(s)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", filter === s ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]" : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-600 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
+          <button key={s} type="button" onClick={() => setFilter(s)} className={cn("flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3 text-xs font-semibold transition active:scale-95 lg:h-auto lg:py-1.5 lg:active:scale-100", filter === s ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]" : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-600 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
             {label(s)} <span className="ml-1 opacity-60">{counts[s] ?? 0}</span>
           </button>
         ))}
+        </div>
         {isOwner && (
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-zinc-400">Assignee</span>
-            <Select value={assignee} onChange={(e) => setAssignee(e.target.value)} className="h-8 w-40 py-0 text-xs">
+          <div className="flex items-center gap-2 lg:ml-auto">
+            <span className="shrink-0 text-xs text-zinc-400">Assignee</span>
+            <Select value={assignee} onChange={(e) => setAssignee(e.target.value)} className="w-full text-xs lg:h-8 lg:w-40 lg:py-0">
               <option value="ALL">Everyone</option>
               {me && <option value={me.id}>Me</option>}
               <option value="UNASSIGNED">Unassigned</option>

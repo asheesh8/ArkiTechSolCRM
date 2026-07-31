@@ -28,17 +28,18 @@ export function MetricTile({
   className?: string;
 }) {
   return (
-    <div className={cn("crm-card rounded-lg border p-4", className)}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-[var(--muted)]">{label}</p>
-          <div className="mt-2 text-2xl font-bold tabular-nums text-zinc-950 dark:text-zinc-50">{value}</div>
+    <div className={cn("crm-card rounded-lg border p-3 sm:p-4", className)}>
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-[var(--muted)] sm:text-sm">{label}</p>
+          <div className="mt-1 text-xl font-bold tabular-nums text-zinc-950 dark:text-zinc-50 sm:mt-2 sm:text-2xl">{value}</div>
         </div>
-        <span className={cn("flex h-10 w-10 items-center justify-center rounded-lg", toneClasses[tone])}>
-          <Icon className="h-5 w-5" />
+        <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10", toneClasses[tone])}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </span>
       </div>
-      {detail ? <p className="mt-3 text-xs leading-5 text-[var(--muted)]">{detail}</p> : null}
+      {/* Two tiles per row on a phone leaves no space for the supporting copy. */}
+      {detail ? <p className="mt-2 hidden text-xs leading-5 text-[var(--muted)] sm:mt-3 sm:block">{detail}</p> : null}
     </div>
   );
 }

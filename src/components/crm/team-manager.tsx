@@ -109,7 +109,7 @@ export function TeamManager({ currentUserId }: { currentUserId: string }) {
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {users.map((u) => (
-                <div key={u.id} className={cn("flex flex-wrap items-center gap-3 py-3", !u.isActive && "opacity-60")}>
+                <div key={u.id} className={cn("flex flex-col gap-3 py-3 sm:flex-row sm:flex-wrap sm:items-center", !u.isActive && "opacity-60")}>
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 font-medium text-zinc-900 dark:text-zinc-100">
                       {u.name}
@@ -122,23 +122,25 @@ export function TeamManager({ currentUserId }: { currentUserId: string }) {
                     value={u.role}
                     disabled={busyId === u.id}
                     onChange={(e) => patchUser(u.id, { role: e.target.value }, (x) => ({ ...x, role: e.target.value }))}
-                    className="h-9 w-48"
+                    className="w-full sm:h-9 sm:w-48"
                     title="Role"
                   >
                     {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{ROLE_LABEL[r.value]}</option>)}
                   </Select>
-                  <Button size="sm" variant="outline" disabled={busyId === u.id} onClick={() => resetPassword(u)} title="Reset password">
-                    <KeyRound className="h-4 w-4" /> Reset
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busyId === u.id || u.id === currentUserId}
-                    onClick={() => toggleActive(u)}
-                    className={cn(u.isActive ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40" : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40")}
-                  >
-                    {busyId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : u.isActive ? "Deactivate" : "Reactivate"}
-                  </Button>
+                  <div className="flex gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
+                    <Button size="sm" variant="outline" className="h-11 sm:h-9" disabled={busyId === u.id} onClick={() => resetPassword(u)} title="Reset password">
+                      <KeyRound className="h-4 w-4" /> Reset
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busyId === u.id || u.id === currentUserId}
+                      onClick={() => toggleActive(u)}
+                      className={cn("h-11 sm:h-9", u.isActive ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40" : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40")}
+                    >
+                      {busyId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : u.isActive ? "Deactivate" : "Reactivate"}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

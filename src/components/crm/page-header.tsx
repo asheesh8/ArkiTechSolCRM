@@ -15,13 +15,19 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <section className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
+    <section className={cn("flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between", className)}>
       <div className="min-w-0">
-        {eyebrow ? <p className="mb-2 text-xs font-semibold text-[var(--muted)]">{eyebrow}</p> : null}
-        <h2 className="text-2xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">{title}</h2>
+        {eyebrow ? <p className="mb-1.5 text-xs font-semibold text-[var(--muted)] sm:mb-2">{eyebrow}</p> : null}
+        <h2 className="text-xl font-semibold tracking-normal text-zinc-950 dark:text-zinc-50 sm:text-2xl">{title}</h2>
         {description ? <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--muted)]">{description}</p> : null}
       </div>
-      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+      {/* Actions share the row evenly on small screens instead of overflowing;
+          at lg they revert to their natural widths beside the title. */}
+      {actions ? (
+        <div className="flex w-full flex-wrap items-center gap-2 [&>*]:min-w-0 [&>*]:flex-1 lg:w-auto lg:shrink-0 lg:[&>*]:flex-none">
+          {actions}
+        </div>
+      ) : null}
     </section>
   );
 }

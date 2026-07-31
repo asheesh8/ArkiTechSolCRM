@@ -217,7 +217,7 @@ export default function ClientsPage() {
               <Select
                 value={assigneeFilter}
                 onChange={(e) => { setAssigneeFilter(e.target.value); setSelected(new Set()); }}
-                className="h-10 w-52 pl-9"
+                className="w-full pl-9 lg:w-52"
               >
                 <option value="">All teammates</option>
                 <option value="unassigned">Unassigned</option>
@@ -242,7 +242,7 @@ export default function ClientsPage() {
         )}
       />
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <MetricTile icon={Building2} label="Active clients" value={activeClients.length.toLocaleString()} detail="Closed and currently served." tone="cyan" />
         <MetricTile icon={ClipboardList} label="Pipeline leads" value={pipeline.length.toLocaleString()} detail="Working opportunities." tone="emerald" />
         <MetricTile icon={AlertTriangle} label="Stale leads" value={staleLeads.length.toLocaleString()} detail="Need a fresh touch." tone="amber" />
@@ -257,17 +257,17 @@ export default function ClientsPage() {
             type="button"
             onClick={() => switchTab(t)}
             className={cn(
-              "rounded-lg px-5 py-2 text-sm font-semibold transition",
+              "flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold transition sm:flex-none sm:px-5 sm:py-2",
               tab === t ? "bg-[var(--surface-strong)] text-zinc-900 shadow-sm dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300",
             )}
           >
             {t === "clients" ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center gap-2">
                 Active Clients
                 <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "clients" ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{activeClients.length}</span>
               </span>
             ) : (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center gap-2">
                 Leads
                 <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "leads" ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{pipeline.length}</span>
               </span>
@@ -301,7 +301,7 @@ export default function ClientsPage() {
           <Input placeholder="Filter by city…" value={city} onChange={(e) => setCity(e.target.value)} className="pl-9" />
         </div>
         {hasFilters && (
-          <button type="button" onClick={() => { setSearch(""); setStatus(""); setCity(""); setAssigneeFilter(""); }} className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-sm font-semibold text-zinc-500 hover:bg-white dark:hover:bg-white/10">
+          <button type="button" onClick={() => { setSearch(""); setStatus(""); setCity(""); setAssigneeFilter(""); }} className="flex h-11 items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 text-sm font-semibold text-zinc-500 active:scale-[0.98] hover:bg-white dark:hover:bg-white/10 lg:h-auto lg:py-2">
             <X className="h-3.5 w-3.5" /> Clear
           </button>
         )}
@@ -399,35 +399,36 @@ export default function ClientsPage() {
 
           {/* Bulk assign bar (managers) */}
           {isManager && selected.size > 0 && (
-            <div className="sticky top-[4.5rem] z-10 flex flex-wrap items-center gap-3 rounded-xl border border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-3 backdrop-blur">
+            <div className="sticky top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-[var(--accent)] bg-[var(--accent)]/10 px-3 py-3 backdrop-blur sm:px-4 lg:top-[4.5rem]">
               <span className="text-sm font-semibold">{selected.size} selected</span>
               {selected.size < filteredLeads.length && (
                 <button type="button" onClick={() => setSelected(new Set(filteredLeads.map((l) => l.id)))} className="text-xs font-medium text-[var(--accent)] underline">
                   Select all {filteredLeads.length}
                 </button>
               )}
-              <div className="ml-auto flex flex-wrap items-center gap-2">
-                <Select value={bulkAssignee} onChange={(e) => setBulkAssignee(e.target.value)} className="h-9 w-44 py-0 text-sm">
+              <button type="button" onClick={() => setSelected(new Set())} className="ml-auto rounded-lg px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 lg:hidden">Clear</button>
+              <div className="flex w-full items-center gap-2 lg:ml-auto lg:w-auto">
+                <Select value={bulkAssignee} onChange={(e) => setBulkAssignee(e.target.value)} className="min-w-0 flex-1 lg:h-9 lg:w-44 lg:flex-none lg:py-0 lg:text-sm">
                   <option value="">Assign to…</option>
                   {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   <option value="__unassign__">Unassign</option>
                 </Select>
-                <Button size="sm" onClick={bulkAssign} disabled={bulkBusy || !bulkAssignee}>
+                <Button size="sm" onClick={bulkAssign} disabled={bulkBusy || !bulkAssignee} className="h-11 shrink-0 lg:h-8">
                   {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}Assign
                 </Button>
-                <button type="button" onClick={() => setSelected(new Set())} className="rounded-lg px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">Clear</button>
+                <button type="button" onClick={() => setSelected(new Set())} className="hidden rounded-lg px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 lg:block">Clear</button>
               </div>
             </div>
           )}
           {bulkMsg && <p className="text-sm text-emerald-600 dark:text-emerald-400">{bulkMsg}</p>}
 
-          {/* Status filter pills */}
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setStatus("")} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", !status ? "border-zinc-400 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-500 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
+          {/* Status filter pills — a swipeable rail on touch, wrapped at lg. */}
+          <div className="crm-rail scrollbar-none -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:-mx-4 sm:px-4 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0">
+            <button type="button" onClick={() => setStatus("")} className={cn("flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3 text-xs font-semibold transition active:scale-95 lg:h-auto lg:py-1.5 lg:active:scale-100", !status ? "border-zinc-400 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-500 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
               All <span className="ml-1 opacity-60">{scopedPipeline.length}</span>
             </button>
             {PIPELINE_STATUSES.map((s) => (
-              <button key={s} type="button" onClick={() => setStatus(status === s ? "" : s)} className={cn("rounded-full border px-3 py-1.5 text-xs font-semibold transition", status === s ? STATUS_COLORS[s] : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-500 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
+              <button key={s} type="button" onClick={() => setStatus(status === s ? "" : s)} className={cn("flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3 text-xs font-semibold transition active:scale-95 lg:h-auto lg:py-1.5 lg:active:scale-100", status === s ? STATUS_COLORS[s] : "border-[var(--border)] bg-[var(--surface-strong)] text-zinc-500 hover:bg-white dark:text-zinc-400 dark:hover:bg-white/10")}>
                 {formatStatus(s)}{counts[s] != null && <span className="ml-1.5 opacity-60">{counts[s]}</span>}
               </button>
             ))}

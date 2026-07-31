@@ -84,7 +84,7 @@ export default function AnalyticsPage() {
           <Select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
-            className="w-40"
+            className="w-full lg:w-40"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -130,7 +130,8 @@ export default function AnalyticsPage() {
             {data.sites.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-zinc-400">No visits tracked yet</div>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[30rem] text-sm">
                 <thead>
                   <tr className="border-b border-[var(--border)]">
                     <th className="px-5 py-3 text-left text-xs font-semibold text-zinc-400">Site</th>
@@ -154,6 +155,7 @@ export default function AnalyticsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </Card>
 

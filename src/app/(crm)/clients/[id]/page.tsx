@@ -223,10 +223,16 @@ function SignaturePad({ onSign, saving }: { onSign: (data: string) => void; savi
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
+  // The canvas is a fixed 320x90 bitmap stretched to whatever width the column
+  // gives it, so pointer coordinates have to be scaled into bitmap space or the
+  // ink lands away from the finger — very visible on a phone.
   function pos(e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) {
     const rect = canvas.getBoundingClientRect();
     const p = "touches" in e ? e.touches[0] : (e as React.MouseEvent);
-    return { x: p.clientX - rect.left, y: p.clientY - rect.top };
+    return {
+      x: (p.clientX - rect.left) * (canvas.width / rect.width),
+      y: (p.clientY - rect.top) * (canvas.height / rect.height),
+    };
   }
   function start(e: React.MouseEvent | React.TouchEvent) {
     drawing.current = true;
@@ -236,6 +242,7 @@ function SignaturePad({ onSign, saving }: { onSign: (data: string) => void; savi
   }
   function move(e: React.MouseEvent | React.TouchEvent) {
     if (!drawing.current) return;
+    e.preventDefault();
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.strokeStyle = "#18181b";
     const { x, y } = pos(e, canvasRef.current!);
@@ -723,13 +730,13 @@ export default function ClientDetailPage() {
           </div>
 
           {/* Quick action bar */}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {lead.phone && <a href={`tel:${lead.phone}`}><Button variant="outline" size="sm"><Phone className="h-4 w-4" />{lead.phone}</Button></a>}
-            {directionsUrl && <a href={directionsUrl} target="_blank"><Button variant="outline" size="sm"><Navigation className="h-4 w-4" />Directions</Button></a>}
-            {lead.email && <a href={`mailto:${lead.email}`}><Button variant="outline" size="sm"><Mail className="h-4 w-4" />Email</Button></a>}
-            {lead.googleMapsUrl && <a href={lead.googleMapsUrl} target="_blank"><Button variant="outline" size="sm"><ExternalLink className="h-4 w-4" />Google</Button></a>}
-            {lead.website && <a href={lead.website} target="_blank"><Button variant="outline" size="sm"><Globe2 className="h-4 w-4" />Website</Button></a>}
-            <a href={`/clients/${id}/onboard`}><Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700"><UserCheck className="h-4 w-4" />{isClient ? "New contract" : "Onboard"}</Button></a>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            {lead.phone && <a href={`tel:${lead.phone}`} className="contents"><Button variant="outline" size="sm" className="h-11 min-w-0 sm:h-9"><Phone className="h-4 w-4 shrink-0" /><span className="truncate">{lead.phone}</span></Button></a>}
+            {directionsUrl && <a href={directionsUrl} target="_blank" className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><Navigation className="h-4 w-4" />Directions</Button></a>}
+            {lead.email && <a href={`mailto:${lead.email}`} className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><Mail className="h-4 w-4" />Email</Button></a>}
+            {lead.googleMapsUrl && <a href={lead.googleMapsUrl} target="_blank" className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><ExternalLink className="h-4 w-4" />Google</Button></a>}
+            {lead.website && <a href={lead.website} target="_blank" className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><Globe2 className="h-4 w-4" />Website</Button></a>}
+            <a href={`/clients/${id}/onboard`} className="contents"><Button size="sm" className="col-span-2 h-11 bg-indigo-600 text-white hover:bg-indigo-700 sm:col-span-1 sm:h-9"><UserCheck className="h-4 w-4" />{isClient ? "New contract" : "Onboard"}</Button></a>
           </div>
         </div>
 
@@ -744,7 +751,7 @@ export default function ClientDetailPage() {
                 value={lead.assignedTo?.id ?? ""}
                 onChange={(e) => updateAssignee(e.target.value)}
                 disabled={assigning}
-                className="h-8 w-auto min-w-44 py-0 text-sm"
+                className="w-full text-sm lg:h-8 lg:w-auto lg:min-w-44 lg:py-0"
               >
                 <option value="">Unassigned</option>
                 {users.map((u) => (
@@ -768,7 +775,7 @@ export default function ClientDetailPage() {
                 type="button"
                 onClick={() => updateStatus(s)}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition",
+                  "flex h-9 items-center rounded-full border px-3 text-xs font-medium transition active:scale-95 lg:h-auto lg:py-1 lg:active:scale-100",
                   lead.status === s
                     ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]"
                     : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800",
@@ -783,7 +790,7 @@ export default function ClientDetailPage() {
 
       {/* ── PageSpeed scores ── */}
       {(lead.pageSpeedPerformance != null || lead.pageSpeedSEO != null) && (
-        <section className="grid gap-4 md:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           <ScoreCard label="Performance" value={lead.pageSpeedPerformance} />
           <ScoreCard label="Accessibility" value={lead.pageSpeedAccessibility} />
           <ScoreCard label="SEO" value={lead.pageSpeedSEO} />
@@ -794,8 +801,9 @@ export default function ClientDetailPage() {
       {/* ── Main 2-column layout ── */}
       <section className="grid gap-6 xl:grid-cols-[1fr_380px]">
 
-        {/* Left: notes timeline + profile + audits */}
-        <div className="space-y-6">
+        {/* Left: notes timeline + profile + audits. Logging a call is the whole
+            job on a phone, so the right column jumps ahead of this until xl. */}
+        <div className="order-2 space-y-6 xl:order-none">
 
           {/* Client packet — signed agreements & signatures (onboarded clients only) */}
           {isClient && <ClientPacket client={client} />}
@@ -934,7 +942,7 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Right: call log panel + website kit */}
-        <div className="space-y-6">
+        <div className="order-1 space-y-6 xl:order-none">
 
           {/* Call log panel — sticky */}
           <div className="xl:sticky xl:top-6">
