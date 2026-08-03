@@ -51,12 +51,15 @@ export function CookieNotice() {
           // the two never overlap.
           className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-[75] sm:bottom-5 sm:left-5 sm:right-auto sm:max-w-sm"
         >
-          <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#11111d]/95 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
+          <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#11111d]/95 p-3.5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] backdrop-blur-2xl sm:gap-4 sm:p-5">
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-500/15">
+              {/* Icon and close button are desktop-only: on a phone they cost
+                  width that pushes the copy onto extra lines, and "Got it"
+                  already dismisses. */}
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-500/15 sm:flex">
                 <Cookie className="h-4 w-4 text-violet-200" aria-hidden="true" />
               </span>
-              <p className="text-[0.8rem] leading-6 text-white/50">
+              <p className="text-[0.72rem] leading-[1.5] text-white/50 sm:text-[0.8rem] sm:leading-6">
                 We use cookies and similar technologies to run this site, remember your preferences, and understand how it&apos;s used. See our{" "}
                 <Link href="/legal/privacy" className="font-semibold text-violet-200/85 underline-offset-4 transition hover:text-violet-100 hover:underline">
                   Privacy Policy
@@ -67,24 +70,24 @@ export function CookieNotice() {
                 type="button"
                 onClick={dismiss}
                 aria-label="Dismiss cookie notice"
-                className="-mr-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/30 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+                className="-mr-1 -mt-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/30 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:flex"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
 
-            <div className="flex items-center gap-2 pl-12">
+            <div className="flex items-center gap-2 sm:pl-12">
               <button
                 type="button"
                 onClick={dismiss}
-                className="rounded-full px-5 py-2 text-xs font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+                className="rounded-full px-4 py-1.5 text-[11px] font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:px-5 sm:py-2 sm:text-xs"
                 style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }}
               >
                 Got it
               </button>
               <Link
                 href="/legal/terms"
-                className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 text-xs font-semibold text-white/45 transition hover:border-white/20 hover:text-white"
+                className="rounded-full border border-white/10 bg-white/[0.035] px-3.5 py-1.5 text-[11px] font-semibold text-white/45 transition hover:border-white/20 hover:text-white sm:px-4 sm:py-2 sm:text-xs"
               >
                 Terms
               </Link>
