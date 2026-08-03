@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect, useRef, type MouseEvent } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { Hero } from "@/components/landing/hero";
@@ -10,6 +11,7 @@ import { TeamSection } from "@/components/landing/team-section";
 import { ClosingSections } from "@/components/landing/closing-sections";
 import { ContactModal } from "@/components/landing/contact-modal";
 import { ChatWidget } from "@/components/landing/chat-widget";
+import { CookieNotice } from "@/components/landing/cookie-notice";
 
 export default function Home() {
   const [contactOpen, setContactOpen] = useState(false);
@@ -70,6 +72,7 @@ export default function Home() {
     <main className="overflow-x-hidden" style={{ background: "#0c0c18", color: "white" }}>
       <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
       <ChatWidget suppressed={contactOpen} onStartProject={() => setContactOpen(true)} />
+      <CookieNotice />
       <motion.div className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-violet-500 via-sky-400 to-cyan-300" style={{ scaleX: progress }} />
 
       {/* ── Nav ── */}
@@ -134,9 +137,17 @@ export default function Home() {
             />
           </button>
           <span className="text-xs text-white/25">© {new Date().getFullYear()} · Burlington, VT</span>
-          <button onClick={() => setContactOpen(true)} className="text-xs text-white/35 transition hover:text-white">
-            hello@arkitech-sol.com
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link href="/legal/privacy" className="text-xs text-white/35 transition hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/legal/terms" className="text-xs text-white/35 transition hover:text-white">
+              Terms
+            </Link>
+            <button onClick={() => setContactOpen(true)} className="text-xs text-white/35 transition hover:text-white">
+              hello@arkitech-sol.com
+            </button>
+          </div>
         </div>
       </footer>
     </main>
