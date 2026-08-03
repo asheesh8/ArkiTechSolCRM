@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, ExternalLink, Loader2, MapPin, RefreshCw, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, Clock3, ExternalLink, Loader2, MapPin, RefreshCw, Users } from "lucide-react";
+import { OwnerTimeCalendar } from "@/components/calendar/owner-time-calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -64,12 +65,19 @@ function calendarColor(value: string) {
   return colors[hash % colors.length];
 }
 
-export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { embedUrl?: string; nativeAgendaEnabled?: boolean }) {
+type CalendarWorkspaceProps = {
+  embedUrl?: string;
+  nativeAgendaEnabled?: boolean;
+  ownerTimeEnabled?: boolean;
+};
+
+export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true, ownerTimeEnabled = false }: CalendarWorkspaceProps) {
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(nativeAgendaEnabled);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"schedule" | "owner-time">("schedule");
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)), [anchor]);
   const rangeLabel = `${days[0].toLocaleDateString([], { month: "short", day: "numeric" })} - ${days[6].toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
@@ -93,9 +101,13 @@ export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { em
   }, [anchor]);
 
   useEffect(() => {
-    if (!nativeAgendaEnabled) return;
+    if (!nativeAgendaEnabled || activeTab !== "schedule") return;
     void loadEvents();
-  }, [loadEvents, nativeAgendaEnabled]);
+  }, [activeTab, loadEvents, nativeAgendaEnabled]);
+
+  useEffect(() => {
+    if (!ownerTimeEnabled && activeTab === "owner-time") setActiveTab("schedule");
+  }, [activeTab, ownerTimeEnabled]);
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -109,31 +121,67 @@ export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { em
 
   const selectedEvents = eventsByDay.get(selectedDay.toDateString()) ?? [];
   const today = new Date();
-  const showNativeAgenda = nativeAgendaEnabled && (!embedUrl || !error);
+  const showNativeAgenda = activeTab === "schedule" && nativeAgendaEnabled && (!embedUrl || !error);
 
   return (
     <div className="space-y-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Calendar</h2>
-          <p className="mt-1 text-sm text-zinc-500">Ashish and Terri&apos;s shared Google Calendar inside the CRM.</p>
+          <p className="mt-1 text-sm text-zinc-500">Ashish and Terri&apos;s shared schedule and owner time inside the CRM.</p>
         </div>
-        {showNativeAgenda && <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setAnchor(addDays(anchor, -7))}>
-            <ChevronLeft className="h-4 w-4" /> Previous
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => { const now = new Date(); setAnchor(startOfWeek(now)); setSelectedDay(now); }}>
-            Today
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(addDays(anchor, 7))}>
-            Next <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" title="Refresh calendar" onClick={() => void loadEvents()} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          </Button>
-        </div>}
+        <div className="flex flex-col gap-2 sm:items-end">
+          {ownerTimeEnabled && (
+            <div role="tablist" aria-label="Calendar views" className="grid grid-cols-2 gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-1">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "schedule"}
+                onClick={() => setActiveTab("schedule")}
+                className={cn(
+                  "inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50",
+                  activeTab === "schedule" && "bg-white text-zinc-950 shadow-sm dark:bg-zinc-950 dark:text-zinc-50",
+                )}
+              >
+                <CalendarDays className="h-4 w-4" />
+                Schedule
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "owner-time"}
+                onClick={() => setActiveTab("owner-time")}
+                className={cn(
+                  "inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50",
+                  activeTab === "owner-time" && "bg-white text-zinc-950 shadow-sm dark:bg-zinc-950 dark:text-zinc-50",
+                )}
+              >
+                <Clock3 className="h-4 w-4" />
+                Owner time
+              </button>
+            </div>
+          )}
+          {showNativeAgenda && <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setAnchor(addDays(anchor, -7))}>
+              <ChevronLeft className="h-4 w-4" /> Previous
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => { const now = new Date(); setAnchor(startOfWeek(now)); setSelectedDay(now); }}>
+              Today
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setAnchor(addDays(anchor, 7))}>
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" title="Refresh calendar" onClick={() => void loadEvents()} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            </Button>
+          </div>}
+        </div>
       </section>
 
+      {activeTab === "owner-time" && ownerTimeEnabled ? (
+        <OwnerTimeCalendar />
+      ) : (
+        <>
       {embedUrl && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -276,6 +324,8 @@ export function CalendarWorkspace({ embedUrl, nativeAgendaEnabled = true }: { em
           </CardContent>
         </Card>
       </div>}
+        </>
+      )}
     </div>
   );
 }

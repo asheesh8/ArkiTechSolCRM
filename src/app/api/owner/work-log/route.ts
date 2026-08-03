@@ -67,6 +67,17 @@ function parseIsoDate(value: unknown) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function parseRequestedRange(searchParams: URLSearchParams) {
+  const timeMin = parseIsoDate(searchParams.get("timeMin"));
+  const timeMax = parseIsoDate(searchParams.get("timeMax"));
+  if (!timeMin || !timeMax || timeMin >= timeMax) return null;
+
+  const maxRangeMs = 45 * 24 * 60 * 60 * 1000;
+  if (timeMax.getTime() - timeMin.getTime() > maxRangeMs) return null;
+
+  return { timeMin, timeMax };
+}
+
 function normalizeManualRange(startedAt: Date, endedAt: Date) {
   const normalizedEndedAt = new Date(endedAt);
   if (normalizedEndedAt < startedAt) normalizedEndedAt.setDate(normalizedEndedAt.getDate() + 1);
@@ -181,16 +192,18 @@ function buildInsights(ownerUsers: Array<{ id: string; name: string; email: stri
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!isOwner(user)) return NextResponse.json({ error: "Owner access required" }, { status: 403 });
 
+    const { searchParams } = new URL(request.url);
+    const requestedRange = parseRequestedRange(searchParams);
     const todayStart = startOfDay();
     const analyticsStart = new Date(Math.min(startOfWeek().getTime(), startOfMonth().getTime(), addDays(todayStart, -29).getTime()));
 
-    const [ownerUsers, activeEntry, recentEntries, insightEntries] = await Promise.all([
+    const [ownerUsers, activeEntry, recentEntries, insightEntries, calendarEntries] = await Promise.all([
       prisma.user.findMany({
         where: { role: "OWNER", isActive: true },
         select: { id: true, name: true, email: true },
@@ -212,6 +225,17 @@ export async function GET() {
         include: entryInclude,
         orderBy: { startedAt: "desc" },
       }),
+      requestedRange
+        ? prisma.ownerWorkLog.findMany({
+            where: {
+              startedAt: { lt: requestedRange.timeMax },
+              user: { role: "OWNER", isActive: true },
+              OR: [{ endedAt: null }, { endedAt: { gt: requestedRange.timeMin } }],
+            },
+            include: entryInclude,
+            orderBy: { startedAt: "asc" },
+          })
+        : Promise.resolve([] as EntryWithUser[]),
     ]);
 
     const insights = buildInsights(ownerUsers, insightEntries);
@@ -220,6 +244,7 @@ export async function GET() {
       viewerId: user.id,
       activeEntry: activeEntry ? serializeEntry(activeEntry) : null,
       recentEntries: recentEntries.map(serializeEntry),
+      calendarEntries: calendarEntries.map(serializeEntry),
       todayByUser: insights.todayByUser,
       insights,
     });

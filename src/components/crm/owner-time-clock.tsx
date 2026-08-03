@@ -69,6 +69,10 @@ type WorkLogResponse = {
 
 type BusyState = "clock-in" | "clock-out" | "manual" | "save" | "edit" | null;
 
+type OwnerTimeClockProps = {
+  onChange?: () => void;
+};
+
 type ManualForm = {
   date: string;
   startTime: string;
@@ -181,7 +185,7 @@ function InsightTile({ icon: Icon, label, value, detail }: { icon: React.Compone
   );
 }
 
-export function OwnerTimeClock() {
+export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
   const [data, setData] = useState<WorkLogResponse | null>(null);
   const [summary, setSummary] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
@@ -256,6 +260,7 @@ export function OwnerTimeClock() {
       });
       if (!response.ok) throw new Error(await readError(response));
       await loadEntries(true);
+      onChange?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update the time clock.");
     } finally {
@@ -276,6 +281,7 @@ export function OwnerTimeClock() {
       });
       if (!response.ok) throw new Error(await readError(response));
       await loadEntries(true);
+      onChange?.();
       setSavedMessage(`Saved ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the work note.");
@@ -324,6 +330,7 @@ export function OwnerTimeClock() {
       });
       if (!response.ok) throw new Error(await readError(response));
       await loadEntries(true);
+      onChange?.();
       setEditingEntryId(null);
       setSavedMessage("Updated work entry.");
     } catch (err) {
@@ -360,6 +367,7 @@ export function OwnerTimeClock() {
       });
       if (!response.ok) throw new Error(await readError(response));
       await loadEntries(true);
+      onChange?.();
       setManualForm({ ...defaultManualForm(), workSummary: "" });
       setManualOpen(false);
       setSavedMessage("Posted missed work entry.");
