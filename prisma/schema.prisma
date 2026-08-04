@@ -51,24 +51,24 @@ enum LeadExclusionReason {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  name         String
-  email        String     @unique
-  passwordHash String?
-  role         Role       @default(MEMBER)
-  isActive     Boolean    @default(true)
-  leads        Lead[]     @relation("AssignedLeads")
-  callNotes    CallNote[]
-  scrapeUsages ScrapeUsage[]
-  staffSessions StaffSession[]
-  ownerWorkLogs OwnerWorkLog[]
-  noteCabinets NoteCabinet[]
+  id                String             @id @default(cuid())
+  name              String
+  email             String             @unique
+  passwordHash      String?
+  role              Role               @default(MEMBER)
+  isActive          Boolean            @default(true)
+  leads             Lead[]             @relation("AssignedLeads")
+  callNotes         CallNote[]
+  scrapeUsages      ScrapeUsage[]
+  staffSessions     StaffSession[]
+  ownerWorkLogs     OwnerWorkLog[]
+  noteCabinets      NoteCabinet[]
   noteCabinetShares NoteCabinetShare[]
-  notePages    NotePage[]
-  notePresences NotePresence[]
-  devWorkRequests WorkRequest[] @relation("AssignedDevWorkRequests")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  notePages         NotePage[]
+  notePresences     NotePresence[]
+  devWorkRequests   WorkRequest[]      @relation("AssignedDevWorkRequests")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 model StaffSession {
@@ -99,35 +99,35 @@ model OwnerWorkLog {
 }
 
 model Lead {
-  id                         String      @id @default(cuid())
-  businessName               String
-  category                   String?
-  phone                      String?
-  email                      String?
-  website                    String?
-  address                    String?
-  city                       String?
-  state                      String?
-  googlePlaceId              String?     @unique
-  googleMapsUrl              String?
-  googleRating               Float?
-  googleReviewCount          Int?
-  status                     LeadStatus  @default(NEW)
-  priority                   LeadPriority @default(STANDARD)
-  websiteScore               Int?
-  pageSpeedPerformance       Int?
-  pageSpeedAccessibility     Int?
-  pageSpeedSEO               Int?
-  pageSpeedBestPractices     Int?
-  notes                      String?
-  assignedToId               String?
-  assignedTo                 User?       @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
-  callNotes                  CallNote[]
-  audits                     Audit[]
-  client                     Client?
+  id                        String                     @id @default(cuid())
+  businessName              String
+  category                  String?
+  phone                     String?
+  email                     String?
+  website                   String?
+  address                   String?
+  city                      String?
+  state                     String?
+  googlePlaceId             String?                    @unique
+  googleMapsUrl             String?
+  googleRating              Float?
+  googleReviewCount         Int?
+  status                    LeadStatus                 @default(NEW)
+  priority                  LeadPriority               @default(STANDARD)
+  websiteScore              Int?
+  pageSpeedPerformance      Int?
+  pageSpeedAccessibility    Int?
+  pageSpeedSEO              Int?
+  pageSpeedBestPractices    Int?
+  notes                     String?
+  assignedToId              String?
+  assignedTo                User?                      @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
+  callNotes                 CallNote[]
+  audits                    Audit[]
+  client                    Client?
   receptionistConversations ReceptionistConversation[]
-  createdAt                  DateTime    @default(now())
-  updatedAt                  DateTime    @updatedAt
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
 
   @@index([status])
   @@index([priority])
@@ -137,16 +137,16 @@ model Lead {
 }
 
 model CallNote {
-  id           String       @id @default(cuid())
+  id           String      @id @default(cuid())
   leadId       String
   userId       String
   note         String
-  noteType     NoteType     @default(GENERAL)
+  noteType     NoteType    @default(GENERAL)
   callOutcome  CallOutcome
   followUpDate DateTime?
-  createdAt    DateTime     @default(now())
-  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  lead         Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
   @@index([userId])
@@ -155,22 +155,22 @@ model CallNote {
 }
 
 model Audit {
-  id                       String   @id @default(cuid())
-  leadId                   String?
-  url                      String
-  strategy                 String   @default("mobile")
-  performance              Int?
-  accessibility            Int?
-  seo                      Int?
-  bestPractices            Int?
-  firstContentfulPaint     String?
-  largestContentfulPaint   String?
-  speedIndex               String?
-  totalBlockingTime        String?
-  cumulativeLayoutShift    String?
-  opportunities            Json?
-  createdAt                DateTime @default(now())
-  lead                     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  id                     String   @id @default(cuid())
+  leadId                 String?
+  url                    String
+  strategy               String   @default("mobile")
+  performance            Int?
+  accessibility          Int?
+  seo                    Int?
+  bestPractices          Int?
+  firstContentfulPaint   String?
+  largestContentfulPaint String?
+  speedIndex             String?
+  totalBlockingTime      String?
+  cumulativeLayoutShift  String?
+  opportunities          Json?
+  createdAt              DateTime @default(now())
+  lead                   Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
 
   @@index([leadId])
   @@index([url])
@@ -254,32 +254,33 @@ model Client {
   contracts    Contract[]
   invoices     Invoice[]
   workRequests WorkRequest[]
+  voiceAgents  VoiceAgent[]
 
   @@index([email])
 }
 
 model Contract {
-  id            String         @id @default(cuid())
-  clientId      String
-  planName      String
-  lineItems     Json
-  subtotal      Float
-  tax           Float          @default(0)
-  total         Float
-  billingCycle  BillingCycle   @default(MONTHLY)
-  status        ContractStatus @default(DRAFT)
-  sentAt        DateTime?
-  signedAt      DateTime?
-  signatureData String?
-  signToken     String?        @unique
-  notes         String?
-  documentKey   String?
-  documentName  String?
+  id                    String         @id @default(cuid())
+  clientId              String
+  planName              String
+  lineItems             Json
+  subtotal              Float
+  tax                   Float          @default(0)
+  total                 Float
+  billingCycle          BillingCycle   @default(MONTHLY)
+  status                ContractStatus @default(DRAFT)
+  sentAt                DateTime?
+  signedAt              DateTime?
+  signatureData         String?
+  signToken             String?        @unique
+  notes                 String?
+  documentKey           String?
+  documentName          String?
   providerSignatureData String?
   providerSignedAt      DateTime?
   providerName          String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   invoices Invoice[]
@@ -420,11 +421,11 @@ model ReceptionistMessage {
 }
 
 model ReceptionistSyncState {
-  agentId              String    @id
-  lastIncrementalAt    DateTime?
-  lastFullReconcileAt  DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  agentId             String    @id
+  lastIncrementalAt   DateTime?
+  lastFullReconcileAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 // ─── Analytics ───────────────────────────────────────────────────────────────
@@ -448,17 +449,17 @@ model PageView {
 // cabinets"; pages nest infinitely inside a cabinet via NotePage.parentId.
 
 model NoteCabinet {
-  id          String     @id @default(cuid())
-  name        String     @default("New cabinet")
-  icon        String     @default("📁")
-  color       String     @default("blue")
-  sortOrder   Int        @default(0)
+  id          String             @id @default(cuid())
+  name        String             @default("New cabinet")
+  icon        String             @default("📁")
+  color       String             @default("blue")
+  sortOrder   Int                @default(0)
   createdById String?
-  createdBy   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
   pages       NotePage[]
   shares      NoteCabinetShare[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   @@index([sortOrder])
 }
@@ -466,10 +467,10 @@ model NoteCabinet {
 // Per-cabinet delegation. Owners (Role.OWNER) always see every cabinet; other
 // roles see a cabinet only if they created it or a share row grants them access.
 model NoteCabinetShare {
-  id        String      @id @default(cuid())
+  id        String   @id @default(cuid())
   cabinetId String
   userId    String
-  createdAt DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   cabinet NoteCabinet @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
   user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -479,21 +480,21 @@ model NoteCabinetShare {
 }
 
 model NotePage {
-  id          String      @id @default(cuid())
+  id          String         @id @default(cuid())
   cabinetId   String
-  cabinet     NoteCabinet @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
+  cabinet     NoteCabinet    @relation(fields: [cabinetId], references: [id], onDelete: Cascade)
   parentId    String?
-  parent      NotePage?   @relation("PageTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children    NotePage[]  @relation("PageTree")
-  title       String      @default("Untitled")
-  icon        String      @default("📄")
-  content     String      @default("")
-  sortOrder   Int         @default(0)
+  parent      NotePage?      @relation("PageTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    NotePage[]     @relation("PageTree")
+  title       String         @default("Untitled")
+  icon        String         @default("📄")
+  content     String         @default("")
+  sortOrder   Int            @default(0)
   createdById String?
-  createdBy   User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
   presences   NotePresence[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([cabinetId])
   @@index([parentId])
@@ -516,4 +517,48 @@ model NotePresence {
   @@unique([pageId, userId])
   @@index([pageId])
   @@index([updatedAt])
+}
+
+// ─── Voice agents ────────────────────────────────────────────────────────────
+
+// A voice agent that lives on ElevenLabs. The CRM catalogs the ones on the
+// account rather than creating them, so agent config stays authored upstream
+// and this table only owns the CRM-side facts: who the agent belongs to and
+// whether it is exposed as a public demo.
+model VoiceAgent {
+  id              String    @id @default(cuid())
+  providerAgentId String    @unique
+  name            String
+  slug            String    @unique
+  clientId        String?
+  // Demo presentation — a prospect-facing pitch, not the agent's own prompt.
+  demoEnabled     Boolean   @default(false)
+  demoHeadline    String?
+  demoSubheadline String?   @db.Text
+  demoBusiness    String?
+  isArchived      Boolean   @default(false)
+  lastSyncedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  client       Client?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  demoSessions VoiceDemoSession[]
+
+  @@index([clientId])
+  @@index([demoEnabled])
+}
+
+// One prospect demo conversation. Rows are the rate-limit ledger for the public
+// demo page and the record of which pitches actually got used.
+model VoiceDemoSession {
+  id        String   @id @default(cuid())
+  agentId   String
+  ipHash    String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  agent VoiceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, createdAt])
+  @@index([ipHash, createdAt])
 }

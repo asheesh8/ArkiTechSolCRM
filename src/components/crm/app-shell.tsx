@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Bot,
   Building2,
   CalendarDays,
   ChevronRight,
@@ -51,6 +52,7 @@ const navSections: NavSection[] = [
     label: "Clients & Work",
     items: [
       { href: "/receptionist", label: "AI Receptionist", icon: Headphones, roles: ["OWNER"] },
+      { href: "/agents", label: "Agents", icon: Bot, roles: ["OWNER"] },
       { href: "/clients", label: "CRM Clients", icon: Building2, roles: ["OWNER", "MEMBER"] },
       { href: "/requests", label: "Work Requests", icon: Inbox, roles: ["OWNER", "DEV"] },
     ],
@@ -89,6 +91,7 @@ const PAGE_DETAILS: Record<string, string> = {
   "/leads": "Find high-fit local businesses and move winners into the CRM.",
   "/outreach": "Cold text workflows for timely follow-up.",
   "/receptionist": "AI call handling, conversations, and intake quality.",
+  "/agents": "Voice agents, client assignments, and public demo links.",
   "/clients": "Client relationships, active leads, assignments, and sales stages.",
   "/requests": "Delivery work, client requests, deadlines, and developer handoff.",
   "/analytics": "Traffic and conversion signals across ArkiTech properties.",
@@ -113,6 +116,7 @@ const MOBILE_TAB_LABELS: Record<string, string> = {
   "/calendar": "Calendar",
   "/notes": "Notes",
   "/receptionist": "Calls",
+  "/agents": "Agents",
   "/analytics": "Stats",
   "/accountability": "Today",
   "/settings": "Team",

@@ -85,13 +85,38 @@ export class ElevenLabsUpstreamError extends Error {
 
 function getConfig() {
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
-  const agentId = process.env.ELEVENLABS_AGENT_ID?.trim();
 
-  if (!apiKey || !agentId) {
+  if (!apiKey) {
     throw new ElevenLabsConfigurationError("ElevenLabs receptionist configuration is incomplete.");
   }
 
-  return { apiKey, agentId };
+  return { apiKey };
+}
+
+// Which agents this deployment archives calls for. The roster is the source of
+// truth; ELEVENLABS_AGENT_ID stays honoured so a deployment that predates the
+// roster keeps syncing its original agent without any migration step.
+export async function resolveKnownAgentIds() {
+  const ids = new Set<string>();
+
+  try {
+    const registered = await prisma.voiceAgent.findMany({
+      where: { isArchived: false },
+      select: { providerAgentId: true },
+    });
+    for (const agent of registered) ids.add(agent.providerAgentId);
+  } catch (error) {
+    // If this build reaches production before the VoiceAgent migration runs,
+    // fall back to the env agent rather than taking the receptionist down.
+    const code = (error as { code?: string }).code;
+    if (code !== "P2021" && !(error instanceof TypeError)) throw error;
+    console.warn("[ElevenLabs] Voice agent roster unavailable — falling back to ELEVENLABS_AGENT_ID.");
+  }
+
+  const envAgentId = process.env.ELEVENLABS_AGENT_ID?.trim();
+  if (envAgentId) ids.add(envAgentId);
+
+  return [...ids];
 }
 
 async function elevenLabsJson<T>(path: string, schema: z.ZodType<T>) {
@@ -128,8 +153,7 @@ async function elevenLabsJson<T>(path: string, schema: z.ZodType<T>) {
   }
 }
 
-async function listAllConversationSummaries(callStartAfterUnix?: number) {
-  const { agentId } = getConfig();
+async function listAllConversationSummaries(agentId: string, callStartAfterUnix?: number) {
   const conversations: ConversationSummary[] = [];
   let cursor: string | null = null;
   let pages = 0;
@@ -159,6 +183,57 @@ async function listAllConversationSummaries(callStartAfterUnix?: number) {
   }
 
   return conversations;
+}
+
+const agentListSchema = z.object({
+  agents: z.array(z.object({
+    agent_id: z.string(),
+    name: z.string().nullable().optional(),
+    created_at_unix_secs: z.number().nullable().optional(),
+    tags: z.array(z.string()).optional(),
+  }).passthrough()),
+  has_more: z.boolean().default(false),
+  next_cursor: z.string().nullable().optional(),
+});
+
+const signedUrlSchema = z.object({ signed_url: z.string().url() });
+
+// Every agent on the ElevenLabs account, so the CRM roster can be reconciled
+// against what actually exists upstream.
+export async function listElevenLabsAgents() {
+  const agents: Array<{ agentId: string; name: string; createdAt: Date | null; tags: string[] }> = [];
+  let cursor: string | null = null;
+  let pages = 0;
+
+  do {
+    const search = new URLSearchParams({ page_size: "100" });
+    if (cursor) search.set("cursor", cursor);
+
+    const page = await elevenLabsJson(`/agents?${search.toString()}`, agentListSchema);
+    for (const agent of page.agents) {
+      agents.push({
+        agentId: agent.agent_id,
+        name: agent.name?.trim() || "Untitled agent",
+        createdAt: agent.created_at_unix_secs ? new Date(agent.created_at_unix_secs * 1_000) : null,
+        tags: agent.tags ?? [],
+      });
+    }
+    cursor = page.has_more ? page.next_cursor ?? null : null;
+    pages += 1;
+  } while (cursor && pages < 50);
+
+  return agents;
+}
+
+// Short-lived credential that lets a browser open a conversation with an agent
+// without the agent being public. Issued server-side so the API key never
+// reaches the client and every demo call passes our own gating first.
+export async function createElevenLabsSignedUrl(agentId: string) {
+  const { signed_url } = await elevenLabsJson(
+    `/conversation/get-signed-url?agent_id=${encodeURIComponent(agentId)}`,
+    signedUrlSchema,
+  );
+  return signed_url;
 }
 
 export function getElevenLabsConversation(conversationId: string) {
@@ -466,11 +541,13 @@ export async function archiveReceptionistWebhookConversation(payload: unknown) {
     throw new ElevenLabsWebhookPayloadError("The webhook conversation payload is invalid.");
   }
 
-  const configuredAgentId = process.env.ELEVENLABS_AGENT_ID?.trim();
-  if (!configuredAgentId) {
-    throw new ElevenLabsConfigurationError("The receptionist agent ID is not configured.");
+  // Accept any agent this deployment knows about, not just the env one — the
+  // whole roster shares a single webhook endpoint upstream.
+  const knownAgentIds = await resolveKnownAgentIds();
+  if (!knownAgentIds.length) {
+    throw new ElevenLabsConfigurationError("No voice agents are registered to receive calls.");
   }
-  if (parsed.data.agent_id !== configuredAgentId) return { ignored: true as const };
+  if (!knownAgentIds.includes(parsed.data.agent_id)) return { ignored: true as const };
 
   const leadIdsByPhone = await getUniqueLeadIdsByPhone();
   const summary = summaryFromDetail(parsed.data);
@@ -492,8 +569,7 @@ async function mapWithConcurrency<T>(items: T[], concurrency: number, run: (item
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
 }
 
-async function performSync(): Promise<ReceptionistSyncResult> {
-  const { agentId } = getConfig();
+async function syncAgent(agentId: string, leadIdsByPhone: Map<string, string>): Promise<ReceptionistSyncResult> {
   const [latestStored, incompleteStored, syncState] = await Promise.all([
     prisma.receptionistConversation.findFirst({
       where: { agentId },
@@ -540,7 +616,7 @@ async function performSync(): Promise<ReceptionistSyncResult> {
   const callStartAfterUnix = !shouldFullyReconcile && latestStored
     ? Math.max(0, Math.floor(latestStored.startedAt.getTime() / 1_000) - 86_400)
     : undefined;
-  const summaries = await listAllConversationSummaries(callStartAfterUnix);
+  const summaries = await listAllConversationSummaries(agentId, callStartAfterUnix);
   const listedProviderIds = new Set(summaries.map((summary) => summary.conversation_id));
   for (const conversation of incompleteStored) {
     if (listedProviderIds.has(conversation.providerConversationId)) continue;
@@ -567,26 +643,23 @@ async function performSync(): Promise<ReceptionistSyncResult> {
       tag_ids: conversation.tagIds,
     }));
   }
-  const [existingConversations, leadIdsByPhone] = await Promise.all([
-    prisma.receptionistConversation.findMany({
-      where: {
-        agentId,
-        providerConversationId: { in: summaries.map((summary) => summary.conversation_id) },
-      },
-      select: {
-        id: true,
-        providerConversationId: true,
-        status: true,
-        title: true,
-        summary: true,
-        messageCount: true,
-        metadata: true,
-        detailStatus: true,
-        _count: { select: { messages: true } },
-      },
-    }),
-    getUniqueLeadIdsByPhone(),
-  ]);
+  const existingConversations = await prisma.receptionistConversation.findMany({
+    where: {
+      agentId,
+      providerConversationId: { in: summaries.map((summary) => summary.conversation_id) },
+    },
+    select: {
+      id: true,
+      providerConversationId: true,
+      status: true,
+      title: true,
+      summary: true,
+      messageCount: true,
+      metadata: true,
+      detailStatus: true,
+      _count: { select: { messages: true } },
+    },
+  });
   const existingByProviderId = new Map(existingConversations.map((conversation) => [conversation.providerConversationId, conversation]));
   const result: ReceptionistSyncResult = {
     scanned: summaries.length,
@@ -644,6 +717,40 @@ async function performSync(): Promise<ReceptionistSyncResult> {
   });
 
   return result;
+}
+
+async function performSync(): Promise<ReceptionistSyncResult> {
+  getConfig();
+
+  const agentIds = await resolveKnownAgentIds();
+  if (!agentIds.length) {
+    throw new ElevenLabsConfigurationError("No voice agents are registered to sync.");
+  }
+
+  // The phone→lead map is identical for every agent, so build it once rather
+  // than re-reading every lead per agent.
+  const leadIdsByPhone = await getUniqueLeadIdsByPhone();
+  const total: ReceptionistSyncResult = { scanned: 0, archived: 0, refreshed: 0, unchanged: 0, errors: 0 };
+
+  for (const agentId of agentIds) {
+    try {
+      const result = await syncAgent(agentId, leadIdsByPhone);
+      total.scanned += result.scanned;
+      total.archived += result.archived;
+      total.refreshed += result.refreshed;
+      total.unchanged += result.unchanged;
+      total.errors += result.errors;
+    } catch (error) {
+      // One unreachable or deleted agent must not abort the whole roster.
+      console.error(
+        `[ElevenLabs sync] Unable to sync agent ${agentId}:`,
+        error instanceof Error ? error.message : "unknown error",
+      );
+      total.errors += 1;
+    }
+  }
+
+  return total;
 }
 
 let activeSync: Promise<ReceptionistSyncResult> | null = null;

@@ -6,6 +6,7 @@ import {
   ElevenLabsConfigurationError,
   ElevenLabsUpstreamError,
   publicConversationFields,
+  resolveKnownAgentIds,
   syncReceptionistConversations,
 } from "@/lib/elevenlabs";
 import { prisma } from "@/lib/prisma";
@@ -69,10 +70,16 @@ export async function GET(request: Request) {
     source: url.searchParams.get("source") ?? "",
     page: url.searchParams.get("page") ?? "1",
   });
-  const configuredAgentId = process.env.ELEVENLABS_AGENT_ID?.trim();
-  const agentWhere: Prisma.ReceptionistConversationWhereInput = configuredAgentId
-    ? { agentId: configuredAgentId }
-    : {};
+  // Scope to the agents this deployment owns. An `agent` param narrows to one
+  // of them; without it the page shows the whole roster's calls.
+  const knownAgentIds = await resolveKnownAgentIds();
+  const requestedAgent = url.searchParams.get("agent")?.trim();
+  const agentWhere: Prisma.ReceptionistConversationWhereInput =
+    requestedAgent && knownAgentIds.includes(requestedAgent)
+      ? { agentId: requestedAgent }
+      : knownAgentIds.length
+        ? { agentId: { in: knownAgentIds } }
+        : {};
   const where: Prisma.ReceptionistConversationWhereInput = {
     ...agentWhere,
     ...(query.outcome === "successful"
