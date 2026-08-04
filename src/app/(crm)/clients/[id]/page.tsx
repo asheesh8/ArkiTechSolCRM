@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Activity, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronRight,
-  Download, Edit3, ExternalLink, FileText, Folder, Globe2,
+  Download, Edit3, ExternalLink, FileText, Folder, Globe2, Image as ImageIcon,
   Loader2, Mail, MapPin, Navigation, PenLine, Phone, PhoneCall,
   PhoneMissed, Save, Send, ShieldCheck, Sparkles, Star, ThumbsDown, ThumbsUp, Trash2,
   Upload, UserCheck, X,
@@ -290,6 +290,20 @@ const CONTRACT_TONE: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
 };
 
+// Agreements are uploaded as a PDF or as a photo/scan of a signed page.
+const AGREEMENT_ACCEPT = "application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png";
+const AGREEMENT_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
+
+function isAgreementFile(name: string) {
+  const n = name.toLowerCase();
+  return AGREEMENT_EXTENSIONS.some((ext) => n.endsWith(ext));
+}
+
+function isAgreementImage(name: string | null | undefined) {
+  const n = (name ?? "").toLowerCase();
+  return n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".png");
+}
+
 // The signed "client packet": every agreement with signatures, PDFs, and operational notes.
 function ClientPacket({ client }: { client: any }) {
   const [contracts, setContracts] = useState<any[]>(client.contracts ?? []);
@@ -337,7 +351,7 @@ function ClientPacket({ client }: { client: any }) {
 
   async function uploadReplacement(f: File): Promise<{ key: string; name: string }> {
     const res = await fetch(`/api/contracts/upload?filename=${encodeURIComponent(f.name)}`, {
-      method: "POST", headers: { "Content-Type": f.type || "application/pdf" }, body: f,
+      method: "POST", headers: { "Content-Type": f.type || "application/octet-stream" }, body: f,
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error ?? "Could not upload the file");
@@ -449,11 +463,11 @@ function ClientPacket({ client }: { client: any }) {
                       </div>
                       <div className="space-y-1.5"><Label>Notes <span className="font-normal text-zinc-400">(optional)</span></Label><Textarea rows={2} value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} /></div>
                       <div className="space-y-1.5">
-                        <Label>Replace PDF <span className="font-normal text-zinc-400">(optional)</span></Label>
+                        <Label>Replace document <span className="font-normal text-zinc-400">(optional)</span></Label>
                         <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:border-indigo-400 dark:border-zinc-700 dark:text-zinc-300">
                           <Upload className="h-4 w-4" />
-                          <span className="truncate">{editFile ? editFile.name : (c.documentName ? `Current: ${c.documentName} — pick a new PDF` : "Upload a PDF")}</span>
-                          <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f && (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"))) setEditFile(f); }} />
+                          <span className="truncate">{editFile ? editFile.name : (c.documentName ? `Current: ${c.documentName} — pick a new file` : "Upload a PDF, JPEG, or PNG")}</span>
+                          <input type="file" accept={AGREEMENT_ACCEPT} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f && isAgreementFile(f.name)) setEditFile(f); }} />
                         </label>
                       </div>
                       {editMsg && <p className="text-xs text-red-600">{editMsg}</p>}
@@ -481,11 +495,13 @@ function ClientPacket({ client }: { client: any }) {
                   </ul>
                 )}
 
-                {/* Uploaded PDF */}
+                {/* Uploaded agreement document */}
                 {c.documentKey && (
                   <a href={`/api/portal/files/${encodeURIComponent(c.documentKey)}`} target="_blank" rel="noopener noreferrer">
                     <Button variant="outline" size="sm" className="w-full justify-start">
-                      <FileText className="h-4 w-4 text-red-500" />
+                      {isAgreementImage(c.documentName)
+                        ? <ImageIcon className="h-4 w-4 text-indigo-500" />
+                        : <FileText className="h-4 w-4 text-red-500" />}
                       {c.documentName ?? "Contract document"}
                       <ExternalLink className="ml-auto h-3.5 w-3.5 text-zinc-400" />
                     </Button>

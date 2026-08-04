@@ -2,61 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, FileText, Loader2, Mail, Plus, Send, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, FileText, Image as ImageIcon, Loader2, Mail, Send, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// ─── Plan presets ─────────────────────────────────────────────────────────────
-const PLAN_PRESETS = [
-  {
-    name: "Basic",
-    price: 197,
-    billing: "MONTHLY",
-    items: [
-      { description: "Website design & development", amount: 147 },
-      { description: "Monthly hosting & maintenance", amount: 50 },
-    ],
-  },
-  {
-    name: "Standard",
-    price: 349,
-    billing: "MONTHLY",
-    items: [
-      { description: "Custom website design & development", amount: 199 },
-      { description: "Monthly hosting, maintenance & updates", amount: 100 },
-      { description: "SEO & Google Business optimization", amount: 50 },
-    ],
-  },
-  {
-    name: "One-Time Build",
-    price: 2000,
-    billing: "ONE_TIME",
-    items: [
-      { description: "Full website design & development", amount: 1900 },
-      { description: "Launch & setup", amount: 100 },
-    ],
-  },
-  {
-    name: "Edit / Add-on",
-    price: 50,
-    billing: "ONE_TIME",
-    items: [
-      { description: "Website edit or addition", amount: 50 },
-    ],
-  },
-  {
-    name: "Custom",
-    price: 0,
-    billing: "MONTHLY",
-    items: [{ description: "", amount: 0 }],
-  },
-];
-
-type LineItem = { description: string; amount: number };
 type Lead = { id: string; businessName: string; email: string | null; phone: string | null; name?: string };
 
-const STEPS = ["Choose Draft", "Build Agreement", "Send & Sign", "Portal Handoff"];
+const STEPS = ["Build Agreement", "Send & Sign", "Portal Handoff"];
+
+// The agreement is whatever the owner already signs off on — a PDF contract or
+// a photo/scan of one.
+const ACCEPT_ATTR = "application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png";
+const ACCEPTED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
+
+function isImageFile(name: string) {
+  const n = name.toLowerCase();
+  return n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".png");
+}
 
 export default function OnboardPage() {
   const { id } = useParams<{ id: string }>();
@@ -71,18 +34,12 @@ export default function OnboardPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  // Step 1: plan
-  const [selectedPlan, setSelectedPlan] = useState(0);
-
-  // Step 2: contract builder
-  const [contractMode, setContractMode] = useState<"build" | "upload">("build");
-  const [planName, setPlanName] = useState(PLAN_PRESETS[0].name);
-  const [items, setItems] = useState<LineItem[]>(PLAN_PRESETS[0].items);
-  const [billing, setBilling] = useState<string>(PLAN_PRESETS[0].billing);
-  const [tax, setTax] = useState(0);
+  // Step 1: the agreement
+  const [planName, setPlanName] = useState("Service Agreement");
+  const [billing, setBilling] = useState("MONTHLY");
   const [notes, setNotes] = useState("");
 
-  // Custom uploaded contract
+  // Uploaded agreement document
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [docAmount, setDocAmount] = useState(0);
@@ -101,30 +58,17 @@ export default function OnboardPage() {
     });
   }, [id]);
 
-  const subtotal = items.reduce((s, i) => s + Number(i.amount || 0), 0);
-  const total = subtotal + Number(tax || 0);
-  const displayTotal = contractMode === "upload" ? Number(docAmount || 0) : total;
-
-  function applyPreset(idx: number) {
-    const p = PLAN_PRESETS[idx];
-    setSelectedPlan(idx);
-    setPlanName(p.name);
-    setItems(p.items.map((i) => ({ ...i })));
-    setBilling(p.billing);
-    setTax(0);
-  }
-
-  function setItem(idx: number, field: keyof LineItem, val: string | number) {
-    setItems((prev) => prev.map((item, i) => i === idx ? { ...item, [field]: field === "amount" ? Number(val) : val } : item));
-  }
-
-  function addItem() { setItems((prev) => [...prev, { description: "", amount: 0 }]); }
-  function removeItem(idx: number) { setItems((prev) => prev.filter((_, i) => i !== idx)); }
+  const displayTotal = Number(docAmount || 0);
 
   function onPickFile(f: File | null) {
     if (!f) return;
-    if (f.type !== "application/pdf" && !f.name.toLowerCase().endsWith(".pdf")) {
-      setError("Please upload a PDF file.");
+    const name = f.name.toLowerCase();
+    const ok = ACCEPTED_EXTENSIONS.some((ext) => name.endsWith(ext))
+      || f.type === "application/pdf"
+      || f.type.startsWith("image/jpeg")
+      || f.type.startsWith("image/png");
+    if (!ok) {
+      setError("Please upload a PDF, JPEG, or PNG.");
       return;
     }
     setError("");
@@ -136,7 +80,7 @@ export default function OnboardPage() {
     // "The string did not match the expected pattern" on multipart File uploads.
     const res = await fetch(`/api/contracts/upload?filename=${encodeURIComponent(f.name)}`, {
       method: "POST",
-      headers: { "Content-Type": f.type || "application/pdf" },
+      headers: { "Content-Type": f.type || "application/octet-stream" },
       body: f,
     });
     const data = await res.json().catch(() => ({}));
@@ -171,32 +115,28 @@ export default function OnboardPage() {
         setClientId(cId!);
       }
 
-      // Upload the custom contract file first (if in upload mode)
-      let doc: { key: string; name: string } | null = null;
-      if (contractMode === "upload") {
-        if (!file) { setError("Add a PDF contract before generating."); setBusy(false); return; }
-        try {
-          doc = await uploadContractFile(file);
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Upload failed"); setBusy(false); return;
-        }
+      // Upload the agreement document first — it is the contract
+      if (!file) { setError("Add the agreement file before generating."); setBusy(false); return; }
+      let doc: { key: string; name: string };
+      try {
+        doc = await uploadContractFile(file);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Upload failed"); setBusy(false); return;
       }
 
-      // Contract payload differs by mode
-      const payload = contractMode === "upload"
-        ? {
-            clientId: cId,
-            planName: planName || "Custom Contract",
-            lineItems: [{ description: planName || "Custom contract", amount: Number(docAmount || 0) }],
-            subtotal: Number(docAmount || 0),
-            tax: 0,
-            total: Number(docAmount || 0),
-            billingCycle: billing,
-            notes,
-            documentKey: doc!.key,
-            documentName: doc!.name,
-          }
-        : { clientId: cId, planName, lineItems: items, subtotal, tax, total, billingCycle: billing, notes };
+      const amount = Number(docAmount || 0);
+      const payload = {
+        clientId: cId,
+        planName: planName || "Service Agreement",
+        lineItems: [{ description: planName || "Service Agreement", amount }],
+        subtotal: amount,
+        tax: 0,
+        total: amount,
+        billingCycle: billing,
+        notes,
+        documentKey: doc.key,
+        documentName: doc.name,
+      };
 
       // Create contract
       const res2 = await fetch("/api/contracts", {
@@ -207,7 +147,7 @@ export default function OnboardPage() {
       const data2 = await res2.json();
       if (!res2.ok) { setError(data2.error ?? "Could not create contract"); setBusy(false); return; }
       setContractId(data2.contract.id);
-      setStep(2);
+      setStep(1);
     } finally {
       setBusy(false);
     }
@@ -222,7 +162,7 @@ export default function OnboardPage() {
     setBusy(false);
     if (!res.ok) { setError(data.error ?? "Could not send"); return; }
     setSignUrl(data.signUrl);
-    setStep(3);
+    setStep(2);
   }
 
   async function copyLink() {
@@ -258,73 +198,12 @@ export default function OnboardPage() {
         ))}
       </div>
 
-      {/* ── Step 0: Choose Plan ── */}
+      {/* ── Step 0: Build Agreement (upload the signed-off document) ── */}
       {step === 0 && (
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-xl font-bold">Choose a plan</h2>
-            <p className="mt-1 text-sm text-zinc-500">Select a draft agreement, then customize scope, terms, and the signing flow for {lead.businessName}.</p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {PLAN_PRESETS.map((plan, i) => (
-              <button
-                key={plan.name}
-                type="button"
-                onClick={() => applyPreset(i)}
-                className={`rounded-xl border p-5 text-left transition hover:border-indigo-400 ${selectedPlan === i ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950" : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-100">{plan.name}</p>
-                    <p className="mt-0.5 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                      {plan.price ? `$${plan.price}` : "Custom"}<span className="text-sm font-normal text-zinc-500">{plan.price && plan.billing === "MONTHLY" ? "/mo" : ""}</span>
-                    </p>
-                  </div>
-                  {selectedPlan === i && <CheckCircle2 className="h-5 w-5 text-indigo-600" />}
-                </div>
-                <ul className="mt-3 space-y-1">
-                  {plan.items.map((item, j) => (
-                    <li key={j} className="flex items-start gap-2 text-xs text-zinc-500">
-                      <Check className="mt-0.5 h-3 w-3 shrink-0 text-indigo-500" />
-                      {item.description || "Custom line item"}
-                    </li>
-                  ))}
-                </ul>
-              </button>
-            ))}
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={() => setStep(1)}>
-              Next — Build contract <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Step 1: Build Contract ── */}
-      {step === 1 && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold">Build the contract</h2>
-            <p className="mt-1 text-sm text-zinc-500">Confirm client info, then build line items or upload your own contract PDF.</p>
-          </div>
-
-          {/* Mode toggle */}
-          <div className="inline-flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900">
-            <button
-              type="button"
-              onClick={() => setContractMode("build")}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${contractMode === "build" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-800 dark:text-indigo-300" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
-            >
-              <Plus className="h-4 w-4" /> Build line items
-            </button>
-            <button
-              type="button"
-              onClick={() => setContractMode("upload")}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${contractMode === "upload" ? "bg-white text-indigo-700 shadow-sm dark:bg-zinc-800 dark:text-indigo-300" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
-            >
-              <Upload className="h-4 w-4" /> Upload PDF
-            </button>
+            <h2 className="text-xl font-bold">Build the agreement</h2>
+            <p className="mt-1 text-sm text-zinc-500">Confirm client info, then upload the agreement for {lead.businessName} — a PDF, or a photo/scan of a signed page.</p>
           </div>
 
           <Card>
@@ -345,69 +224,11 @@ export default function OnboardPage() {
             </CardContent>
           </Card>
 
-          {contractMode === "build" && (
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div><CardTitle>Plan: {planName}</CardTitle></div>
-                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} className="w-full text-sm sm:max-w-[200px]" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {items.map((item, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input
-                    value={item.description}
-                    onChange={(e) => setItem(i, "description", e.target.value)}
-                    placeholder="Service description"
-                    className="flex-1"
-                  />
-                  <div className="flex w-28 items-center gap-1">
-                    <span className="text-zinc-500">$</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={item.amount}
-                      onChange={(e) => setItem(i, "amount", e.target.value)}
-                      className="w-full"
-                    />
-                  </div>
-                  {items.length > 1 && (
-                    <button type="button" onClick={() => removeItem(i)} className="shrink-0 rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button type="button" onClick={addItem} className="flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-sm text-zinc-500 hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-700">
-                <Plus className="h-4 w-4" /> Add line item
-              </button>
-
-              <div className="mt-4 space-y-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-                <div className="flex items-center justify-between text-sm text-zinc-500">
-                  <span>Subtotal</span><span>${subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-zinc-500">Tax / fees</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-zinc-500">$</span>
-                    <Input type="number" min="0" value={tax} onChange={(e) => setTax(Number(e.target.value))} className="w-24" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between border-t border-zinc-200 pt-2 text-base font-bold dark:border-zinc-800">
-                  <span>Total</span><span>${total.toFixed(2)}{billing === "MONTHLY" ? " / mo" : ""}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          )}
-
-          {contractMode === "upload" && (
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                <CardTitle>Upload contract</CardTitle>
-                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} placeholder="Contract name" className="w-full text-sm sm:max-w-[200px]" />
+                <CardTitle>Upload agreement</CardTitle>
+                <Input value={planName} onChange={(e) => setPlanName(e.target.value)} placeholder="Agreement name" className="w-full text-sm sm:max-w-[200px]" />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -422,15 +243,15 @@ export default function OnboardPage() {
                     <Upload className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Drop a PDF here, or click to browse</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">Your own contract, agreement, or proposal — PDF only</p>
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Drop the agreement here, or click to browse</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">Your own contract, agreement, or proposal — PDF, JPEG, or PNG</p>
                   </div>
-                  <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} />
+                  <input type="file" accept={ACCEPT_ATTR} className="hidden" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} />
                 </label>
               ) : (
                 <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600 dark:bg-red-950">
-                    <FileText className="h-5 w-5" />
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isImageFile(file.name) ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-950" : "bg-red-100 text-red-600 dark:bg-red-950"}`}>
+                    {isImageFile(file.name) ? <ImageIcon className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{file.name}</p>
@@ -454,7 +275,6 @@ export default function OnboardPage() {
               </div>
             </CardContent>
           </Card>
-          )}
 
           <Card>
             <CardHeader><CardTitle>Additional terms <span className="font-normal text-zinc-500">(optional)</span></CardTitle></CardHeader>
@@ -465,9 +285,8 @@ export default function OnboardPage() {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(0)}><ArrowLeft className="h-4 w-4" /> Back</Button>
-            <Button onClick={createContractAndClient} disabled={busy || !clientEmail || !clientName || (contractMode === "build" ? total === 0 : !file)}>
+          <div className="flex justify-end">
+            <Button onClick={createContractAndClient} disabled={busy || !clientEmail || !clientName || !file}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Generate contract <ArrowRight className="h-4 w-4" />
             </Button>
@@ -475,8 +294,8 @@ export default function OnboardPage() {
         </div>
       )}
 
-      {/* ── Step 2: Send & Sign ── */}
-      {step === 2 && (
+      {/* ── Step 1: Send & Sign ── */}
+      {step === 1 && (
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold">Send the contract</h2>
@@ -488,7 +307,7 @@ export default function OnboardPage() {
               <div className="rounded-xl bg-indigo-50 p-5 dark:bg-indigo-950">
                 <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">{planName}</p>
                 <p className="mt-1 text-3xl font-bold text-indigo-900 dark:text-indigo-100">${displayTotal.toFixed(2)}<span className="text-base font-normal text-indigo-600">{billing === "MONTHLY" ? " / mo" : ""}</span></p>
-                <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{contractMode === "upload" ? "Custom PDF contract" : `${items.length} service${items.length !== 1 ? "s" : ""}`} · to {clientName} ({clientEmail})</p>
+                <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{file?.name ?? "Uploaded agreement"} · to {clientName} ({clientEmail})</p>
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
@@ -549,9 +368,9 @@ export default function OnboardPage() {
           </Card>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="h-4 w-4" /> Back</Button>
+            <Button variant="outline" onClick={() => setStep(0)}><ArrowLeft className="h-4 w-4" /> Back</Button>
             {signUrl && (
-              <Button onClick={() => setStep(3)}>
+              <Button onClick={() => setStep(2)}>
                 Next — Portal handoff <ArrowRight className="h-4 w-4" />
               </Button>
             )}
@@ -559,8 +378,8 @@ export default function OnboardPage() {
         </div>
       )}
 
-      {/* ── Step 3: Portal Handoff ── */}
-      {step === 3 && (
+      {/* ── Step 2: Portal Handoff ── */}
+      {step === 2 && (
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold">Portal handoff</h2>

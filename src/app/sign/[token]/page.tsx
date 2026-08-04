@@ -24,6 +24,12 @@ type Contract = {
   client: { name: string; email: string; businessName: string };
 };
 
+// Agreements are uploaded as a PDF or as a photo/scan — each needs its own viewer.
+function isImageDoc(name: string | null) {
+  const n = (name ?? "").toLowerCase();
+  return n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".png");
+}
+
 export default function SignPage() {
   const { token } = useParams<{ token: string }>();
   const [contract, setContract] = useState<Contract | null>(null);
@@ -163,18 +169,27 @@ export default function SignPage() {
                     Open in new tab ↗
                   </a>
                 </h3>
-                <object
-                  data={`/api/sign/${token}/document`}
-                  type="application/pdf"
-                  className="h-[600px] w-full rounded-lg border border-zinc-200"
-                >
-                  <div className="flex flex-col items-center gap-2 p-8 text-center text-sm text-zinc-500">
-                    <p>{contract.documentName ?? "Contract document"}</p>
-                    <a href={`/api/sign/${token}/document`} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 hover:text-indigo-700">
-                      View document ↗
-                    </a>
-                  </div>
-                </object>
+                {isImageDoc(contract.documentName) ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={`/api/sign/${token}/document`}
+                    alt={contract.documentName ?? "Contract document"}
+                    className="max-h-[600px] w-full rounded-lg border border-zinc-200 object-contain"
+                  />
+                ) : (
+                  <object
+                    data={`/api/sign/${token}/document`}
+                    type="application/pdf"
+                    className="h-[600px] w-full rounded-lg border border-zinc-200"
+                  >
+                    <div className="flex flex-col items-center gap-2 p-8 text-center text-sm text-zinc-500">
+                      <p>{contract.documentName ?? "Contract document"}</p>
+                      <a href={`/api/sign/${token}/document`} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 hover:text-indigo-700">
+                        View document ↗
+                      </a>
+                    </div>
+                  </object>
+                )}
                 {contract.total > 0 && (
                   <div className="mt-4 flex justify-between border-t border-zinc-200 pt-4 text-base font-bold text-zinc-900">
                     <span>Total {cycle}</span><span>${contract.total.toFixed(2)}</span>

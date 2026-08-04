@@ -8,13 +8,27 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const email = url.searchParams.get("email");
   if (email) {
-    const client = await prisma.client.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const client = await prisma.client.findUnique({
+      where: { email: email.toLowerCase().trim() },
+      select: { id: true, name: true, email: true, phone: true, businessName: true, leadId: true },
+    });
     return NextResponse.json({ clients: client ? [client] : [] });
   }
-  const clients = await prisma.client.findMany({
+  const rows = await prisma.client.findMany({
     orderBy: { createdAt: "desc" },
-    include: { contracts: { where: { status: "ACTIVE" }, take: 1 }, invoices: { where: { status: "PENDING" }, take: 1 } },
+    include: {
+      contracts: { where: { status: "ACTIVE" }, take: 1 },
+      invoices: { where: { status: "PENDING" }, take: 1 },
+      _count: { select: { contracts: true, invoices: true, workRequests: true } },
+    },
   });
+
+  // Portal credentials never leave the server — the CRM only needs the state.
+  const clients = rows.map(({ passwordHash, sessionToken, sessionExpiry, setupToken, setupExpiry, ...client }) => ({
+    ...client,
+    portalStatus: passwordHash ? "ACTIVE" : setupToken && setupExpiry && setupExpiry > new Date() ? "INVITED" : "NONE",
+  }));
+
   return NextResponse.json({ clients });
 }
 

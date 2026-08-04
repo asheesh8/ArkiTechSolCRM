@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, Building2, ChevronDown, ChevronRight, ClipboardList, Filter, Loader2, MapPin, Phone, Plus, Search, Star, UserCheck, UserPlus, Users, X } from "lucide-react";
+import { AlertTriangle, Building2, ChevronDown, ChevronRight, ClipboardList, Filter, KeyRound, Loader2, Mail, MapPin, Phone, Plus, Search, Star, Trash2, UserCheck, UserPlus, Users, X } from "lucide-react";
 import { LeadTable } from "@/components/crm/lead-table";
 import { ManualClientForm } from "@/components/crm/manual-client-form";
 import { CsvImportCard } from "@/components/crm/csv-import-card";
@@ -30,6 +30,144 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 type TeamUser = { id: string; name: string; role: string };
+
+type OnboardedClient = {
+  id: string;
+  leadId: string | null;
+  name: string;
+  email: string;
+  phone: string | null;
+  businessName: string;
+  createdAt: string;
+  portalStatus: "ACTIVE" | "INVITED" | "NONE";
+  _count: { contracts: number; invoices: number; workRequests: number };
+};
+
+const PORTAL_TONE: Record<OnboardedClient["portalStatus"], string> = {
+  ACTIVE:  "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  INVITED: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  NONE:    "bg-zinc-500/10 text-zinc-500 dark:text-zinc-400",
+};
+
+const PORTAL_LABEL: Record<OnboardedClient["portalStatus"], string> = {
+  ACTIVE:  "Login active",
+  INVITED: "Invite pending",
+  NONE:    "No login",
+};
+
+// Onboarded clients are Client records with a portal login — distinct from the
+// Closed leads shown in the Active Clients tab. This is where broken or
+// duplicate onboardings get cleaned up.
+function OnboardedRow({ client, canManage, onChanged, onDeleted }: {
+  client: OnboardedClient;
+  canManage: boolean;
+  onChanged: (id: string, patch: Partial<OnboardedClient>) => void;
+  onDeleted: (id: string) => void;
+}) {
+  const [busy, setBusy] = useState<"invite" | "login" | "delete" | "">("");
+  const [msg, setMsg] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const counts = client._count;
+
+  async function sendInvite() {
+    setBusy("invite"); setMsg("");
+    try {
+      const res = await fetch(`/api/clients/${client.id}/login`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setMsg(data.error ?? "Could not send the invite."); return; }
+      onChanged(client.id, { portalStatus: "INVITED" });
+      setMsg(`Setup link emailed to ${client.email}.`);
+    } catch {
+      setMsg("Network error — nothing was sent.");
+    } finally { setBusy(""); }
+  }
+
+  async function removeLogin() {
+    setBusy("login"); setMsg("");
+    try {
+      const res = await fetch(`/api/clients/${client.id}/login`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setMsg(data.error ?? "Could not reset the login."); return; }
+      onChanged(client.id, { portalStatus: "NONE" });
+      setMsg("Portal login removed. Send a new invite when they're ready.");
+    } catch {
+      setMsg("Network error — the login was not changed.");
+    } finally { setBusy(""); }
+  }
+
+  async function deleteClient() {
+    setBusy("delete"); setMsg("");
+    try {
+      const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setMsg(data.error ?? "Could not delete this client."); setBusy(""); return; }
+      onDeleted(client.id);
+    } catch {
+      setMsg("Network error — nothing was deleted.");
+      setBusy("");
+    }
+  }
+
+  return (
+    <div className="crm-card rounded-lg border border-[var(--border)] p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-zinc-900 dark:text-zinc-100">{client.businessName}</p>
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", PORTAL_TONE[client.portalStatus])}>
+              {PORTAL_LABEL[client.portalStatus]}
+            </span>
+          </div>
+          <p className="mt-1 truncate text-xs text-zinc-500">{client.name} · {client.email}{client.phone ? ` · ${client.phone}` : ""}</p>
+          <p className="mt-1 text-xs text-zinc-400">
+            {counts.contracts} contract{counts.contracts === 1 ? "" : "s"} · {counts.invoices} invoice{counts.invoices === 1 ? "" : "s"} · {counts.workRequests} request{counts.workRequests === 1 ? "" : "s"} · onboarded {new Date(client.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {client.leadId && (
+            <Link href={`/clients/${client.leadId}`}>
+              <Button variant="outline" size="sm">Open profile</Button>
+            </Link>
+          )}
+          {canManage && (
+            <>
+              <Button variant="outline" size="sm" disabled={!!busy} onClick={sendInvite}>
+                {busy === "invite" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                {client.portalStatus === "NONE" ? "Send invite" : "Resend invite"}
+              </Button>
+              <Button variant="outline" size="sm" disabled={!!busy || client.portalStatus === "NONE"} onClick={removeLogin}>
+                {busy === "login" ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                Remove login
+              </Button>
+              <Button variant="outline" size="sm" disabled={!!busy} onClick={() => setConfirmDelete((v) => !v)} className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950">
+                <Trash2 className="h-4 w-4" /> Delete
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {confirmDelete && canManage && (
+        <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/40">
+          <p className="text-sm font-semibold text-red-800 dark:text-red-200">Delete {client.businessName} permanently?</p>
+          <p className="mt-1 text-xs text-red-700 dark:text-red-300">
+            This also removes {counts.contracts} contract{counts.contracts === 1 ? "" : "s"}, {counts.invoices} invoice{counts.invoices === 1 ? "" : "s"}, and {counts.workRequests} work request{counts.workRequests === 1 ? "" : "s"}. The lead record stays. This cannot be undone.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" disabled={!!busy} onClick={() => setConfirmDelete(false)}>Cancel</Button>
+            <Button size="sm" disabled={!!busy} onClick={deleteClient} className="bg-red-600 hover:bg-red-700">
+              {busy === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Yes, delete permanently
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {msg && <p className="mt-2 text-xs text-zinc-500">{msg}</p>}
+    </div>
+  );
+}
 
 function ActiveClientCard({ lead }: { lead: any }) {
   const location = [lead.city, lead.state].filter(Boolean).join(", ");
@@ -74,11 +212,16 @@ function ActiveClientCard({ lead }: { lead: any }) {
   );
 }
 
+const TABS = ["clients", "leads", "onboarded"] as const;
+type Tab = typeof TABS[number];
+
 export default function ClientsPage() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") === "leads" ? "leads" : "clients";
+  const tabParam = searchParams.get("tab");
+  const initialTab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "clients";
 
-  const [tab, setTab] = useState<"clients" | "leads">(initialTab);
+  const [tab, setTab] = useState<Tab>(initialTab);
+  const [onboarded, setOnboarded] = useState<OnboardedClient[]>([]);
   const [allLeads, setAllLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -100,9 +243,10 @@ export default function ClientsPage() {
     fetch("/api/leads").then((r) => r.json()).then((d) => setAllLeads(d.leads ?? [])).finally(() => setLoading(false));
     fetch("/api/auth/me").then((r) => r.json()).then((d) => setIsManager(!!d.isManager)).catch(() => setIsManager(false));
     fetch("/api/users").then((r) => r.json()).then((d) => setUsers(d.users ?? [])).catch(() => setUsers([]));
+    fetch("/api/clients").then((r) => r.json()).then((d) => setOnboarded(d.clients ?? [])).catch(() => setOnboarded([]));
   }, []);
 
-  function switchTab(t: "clients" | "leads") {
+  function switchTab(t: Tab) {
     setTab(t);
     setSearch(""); setStatus(""); setCity("");
     setSelected(new Set());
@@ -182,6 +326,13 @@ export default function ClientsPage() {
   const filteredLeads = scopedPipeline.filter((l) => !status || l.status === status);
   const filteredDead = dead.filter((l) => byText(l) && byAssignee(l));
 
+  const filteredOnboarded = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return onboarded;
+    return onboarded.filter((c) =>
+      c.businessName.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+  }, [onboarded, search]);
+
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const s of PIPELINE_STATUSES) c[s] = scopedPipeline.filter((l) => l.status === s).length;
@@ -251,29 +402,29 @@ export default function ClientsPage() {
 
       {/* ── Tabs ── */}
       <div className="flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 sm:w-fit">
-        {(["clients", "leads"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => switchTab(t)}
-            className={cn(
-              "flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold transition sm:flex-none sm:px-5 sm:py-2",
-              tab === t ? "bg-[var(--surface-strong)] text-zinc-900 shadow-sm dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300",
-            )}
-          >
-            {t === "clients" ? (
+        {TABS.map((t) => {
+          const meta = {
+            clients:   { label: "Active Clients", count: activeClients.length, tone: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300" },
+            leads:     { label: "Leads", count: pipeline.length, tone: "bg-amber-500/10 text-amber-700 dark:text-amber-300" },
+            onboarded: { label: "Onboarded", count: onboarded.length, tone: "bg-violet-500/10 text-violet-700 dark:text-violet-300" },
+          }[t];
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => switchTab(t)}
+              className={cn(
+                "flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold transition sm:flex-none sm:px-5 sm:py-2",
+                tab === t ? "bg-[var(--surface-strong)] text-zinc-900 shadow-sm dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300",
+              )}
+            >
               <span className="flex items-center justify-center gap-2">
-                Active Clients
-                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "clients" ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{activeClients.length}</span>
+                {meta.label}
+                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === t ? meta.tone : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{meta.count}</span>
               </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                Leads
-                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", tab === "leads" ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400")}>{pipeline.length}</span>
-              </span>
-            )}
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Add / Import panels ── */}
@@ -294,12 +445,14 @@ export default function ClientsPage() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <Input placeholder={tab === "clients" ? "Search clients…" : "Search leads…"} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder={tab === "leads" ? "Search leads…" : tab === "onboarded" ? "Search onboarded clients…" : "Search clients…"} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <div className="relative sm:w-48">
-          <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <Input placeholder="Filter by city…" value={city} onChange={(e) => setCity(e.target.value)} className="pl-9" />
-        </div>
+        {tab !== "onboarded" && (
+          <div className="relative sm:w-48">
+            <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Input placeholder="Filter by city…" value={city} onChange={(e) => setCity(e.target.value)} className="pl-9" />
+          </div>
+        )}
         {hasFilters && (
           <button type="button" onClick={() => { setSearch(""); setStatus(""); setCity(""); setAssigneeFilter(""); }} className="flex h-11 items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 text-sm font-semibold text-zinc-500 active:scale-[0.98] hover:bg-white dark:hover:bg-white/10 lg:h-auto lg:py-2">
             <X className="h-3.5 w-3.5" /> Clear
@@ -347,6 +500,39 @@ export default function ClientsPage() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+        </div>
+
+      ) : tab === "onboarded" ? (
+
+        /* ══════════ ONBOARDED CLIENTS TAB ══════════ */
+        <div className="space-y-4">
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Onboarded client accounts</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Every client record created by the onboarding flow, with its portal login state. Use this to re-send a setup link,
+              clear a broken login, or remove a duplicate or test onboarding.
+              {!isManager && " Owner access is required to change or delete these."}
+            </p>
+          </div>
+
+          {filteredOnboarded.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] py-20 text-center">
+              <p className="font-semibold text-zinc-500">No onboarded clients{search ? " match this search" : " yet"}</p>
+              <p className="mt-1 text-sm text-zinc-400">Run Onboard from a client profile to create one.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredOnboarded.map((c) => (
+                <OnboardedRow
+                  key={c.id}
+                  client={c}
+                  canManage={isManager}
+                  onChanged={(id, patch) => setOnboarded((prev) => prev.map((x) => x.id === id ? { ...x, ...patch } : x))}
+                  onDeleted={(id) => setOnboarded((prev) => prev.filter((x) => x.id !== id))}
+                />
+              ))}
             </div>
           )}
         </div>
