@@ -4,7 +4,11 @@ import { CampaignClient, type CampaignAgent } from "./campaign-client";
 
 // The agent this campaign shows off. If it's ever unpublished the page falls
 // back to any other live demo rather than losing its centrepiece.
-const PREFERRED_DEMO_SLUG = "joe-the-cleaner";
+//
+// Joey runs on ElevenLabs' voice with an OpenAI model as its brain. The
+// speech-to-speech alternative lives on as `joe-the-cleaner` so the two can be
+// compared side by side.
+const PREFERRED_DEMO_SLUG = "joey";
 
 // Nothing on this page reads a dynamic API, so Next would otherwise prerender
 // it and bake in whichever agent was published at build time — unpublishing the
