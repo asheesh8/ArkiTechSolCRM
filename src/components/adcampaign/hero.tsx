@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { Mic, ShieldCheck } from "lucide-react";
+import { ArrowRight, Mic, ShieldCheck } from "lucide-react";
 import { CallSequence } from "./call-sequence";
 
 export function CampaignHero({ onBook, onHearDemo }: { onBook: () => void; onHearDemo: () => void }) {
@@ -14,18 +15,38 @@ export function CampaignHero({ onBook, onHearDemo }: { onBook: () => void; onHea
   });
 
   return (
-    <section className="relative px-5 pb-16 pt-24 sm:px-8 sm:pb-24 sm:pt-28">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-        <div className="text-center lg:text-left">
-          <motion.a
-            {...rise(0.05)}
-            href="/"
-            className="relative mx-auto mb-8 block h-9 w-40 overflow-hidden rounded-xl border border-white/15 bg-white shadow-[0_6px_24px_rgba(0,0,0,0.3)] lg:mx-0"
-            aria-label="ArkiTech Solutions home"
-          >
-            <Image src="/arkitech-banner.png" alt="ArkiTech Solutions" fill priority sizes="160px" className="object-cover object-center" />
-          </motion.a>
+    <section className="relative px-5 pb-16 pt-5 sm:px-8 sm:pb-24 sm:pt-6">
+      <motion.nav
+        {...rise(0.05)}
+        aria-label="Campaign navigation"
+        className="mx-auto flex max-w-6xl items-center justify-between gap-3"
+      >
+        <Link
+          href="/"
+          className="relative block h-8 w-36 shrink-0 overflow-hidden rounded-lg border border-white/15 bg-white shadow-[0_6px_24px_rgba(0,0,0,0.3)] transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 motion-reduce:transform-none motion-reduce:transition-none sm:h-9 sm:w-40 sm:rounded-xl"
+          aria-label="Go to the ArkiTech Solutions main site"
+        >
+          <Image
+            src="/arkitech-banner.png"
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 640px) 160px, 144px"
+            className="object-cover object-center"
+          />
+        </Link>
 
+        <Link
+          href="/"
+          className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 text-xs font-semibold text-white/70 backdrop-blur transition hover:border-white/30 hover:bg-white/[0.1] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 sm:px-4 sm:text-sm"
+        >
+          Visit main site
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
+        </Link>
+      </motion.nav>
+
+      <div className="mx-auto mt-14 grid max-w-6xl items-center gap-12 sm:mt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+        <div className="text-center lg:text-left">
           <motion.p
             {...rise(0.12)}
             className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white/70 backdrop-blur-sm"
