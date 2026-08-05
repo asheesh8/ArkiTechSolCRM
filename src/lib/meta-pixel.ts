@@ -60,11 +60,27 @@ export function loadMetaPixel() {
   window.fbq?.("track", "PageView");
 }
 
+function sendMetaPixelCall(
+  method: "track" | "trackCustom",
+  event: string,
+  params?: Record<string, unknown>
+) {
+  if (!initialised || typeof window === "undefined") return;
+  window.fbq?.(method, event, params);
+}
+
 /**
  * Reports a conversion. No-ops when the pixel was never loaded, which is the
  * case for every visitor who declined — so callers don't need to re-check.
  */
 export function trackMetaEvent(event: string, params?: Record<string, unknown>) {
-  if (!initialised || typeof window === "undefined") return;
-  window.fbq?.("track", event, params);
+  sendMetaPixelCall("track", event, params);
+}
+
+/**
+ * Reports a non-standard signal that should not be used as Meta's optimization
+ * event, but is still useful in Events Manager diagnostics.
+ */
+export function trackMetaCustomEvent(event: string, params?: Record<string, unknown>) {
+  sendMetaPixelCall("trackCustom", event, params);
 }

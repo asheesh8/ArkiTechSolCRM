@@ -12,9 +12,17 @@ import { Founder, HowItWorks, Objections } from "@/components/adcampaign/section
 import { StickyCta } from "@/components/adcampaign/sticky-cta";
 import { CookieNotice } from "@/components/landing/cookie-notice";
 import { attributionPath, captureAttribution, type CampaignAttribution } from "@/lib/campaign";
-import { trackMetaEvent } from "@/lib/meta-pixel";
+import { trackMetaCustomEvent, trackMetaEvent } from "@/lib/meta-pixel";
 
 const TRACKING_SITE = "arkitech-adcampaign";
+const META_CONTENT_CATEGORY = "cleaning-business-ai-agent";
+const CLEANINGBOOK_PAGE_EVENT = {
+  name: "ViewContent",
+  params: {
+    content_name: "cleaningbook-landing-page",
+    content_category: META_CONTENT_CATEGORY,
+  },
+};
 
 export type CampaignAgent = { slug: string; name: string; provider: "elevenlabs" | "openai" } | null;
 
@@ -48,18 +56,26 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
   const handleDemoStart = useCallback(() => {
     if (demoReported.current) return;
     demoReported.current = true;
-    // Meta's standard event for a meaningful pre-purchase action.
-    trackMetaEvent("Lead", { content_name: "voice-demo-started", value: 0, currency: "USD" });
+    trackMetaCustomEvent("VoiceDemoStarted", {
+      content_name: "cleaningbook-voice-demo",
+      content_category: META_CONTENT_CATEGORY,
+    });
   }, []);
 
   const handleBooked = useCallback(() => {
+    trackMetaEvent("Lead", {
+      content_name: "cleaningbook-callback-request",
+      content_category: META_CONTENT_CATEGORY,
+      value: 0,
+      currency: "USD",
+    });
     trackMetaEvent("Schedule", { content_name: "cleaningbook-callback-request" });
   }, []);
 
   return (
     <main className="relative min-h-screen overflow-x-hidden text-white">
       <AmbientBackground />
-      <MetaPixel />
+      <MetaPixel pageEvent={CLEANINGBOOK_PAGE_EVENT} />
       <CookieNotice />
 
       <CampaignHero onBook={goBook} onHearDemo={goDemo} />
