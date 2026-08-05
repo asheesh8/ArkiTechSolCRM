@@ -170,7 +170,7 @@ export function Founder() {
         </span>
 
         <h2 className="mt-6 text-[clamp(26px,4.5vw,38px)] font-black leading-[1.12] tracking-[-0.03em] text-white">
-          I spent six years in a family cleaning business. This agent answers the calls I used to miss.
+          I spent six years in a family cleaning business. This agent answers the calls my family used to miss.
         </h2>
 
         <div className="mt-6 space-y-4 text-[15px] leading-7 text-white/55">
@@ -181,9 +181,15 @@ export function Founder() {
             a month, and that the person who answers it first usually gets the job.
           </p>
           <p>
+            The idea wasn&apos;t even mine — Terri came up with it first. English is his dad&apos;s
+            second language, and the phone was the part of the job he dreaded: pinning down an
+            address, quoting a price, being understood on a bad connection. A lot of those calls
+            were lost before they really started.
+          </p>
+          <p>
             That&apos;s the whole reason this agent exists. It isn&apos;t a general-purpose chatbot
             pointed at a phone line — it&apos;s shaped around the calls cleaning companies actually
-            get, by someone who spent years answering them.
+            get, by people who spent years answering them.
           </p>
         </div>
 
