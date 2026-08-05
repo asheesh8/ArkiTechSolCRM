@@ -139,7 +139,7 @@ export default function CampaignPage() {
         title="Ad Campaign"
         description="Everyone who asked for a call from the Facebook landing page, and the traffic it took to get them."
         actions={(
-          <a href="/adcampaign" target="_blank" rel="noopener noreferrer">
+          <a href="/cleaningbook" target="_blank" rel="noopener noreferrer">
             <Button variant="outline"><ExternalLink className="h-4 w-4" /> View landing page</Button>
           </a>
         )}

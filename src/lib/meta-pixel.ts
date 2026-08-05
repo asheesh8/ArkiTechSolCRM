@@ -18,7 +18,9 @@ declare global {
   }
 }
 
-export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() ?? "";
+const DEFAULT_META_PIXEL_ID = "2090867258498539";
+
+export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || DEFAULT_META_PIXEL_ID;
 
 const SCRIPT_SRC = "https://connect.facebook.net/en_US/fbevents.js";
 

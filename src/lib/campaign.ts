@@ -79,7 +79,7 @@ export function captureAttribution(): CampaignAttribution {
 }
 
 /**
- * Folds attribution into the tracked path, e.g. `/adcampaign?utm_source=facebook`.
+ * Folds attribution into the tracked path, e.g. `/cleaningbook?utm_source=facebook`.
  * PageView has no dedicated columns for this, and the path is what the
  * Analytics page already groups on.
  */

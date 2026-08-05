@@ -32,7 +32,7 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         site: TRACKING_SITE,
-        path: attributionPath("/adcampaign", captured),
+        path: attributionPath("/cleaningbook", captured),
         referrer: document.referrer,
       }),
     }).catch(() => {});
@@ -53,7 +53,7 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
   }, []);
 
   const handleBooked = useCallback(() => {
-    trackMetaEvent("Schedule", { content_name: "adcampaign-callback-request" });
+    trackMetaEvent("Schedule", { content_name: "cleaningbook-callback-request" });
   }, []);
 
   return (

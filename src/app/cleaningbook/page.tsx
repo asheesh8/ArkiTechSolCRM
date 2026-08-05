@@ -58,12 +58,12 @@ async function findDemoAgent(): Promise<CampaignAgent> {
   } catch (error) {
     // This page is behind ad spend — a database hiccup must degrade to the
     // scripted example call, never to an error page.
-    console.error("[Ad campaign]", error instanceof Error ? error.message : "unknown error");
+    console.error("[CleaningBook]", error instanceof Error ? error.message : "unknown error");
     return null;
   }
 }
 
-export default async function AdCampaignPage() {
+export default async function CleaningBookPage() {
   const agent = await findDemoAgent();
   return <CampaignClient agent={agent} />;
 }

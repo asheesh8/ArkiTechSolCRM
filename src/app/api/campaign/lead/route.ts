@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   ].filter(Boolean) as string[];
 
   const note = [
-    "— Inbound from the /adcampaign landing page —",
+    "— Inbound from the /cleaningbook landing page —",
     `Contact: ${data.name}`,
     `Phone: ${phone.national}`,
     data.email ? `Email: ${data.email}` : null,
