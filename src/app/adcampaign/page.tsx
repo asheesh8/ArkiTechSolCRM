@@ -11,6 +11,16 @@ const PREFERRED_DEMO_SLUG = "joe-the-cleaner";
 // demo from the Agents page would then need a redeploy to take effect.
 export const dynamic = "force-dynamic";
 
+// Anything that isn't a known transport falls back to ElevenLabs, which is what
+// every pre-migration row holds.
+function toCampaignAgent(agent: { slug: string; name: string; provider: string }): CampaignAgent {
+  return {
+    slug: agent.slug,
+    name: agent.name,
+    provider: agent.provider === "openai" ? "openai" : "elevenlabs",
+  };
+}
+
 export const metadata: Metadata = {
   title: "Never miss another cleaning job — ArkiTech Solutions",
   description:
@@ -26,18 +36,21 @@ export const metadata: Metadata = {
 };
 
 async function findDemoAgent(): Promise<CampaignAgent> {
+  const select = { slug: true, name: true, provider: true } as const;
+
   try {
     const preferred = await prisma.voiceAgent.findFirst({
       where: { slug: PREFERRED_DEMO_SLUG, demoEnabled: true, isArchived: false },
-      select: { slug: true, name: true },
+      select,
     });
-    if (preferred) return preferred;
+    if (preferred) return toCampaignAgent(preferred);
 
-    return await prisma.voiceAgent.findFirst({
+    const fallback = await prisma.voiceAgent.findFirst({
       where: { demoEnabled: true, isArchived: false },
       orderBy: { createdAt: "asc" },
-      select: { slug: true, name: true },
+      select,
     });
+    return fallback ? toCampaignAgent(fallback) : null;
   } catch (error) {
     // This page is behind ad spend — a database hiccup must degrade to the
     // scripted example call, never to an error page.

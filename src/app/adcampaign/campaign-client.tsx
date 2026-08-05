@@ -16,7 +16,7 @@ import { trackMetaEvent } from "@/lib/meta-pixel";
 
 const TRACKING_SITE = "arkitech-adcampaign";
 
-export type CampaignAgent = { slug: string; name: string } | null;
+export type CampaignAgent = { slug: string; name: string; provider: "elevenlabs" | "openai" } | null;
 
 export function CampaignClient({ agent }: { agent: CampaignAgent }) {
   const [attribution, setAttribution] = useState<CampaignAttribution>({});
@@ -68,6 +68,7 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
         slug={agent?.slug ?? ""}
         agentName={agent?.name ?? "Joe"}
         available={!!agent}
+        provider={agent?.provider ?? "elevenlabs"}
         onDemoStart={handleDemoStart}
       />
 

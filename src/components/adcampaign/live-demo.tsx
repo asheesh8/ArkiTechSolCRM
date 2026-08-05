@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarCheck, ExternalLink, Loader2, Mic, PhoneOff, Play, RotateCcw } from "lucide-react";
+import { useOpenAiRealtime } from "./use-openai-realtime";
 
 // A scripted stand-in for the live call, shown to anyone whose browser won't
 // hand over a microphone. Labelled as an example everywhere it appears — it is
@@ -168,53 +169,24 @@ function SamplePlayer({ agentName }: { agentName: string }) {
   );
 }
 
-function LiveCall({ slug, agentName, onStart }: { slug: string; agentName: string; onStart: () => void }) {
-  const [turns, setTurns] = useState<Turn[]>([]);
-  const [error, setError] = useState("");
-  const [starting, setStarting] = useState(false);
+type CallState = {
+  status: "idle" | "connecting" | "connected";
+  isSpeaking: boolean;
+  turns: Turn[];
+  error: string;
+  start: () => void;
+  end: () => void;
+};
 
-  const conversation = useConversation({
-    onMessage: ({ message, source }) => {
-      setTurns((prev) => [...prev, { role: source === "user" ? "caller" : "agent", text: message }]);
-    },
-    onError: (message) => setError(message || "The call dropped. Try again."),
-  });
-
-  const { status, isSpeaking, startSession, endSession } = conversation;
+/**
+ * Everything a caller sees during a live call. Deliberately knows nothing about
+ * which provider is behind it, so the two transports stay swappable while the
+ * phone line finishes migrating.
+ */
+function CallShell({ agentName, call }: { agentName: string; call: CallState }) {
+  const { status, isSpeaking, turns, error, start, end } = call;
   const connected = status === "connected";
-  const connecting = starting || status === "connecting";
-
-  const start = useCallback(async () => {
-    setError("");
-    setStarting(true);
-    setTurns([]);
-
-    try {
-      // The browser must hold the mic permission before the socket opens,
-      // otherwise the agent connects to silence.
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      setError("Your browser blocked the microphone. Allow it and try again — or play the example call instead.");
-      setStarting(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/demo/${slug}/session`, { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error ?? "The demo could not be started.");
-        setStarting(false);
-        return;
-      }
-      onStart();
-      startSession({ signedUrl: data.signedUrl, connectionType: "websocket" });
-    } catch {
-      setError("Network error — the demo could not be started.");
-    } finally {
-      setStarting(false);
-    }
-  }, [slug, startSession, onStart]);
+  const connecting = status === "connecting";
 
   return (
     <div className="flex flex-col items-center">
@@ -271,7 +243,7 @@ function LiveCall({ slug, agentName, onStart }: { slug: string; agentName: strin
       ) : (
         <button
           type="button"
-          onClick={() => endSession()}
+          onClick={end}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-red-500/90 px-8 py-4 text-base font-bold text-white transition hover:bg-red-500 active:scale-[0.98] motion-reduce:transition-none"
         >
           <PhoneOff className="h-4 w-4" /> End call
@@ -289,16 +261,87 @@ function LiveCall({ slug, agentName, onStart }: { slug: string; agentName: strin
   );
 }
 
+/** ElevenLabs transport: the provider hosts the persona and returns a signed socket. */
+export function ElevenLabsCall({ slug, agentName, onStart }: { slug: string; agentName: string; onStart: () => void }) {
+  const [turns, setTurns] = useState<Turn[]>([]);
+  const [error, setError] = useState("");
+  const [starting, setStarting] = useState(false);
+
+  const conversation = useConversation({
+    onMessage: ({ message, source }) => {
+      setTurns((prev) => [...prev, { role: source === "user" ? "caller" : "agent", text: message }]);
+    },
+    onError: (message) => setError(message || "The call dropped. Try again."),
+  });
+
+  const { status, isSpeaking, startSession, endSession } = conversation;
+
+  const start = useCallback(async () => {
+    setError("");
+    setStarting(true);
+    setTurns([]);
+
+    try {
+      // The browser must hold the mic permission before the socket opens,
+      // otherwise the agent connects to silence.
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setError("Your browser blocked the microphone. Allow it and try again — or play the example call instead.");
+      setStarting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/demo/${slug}/session`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? "The demo could not be started.");
+        setStarting(false);
+        return;
+      }
+      onStart();
+      startSession({ signedUrl: data.signedUrl, connectionType: "websocket" });
+    } catch {
+      setError("Network error — the demo could not be started.");
+    } finally {
+      setStarting(false);
+    }
+  }, [slug, startSession, onStart]);
+
+  return (
+    <CallShell
+      agentName={agentName}
+      call={{
+        status: status === "connected" ? "connected" : starting || status === "connecting" ? "connecting" : "idle",
+        isSpeaking,
+        turns,
+        error,
+        start,
+        end: () => endSession(),
+      }}
+    />
+  );
+}
+
+/** OpenAI Realtime transport: WebRTC, with the persona sent from our own server. */
+export function OpenAiCall({ slug, agentName, onStart }: { slug: string; agentName: string; onStart: () => void }) {
+  const call = useOpenAiRealtime({ slug, onStart });
+  return <CallShell agentName={agentName} call={call} />;
+}
+
 export function LiveDemo({
   slug,
   agentName,
   available,
+  provider,
   onDemoStart,
 }: {
   slug: string;
   agentName: string;
   /** False when no demo agent is published — the sample is then the only option. */
   available: boolean;
+  /** Which transport this agent runs on. Comes from the agent row, not a global flag. */
+  provider: "elevenlabs" | "openai";
   onDemoStart: () => void;
 }) {
   const [mode, setMode] = useState<"live" | "sample">("live");
@@ -367,7 +410,9 @@ export function LiveDemo({
         )}
 
         {mode === "live" && available
-          ? <LiveCall slug={slug} agentName={agentName} onStart={onDemoStart} />
+          ? provider === "openai"
+            ? <OpenAiCall slug={slug} agentName={agentName} onStart={onDemoStart} />
+            : <ElevenLabsCall slug={slug} agentName={agentName} onStart={onDemoStart} />
           : <SamplePlayer agentName={agentName} />}
       </div>
 
@@ -381,6 +426,10 @@ export function LiveDemo({
 }
 
 export function LiveDemoSection(props: Parameters<typeof LiveDemo>[0]) {
+  // ElevenLabs' provider is only mounted for agents that actually use it, so an
+  // OpenAI-only page carries none of its runtime.
+  if (props.provider === "openai") return <LiveDemo {...props} />;
+
   return (
     <ConversationProvider>
       <LiveDemo {...props} />

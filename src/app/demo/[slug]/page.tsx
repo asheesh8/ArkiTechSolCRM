@@ -10,6 +10,7 @@ async function findDemoAgent(slug: string) {
     select: {
       slug: true,
       name: true,
+      provider: true,
       demoEnabled: true,
       isArchived: true,
       demoHeadline: true,

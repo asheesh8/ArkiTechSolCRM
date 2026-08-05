@@ -75,6 +75,7 @@ export async function checkDemoRateLimit(agentId: string, ipHash: string): Promi
 export function publicAgentFields(agent: {
   slug: string;
   name: string;
+  provider: string;
   demoHeadline: string | null;
   demoSubheadline: string | null;
   demoBusiness: string | null;
@@ -82,6 +83,8 @@ export function publicAgentFields(agent: {
   return {
     slug: agent.slug,
     name: agent.name,
+    // Anything unrecognised means a row written before the migration.
+    provider: agent.provider === "openai" ? "openai" as const : "elevenlabs" as const,
     headline: agent.demoHeadline ?? `Talk to ${agent.name}`,
     subheadline: agent.demoSubheadline
       ?? "Ask about hours, pricing, or book an appointment — the same conversation your customers would have.",

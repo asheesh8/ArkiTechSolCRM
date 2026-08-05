@@ -531,7 +531,17 @@ model NotePresence {
 // whether it is exposed as a public demo.
 model VoiceAgent {
   id              String    @id @default(cuid())
+  // For ElevenLabs this mirrors the upstream agent id. For OpenAI there is no
+  // remote agent to point at, so it holds a local "openai:<slug>" identifier
+  // purely to keep the unique constraint meaningful.
   providerAgentId String    @unique
+  // "elevenlabs" | "openai". Decides how a session is opened and, for the
+  // roster sync, whether this row is even ElevenLabs' to archive.
+  provider        String    @default("elevenlabs")
+  // OpenAI has no dashboard to author a persona in — the prompt and voice are
+  // sent from here on every session. Null for ElevenLabs-hosted agents.
+  instructions    String?   @db.Text
+  voice           String?
   name            String
   slug            String    @unique
   clientId        String?

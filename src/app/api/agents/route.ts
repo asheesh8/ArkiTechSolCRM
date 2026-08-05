@@ -78,7 +78,10 @@ export async function POST() {
     return upstreamError(error);
   }
 
-  const existing = await prisma.voiceAgent.findMany();
+  // Only ElevenLabs-hosted rows are this sync's to reconcile. An OpenAI agent
+  // has no upstream counterpart, so including it here would archive it and
+  // unpublish its demo on the next sync.
+  const existing = await prisma.voiceAgent.findMany({ where: { provider: "elevenlabs" } });
   const existingByProviderId = new Map(existing.map((agent) => [agent.providerAgentId, agent]));
   const upstreamIds = new Set(upstream.map((agent) => agent.agentId));
   const now = new Date();
