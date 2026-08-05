@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendContactEmail } from "@/lib/email";
 import { checkPhone } from "@/lib/phone";
+import { CAMPAIGN_SOURCE } from "@/lib/campaign";
 import { clientIpFrom, hashIp } from "@/lib/voice-agents";
 
 // Public endpoint behind a paid ad, so it writes straight into the CRM lead
@@ -128,6 +129,7 @@ export async function POST(req: Request) {
         // An inbound lead that asked to be called outranks anything scraped.
         status: "NEW",
         priority: "PRIORITY",
+        source: CAMPAIGN_SOURCE,
         notes: note,
       },
       select: { id: true },

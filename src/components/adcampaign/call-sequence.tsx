@@ -34,6 +34,35 @@ function SoundWave({ active }: { active: boolean }) {
   );
 }
 
+/**
+ * One of the floating cards. Always mounted and always occupying its space —
+ * only opacity and transform change. Mounting these on their step instead made
+ * the container grow and shrink on a loop, which shoved the whole page up and
+ * down every few seconds.
+ */
+function Card({ visible, className = "", children }: { visible: boolean; className?: string; children: React.ReactNode }) {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      initial={false}
+      animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 14, scale: visible ? 1 : 0.96 }}
+      transition={{ duration: reduceMotion ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
+      aria-hidden={!visible}
+      className={`relative ml-auto w-[92%] rounded-2xl border p-4 ${className}`}
+      style={{
+        borderColor: "rgba(255,255,255,0.12)",
+        background: "rgba(255,255,255,0.97)",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
+        // Hidden cards must not swallow taps on whatever sits beneath them.
+        pointerEvents: visible ? "auto" : "none",
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function CallSequence() {
   const [step, setStep] = useState(0);
   const reduceMotion = useReducedMotion();
@@ -63,21 +92,28 @@ export function CallSequence() {
 
         <div className="mt-5 flex flex-col items-center gap-1.5 text-center">
           <p className="text-lg font-bold text-white">Cleaning Service</p>
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={step}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: reduceMotion ? 0 : 0.3 }}
-              className="flex items-center gap-1.5 text-xs font-semibold"
-              style={{ color: step === 0 ? "#f87171" : "#4ade80" }}
-            >
-              {step === 0
-                ? <><PhoneMissed className="h-3.5 w-3.5" /> Missed call</>
-                : <><Headset className="h-3.5 w-3.5" /> Answered by your agent</>}
-            </motion.p>
-          </AnimatePresence>
+          {/* Reserved row. `mode="wait"` unmounts the old line before the new
+              one enters, so without a fixed height this collapses a line every
+              few seconds and shoves the rest of the page up and down. */}
+          <div className="relative h-4 w-full">
+            <AnimatePresence mode="wait">
+              <motion.p
+                // Keyed on what's displayed, not on `step` — steps 1 and 2 show
+                // the same line and shouldn't replay the transition between them.
+                key={step === 0 ? "missed" : "answered"}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: reduceMotion ? 0 : 0.3 }}
+                className="absolute inset-0 flex items-center justify-center gap-1.5 text-xs font-semibold"
+                style={{ color: step === 0 ? "#f87171" : "#4ade80" }}
+              >
+                {step === 0
+                  ? <><PhoneMissed className="h-3.5 w-3.5" /> Missed call</>
+                  : <><Headset className="h-3.5 w-3.5" /> Answered by your agent</>}
+              </motion.p>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Ring pulses while the call is live. */}
@@ -107,66 +143,36 @@ export function CallSequence() {
       </div>
 
       {/* Agent speech card */}
-      <AnimatePresence>
-        {step >= 1 && (
-          <motion.div
-            initial={{ opacity: 0, y: 14, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.97 }}
-            transition={{ duration: reduceMotion ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 -mt-4 ml-auto w-[92%] rounded-2xl border p-4"
-            style={{
-              borderColor: "rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.97)",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
-            }}
+      <Card visible={step >= 1} className="z-10 -mt-4">
+        <div className="flex items-center gap-3">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+            style={{ background: "linear-gradient(135deg, #6366f1, #38bdf8)" }}
           >
-            <div className="flex items-center gap-3">
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                style={{ background: "linear-gradient(135deg, #6366f1, #38bdf8)" }}
-              >
-                <Headset className="h-4 w-4 text-white" />
-              </span>
-              <SoundWave active={step === 1} />
-            </div>
-            <p className="mt-3 text-[13px] leading-5 text-zinc-700">
-              &ldquo;Thanks for calling! I can answer questions, quote your place, and get you on
-              the schedule. Is this for a house or an office?&rdquo;
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Headset className="h-4 w-4 text-white" />
+          </span>
+          <SoundWave active={step === 1} />
+        </div>
+        <p className="mt-3 text-[13px] leading-5 text-zinc-700">
+          &ldquo;Thanks for calling! I can answer questions, quote your place, and get you on
+          the schedule. Is this for a house or an office?&rdquo;
+        </p>
+      </Card>
 
       {/* Booked card */}
-      <AnimatePresence>
-        {step >= 2 && (
-          <motion.div
-            initial={{ opacity: 0, y: 14, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.97 }}
-            transition={{ duration: reduceMotion ? 0 : 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-20 mt-3 ml-auto flex w-[92%] items-center gap-3 rounded-2xl border p-4"
-            style={{
-              borderColor: "rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.97)",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
-            }}
-          >
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-              style={{ background: "linear-gradient(135deg, #6366f1, #4f46e5)" }}
-            >
-              <CalendarCheck className="h-5 w-5 text-white" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-zinc-900">New job booked</p>
-              <p className="text-[13px] font-semibold text-indigo-600">Tomorrow at 9:00 AM</p>
-              <p className="text-xs text-zinc-500">Residential cleaning · 3 bed / 2 bath</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Card visible={step >= 2} className="z-20 mt-3 flex items-center gap-3">
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: "linear-gradient(135deg, #6366f1, #4f46e5)" }}
+        >
+          <CalendarCheck className="h-5 w-5 text-white" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-zinc-900">New job booked</p>
+          <p className="text-[13px] font-semibold text-indigo-600">Tomorrow at 9:00 AM</p>
+          <p className="text-xs text-zinc-500">Residential cleaning · 3 bed / 2 bath</p>
+        </div>
+      </Card>
     </div>
   );
 }

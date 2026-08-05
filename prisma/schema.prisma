@@ -120,6 +120,9 @@ model Lead {
   pageSpeedSEO              Int?
   pageSpeedBestPractices    Int?
   notes                     String?
+  // Where the lead came from. Null for the scraped majority; "adcampaign" for
+  // inbound from the paid landing page.
+  source                    String?
   assignedToId              String?
   assignedTo                User?                      @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
   callNotes                 CallNote[]
@@ -134,6 +137,7 @@ model Lead {
   @@index([city, state])
   @@index([category])
   @@index([assignedToId])
+  @@index([source, createdAt])
 }
 
 model CallNote {

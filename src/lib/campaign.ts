@@ -4,6 +4,12 @@
 // land on the booking form long after the query string is gone. So the first
 // view of the session wins and is stashed for the rest of it.
 
+/** Stamped on `Lead.source` for every lead from the paid landing page. */
+export const CAMPAIGN_SOURCE = "adcampaign";
+
+/** The `PageView.site` key the landing page reports under. */
+export const CAMPAIGN_SITE = "arkitech-adcampaign";
+
 export type CampaignAttribution = {
   utmSource?: string;
   utmMedium?: string;

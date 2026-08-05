@@ -63,7 +63,9 @@ function Slider({
 
 export function MissedCallMath({ onBook }: { onBook: () => void }) {
   const [missedPerWeek, setMissedPerWeek] = useState(8);
-  const [averageJob, setAverageJob] = useState(180);
+  // Range covers a residential deep clean at the low end through recurring
+  // commercial contracts at the top — $60 was a one-off tidy, not a job.
+  const [averageJob, setAverageJob] = useState(450);
   const [closeRate, setCloseRate] = useState(40);
 
   const monthly = missedPerWeek * WEEKS_PER_MONTH * averageJob * (closeRate / 100);
@@ -108,9 +110,9 @@ export function MissedCallMath({ onBook }: { onBook: () => void }) {
             <Slider
               label="Average job value"
               value={averageJob}
-              min={60}
-              max={600}
-              step={10}
+              min={300}
+              max={4000}
+              step={50}
               onChange={setAverageJob}
               format={(v) => currency.format(v)}
             />
