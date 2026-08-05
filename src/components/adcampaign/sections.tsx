@@ -166,11 +166,11 @@ export function Founder() {
         <span
           className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white/60"
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Why us
+          <Sparkles className="h-3.5 w-3.5 text-amber-300" /> The experience behind it
         </span>
 
         <h2 className="mt-6 text-[clamp(26px,4.5vw,38px)] font-black leading-[1.12] tracking-[-0.03em] text-white">
-          I spent six years in a family cleaning business before I built software.
+          I spent six years in a family cleaning business. This agent answers the calls I used to miss.
         </h2>
 
         <div className="mt-6 space-y-4 text-[15px] leading-7 text-white/55">
@@ -182,13 +182,13 @@ export function Founder() {
           </p>
           <p>
             That&apos;s the whole reason this agent exists. It isn&apos;t a general-purpose chatbot
-            pointed at a phone line — it&apos;s built around the calls cleaning companies actually
+            pointed at a phone line — it&apos;s shaped around the calls cleaning companies actually
             get, by someone who spent years answering them.
           </p>
         </div>
 
         <p className="mt-7 border-t border-white/[0.08] pt-5 text-sm font-semibold text-white/70">
-          Ashish Subedi <span className="font-normal text-white/35">· ArkiTech Solutions · Burlington, VT</span>
+          Teibiroa Jarome Ambo <span className="font-normal text-white/35">· Joe the Cleaner</span>
         </p>
       </motion.div>
     </section>
