@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/field";
 import { MetricTile } from "@/components/crm/metric-tile";
 import { PageHeader } from "@/components/crm/page-header";
+import { matchesPhoneSearch } from "@/lib/phone";
 import { cn, formatStatus } from "@/lib/utils";
 import { leadStatuses } from "@/lib/schemas";
 
@@ -311,8 +312,9 @@ export default function ClientsPage() {
   }
 
   // ── Split into won clients / active pipeline / not interested ──
+  const normalizedSearch = search.trim().toLowerCase();
   const byText = (l: any) =>
-    (!search || l.businessName?.toLowerCase().includes(search.toLowerCase()) || l.phone?.includes(search) || l.city?.toLowerCase().includes(search.toLowerCase())) &&
+    (!normalizedSearch || l.businessName?.toLowerCase().includes(normalizedSearch) || matchesPhoneSearch(l.phone, search) || l.city?.toLowerCase().includes(normalizedSearch)) &&
     (!city || l.city?.toLowerCase().includes(city.toLowerCase()));
   const byAssignee = (l: any) =>
     !assigneeFilter ? true : assigneeFilter === "unassigned" ? !l.assignedToId : l.assignedToId === assigneeFilter;
@@ -330,25 +332,23 @@ export default function ClientsPage() {
     const q = search.trim().toLowerCase();
     if (!q) return onboarded;
     return onboarded.filter((c) =>
-      c.businessName.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+      c.businessName.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || matchesPhoneSearch(c.phone, search));
   }, [onboarded, search]);
 
-  const counts = useMemo(() => {
+  const counts = (() => {
     const c: Record<string, number> = {};
     for (const s of PIPELINE_STATUSES) c[s] = scopedPipeline.filter((l) => l.status === s).length;
     return c;
-  }, [scopedPipeline]);
+  })();
 
   const featuredClients = filteredClients.filter((l) => ["FAVORITE", "PRIORITY"].includes(l.priority));
   const regularClients = filteredClients.filter((l) => !["FAVORITE", "PRIORITY"].includes(l.priority));
   const hasFilters = !!(search || status || city || assigneeFilter);
   const [staleCutoff] = useState(() => Date.now() - 3 * 24 * 60 * 60 * 1000);
-  const staleLeads = useMemo(() => {
-    return scopedPipeline
-      .filter((lead) => ["SAVED", "CALLED", "FOLLOW_UP"].includes(lead.status))
-      .filter((lead) => new Date(lead.updatedAt ?? lead.createdAt).getTime() < staleCutoff)
-      .slice(0, 5);
-  }, [scopedPipeline, staleCutoff]);
+  const staleLeads = scopedPipeline
+    .filter((lead) => ["SAVED", "CALLED", "FOLLOW_UP"].includes(lead.status))
+    .filter((lead) => new Date(lead.updatedAt ?? lead.createdAt).getTime() < staleCutoff)
+    .slice(0, 5);
 
   const assigneeName = assigneeFilter === "unassigned" ? "Unassigned" : users.find((u) => u.id === assigneeFilter)?.name;
 
@@ -445,7 +445,12 @@ export default function ClientsPage() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <Input placeholder={tab === "leads" ? "Search leads…" : tab === "onboarded" ? "Search onboarded clients…" : "Search clients…"} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input
+            placeholder={tab === "onboarded" ? "Search by name, email, or phone…" : "Search by business, phone, or city…"}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
         </div>
         {tab !== "onboarded" && (
           <div className="relative sm:w-48">

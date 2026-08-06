@@ -19,6 +19,26 @@ function digitsOnly(value: string) {
 }
 
 /**
+ * Match phone-like search input without requiring the query and stored number
+ * to use the same punctuation or US country-code format.
+ */
+export function matchesPhoneSearch(phone: string | null | undefined, query: string) {
+  const trimmedQuery = query.trim();
+  // Avoid treating digits embedded in a business name as a phone search.
+  if (!phone || !/^[\d\s()+.\-]+$/.test(trimmedQuery)) return false;
+
+  const phoneDigits = digitsOnly(phone);
+  const queryDigits = digitsOnly(trimmedQuery);
+  if (queryDigits.length < 3) return false;
+
+  const nationalPhone = phoneDigits.length === 11 && phoneDigits.startsWith("1") ? phoneDigits.slice(1) : phoneDigits;
+  const hasExplicitUsCode = trimmedQuery.startsWith("+1") || queryDigits.length === 11;
+  const nationalQuery = hasExplicitUsCode && queryDigits.startsWith("1") ? queryDigits.slice(1) : queryDigits;
+
+  return phoneDigits.includes(queryDigits) || nationalPhone.includes(nationalQuery);
+}
+
+/**
  * Normalize and validate a raw US phone string.
  * Accepts things like "(802) 555-0192", "1-802-555-0192", "+1 802 555 0192".
  */
