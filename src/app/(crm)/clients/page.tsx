@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, Building2, ChevronDown, ChevronRight, ClipboardList, Filter, KeyRound, Loader2, Mail, MapPin, Phone, Plus, Search, Star, Trash2, UserCheck, UserPlus, Users, X } from "lucide-react";
+import { AlertTriangle, Building2, ChevronDown, ChevronRight, ClipboardList, Download, Filter, KeyRound, Loader2, Mail, MapPin, Phone, Plus, Search, Star, Trash2, UserCheck, UserPlus, Users, X } from "lucide-react";
 import { LeadTable } from "@/components/crm/lead-table";
 import { ManualClientForm } from "@/components/crm/manual-client-form";
 import { CsvImportCard } from "@/components/crm/csv-import-card";
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/field";
 import { MetricTile } from "@/components/crm/metric-tile";
 import { PageHeader } from "@/components/crm/page-header";
+import { buildLeadExportCsv } from "@/lib/lead-export";
 import { matchesPhoneSearch } from "@/lib/phone";
 import { cn, formatStatus } from "@/lib/utils";
 import { leadStatuses } from "@/lib/schemas";
@@ -253,6 +254,20 @@ export default function ClientsPage() {
     setSelected(new Set());
   }
 
+  function downloadAllLeads() {
+    if (!allLeads.length) return;
+
+    const csv = buildLeadExportCsv(allLeads);
+    const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `arkitech-crm-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   async function updateStatus(id: string, newStatus: string) {
     const previous = allLeads.find((l) => l.id === id)?.status;
     setAllLeads((prev) => prev.map((l) => l.id === id ? { ...l, status: newStatus } : l));
@@ -376,6 +391,15 @@ export default function ClientsPage() {
               </Select>
             </div>
           )}
+          <Button
+            type="button"
+            onClick={downloadAllLeads}
+            disabled={loading || allLeads.length === 0}
+            variant="outline"
+            title={`Download ${allLeads.length} CRM lead${allLeads.length === 1 ? "" : "s"}`}
+          >
+            <Download className="h-4 w-4" /> Download CSV
+          </Button>
           <Button
             type="button"
             onClick={() => { setShowImport((v) => !v); setShowAdd(false); }}
