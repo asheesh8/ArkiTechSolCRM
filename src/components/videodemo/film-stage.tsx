@@ -11,11 +11,15 @@ export function FilmStage() {
 
   return (
     <div className={styles.stage}>
+      {/* Decorative, but it sits above the fold and paints wider than the frame
+          itself, so Next picks it as the LCP element. 36 KB and eager beats a
+          lazy image the browser waits on. */}
       <div className={styles.stageLight} aria-hidden="true">
         <Image
           src="/videodemo/arkitech-smoked-prism-glass.webp"
           alt=""
           fill
+          priority
           sizes="600px"
           className={styles.stageLightImage}
         />

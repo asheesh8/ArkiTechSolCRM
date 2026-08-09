@@ -8,6 +8,7 @@ import {
   MessageCircleQuestion,
   PhoneCall,
 } from "lucide-react";
+import { FILM_POSTER } from "@/components/videodemo/film";
 import { FilmProvider } from "@/components/videodemo/film-provider";
 import { FilmStage } from "@/components/videodemo/film-stage";
 import { FilmTimeline } from "@/components/videodemo/film-timeline";
@@ -99,6 +100,11 @@ const capabilities = [
 export default function VideoDemoPage() {
   return (
     <main className={styles.page}>
+      {/* The film's poster is set through the `poster` attribute, which next/image
+          can't prioritise — preloading it keeps the hero's real subject ahead of
+          the decoration. React hoists this into <head>. */}
+      <link rel="preload" as="image" href={FILM_POSTER} fetchPriority="high" />
+
       <div className={styles.ambient} aria-hidden="true">
         <Image
           src="/videodemo/arkitech-signal-caustics.webp"
