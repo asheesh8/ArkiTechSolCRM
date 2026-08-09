@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { Captions, Play, RotateCcw, Volume2 } from "lucide-react";
 import { useFilm } from "./film-provider";
+import { SignalPrism } from "./signal-prism";
 import { FILM_CAPTIONS, FILM_POSTER, formatTimecode } from "./film";
 import styles from "@/app/videodemo/video-demo.module.css";
 
@@ -11,19 +11,7 @@ export function FilmStage() {
 
   return (
     <div className={styles.stage}>
-      {/* Decorative, but it sits above the fold and paints wider than the frame
-          itself, so Next picks it as the LCP element. 36 KB and eager beats a
-          lazy image the browser waits on. */}
-      <div className={styles.stageLight} aria-hidden="true">
-        <Image
-          src="/videodemo/arkitech-smoked-prism-glass.webp"
-          alt=""
-          fill
-          priority
-          sizes="600px"
-          className={styles.stageLightImage}
-        />
-      </div>
+      <SignalPrism />
 
       <div className={styles.stageInner}>
         <div className={styles.stageHead}>

@@ -281,23 +281,56 @@
   animation: rise 800ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* A light leak behind the frame rather than a panel: screen blending drops the
-   image's blacks entirely, and the radial mask keeps it from ending on an
-   edge. */
+/* Weighted to the left so the prism stands in the gutter between the headline
+   and the film, rather than hiding behind the frame's edge. */
 .stageLight {
   position: absolute;
   z-index: -1;
-  inset: -14% -34% -8% -22%;
-  opacity: 0.62;
+  inset: -18% -20% -12% -78%;
   pointer-events: none;
+}
+
+/* A light leak rather than a panel: screen blending drops the image's blacks
+   entirely, and the radial mask keeps it from ending on an edge. Always
+   rendered — the WebGL glass fades in over it, so a device that never loads
+   the scene still gets the light. */
+.stageLightStill {
+  position: absolute;
+  inset: 0;
+  opacity: 0.62;
   mix-blend-mode: screen;
   filter: blur(6px) saturate(1.3);
-  -webkit-mask-image: radial-gradient(ellipse at 55% 45%, #000 18%, transparent 68%);
-  mask-image: radial-gradient(ellipse at 55% 45%, #000 18%, transparent 68%);
+  transition: opacity 900ms ease;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 14%, transparent 62%);
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 14%, transparent 62%);
+}
+
+/* Once the real glass is up, the still drops back to a plain backing glow. */
+.stageLight[data-glass="true"] .stageLightStill {
+  opacity: 0.34;
 }
 
 .stageLightImage {
   object-fit: cover;
+}
+
+/* The radial keeps the scene from ending on a rectangle; the linear is
+   insurance, fading the glass out before it can crowd the headline on a
+   narrower desktop. */
+.stageGlass {
+  position: absolute;
+  inset: 0;
+  animation: glass-in 1200ms ease both;
+  -webkit-mask-image: radial-gradient(ellipse 96% 96% at 50% 50%, #000 70%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, #000 9%);
+  mask-image: radial-gradient(ellipse 96% 96% at 50% 50%, #000 70%, transparent 100%),
+    linear-gradient(90deg, transparent 0%, #000 9%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.stageGlass canvas {
+  display: block;
 }
 
 .stageInner {
@@ -1000,6 +1033,17 @@
   }
 }
 
+@keyframes glass-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes pulse {
   0%,
   100% {
@@ -1017,6 +1061,17 @@
 @media (max-width: 1080px) {
   .stage {
     --frame-w: calc(min(58svh, 520px) * 9 / 16);
+  }
+
+  /* The slate has to stay on one line as the frame narrows. */
+  .stageHead {
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+  }
+
+  .stageSlate,
+  .stageClock {
+    white-space: nowrap;
   }
 
   .capabilityGrid {
