@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendContactEmail } from "@/lib/email";
 import { checkPhone } from "@/lib/phone";
 import { CAMPAIGN_SOURCE } from "@/lib/campaign";
+import { buildCleaningBookZapierPayload, sendCleaningBookZapierLead } from "@/lib/cleaningbook-zapier";
 import { clientIpFrom, hashIp } from "@/lib/voice-agents";
 
 // Public endpoint behind a paid ad, so it writes straight into the CRM lead
@@ -64,6 +65,12 @@ const bodySchema = z.object({
   attribution: attributionSchema.optional(),
 });
 
+type CampaignLeadSubmission = z.infer<typeof bodySchema>;
+
+function campaignLeadCategory(intent: CampaignLeadSubmission["formIntent"]) {
+  return intent === "gate" ? "Cleaning · Qualified intro form" : "Cleaning";
+}
+
 export async function POST(req: Request) {
   const payload = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(payload);
@@ -79,6 +86,7 @@ export async function POST(req: Request) {
 
   const data = parsed.data;
   const businessName = data.businessName?.trim() || `${data.name} - CleaningBook inquiry`;
+  const category = campaignLeadCategory(data.formIntent);
 
   // Bot filled the honeypot. Answer as though it worked so it doesn't retry.
   if (data.company?.trim()) return NextResponse.json({ ok: true });
@@ -92,6 +100,7 @@ export async function POST(req: Request) {
   }
 
   const now = Date.now();
+  const submittedAt = new Date(now).toISOString();
   const ipHash = hashIp(clientIpFrom(req.headers));
   const cooldownKey = `${ipHash}:${data.formIntent}`;
   pruneCooldowns(now);
@@ -142,7 +151,7 @@ export async function POST(req: Request) {
     const lead = await prisma.lead.create({
       data: {
         businessName,
-        category: data.formIntent === "gate" ? "Cleaning · Qualified intro form" : "Cleaning",
+        category,
         phone: phone.e164,
         email: data.email || null,
         city: data.city || null,
@@ -162,6 +171,21 @@ export async function POST(req: Request) {
       { error: "Something went wrong on our end. Call (802) 310-3749 and we'll sort it out." },
       { status: 500 },
     );
+  }
+
+  try {
+    await sendCleaningBookZapierLead(buildCleaningBookZapierPayload({
+      data,
+      businessName,
+      category,
+      phone,
+      leadId,
+      note,
+      submittedAt,
+      source: CAMPAIGN_SOURCE,
+    }));
+  } catch (error) {
+    console.error("[Campaign lead] Zapier webhook failed:", error instanceof Error ? error.message : "unknown error");
   }
 
   // The lead is already safe in the CRM — a failed notification must not read
