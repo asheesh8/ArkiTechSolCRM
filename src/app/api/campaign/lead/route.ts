@@ -41,15 +41,23 @@ const FIELD_MESSAGES: Record<string, string> = {
   businessName: "Tell us your business name.",
   phone: "A phone number is required so we can call you back.",
   email: "That email address doesn't look right.",
+  city: "Tell us your city.",
+  state: "Tell us your state.",
 };
 
 const bodySchema = z.object({
+  formIntent: z.enum(["gate", "booking"]).default("booking"),
   name: z.string().trim().min(1).max(120),
-  businessName: z.string().trim().min(1).max(160),
+  businessName: z.string().trim().max(160).optional(),
   phone: z.string().trim().min(1).max(40),
   email: z.string().trim().email().max(160).optional().or(z.literal("")),
   city: z.string().trim().max(120).optional(),
+  state: z.string().trim().max(80).optional(),
   bestTime: z.string().trim().max(80).optional(),
+  currentSituation: z.string().trim().max(180).optional(),
+  onlinePresence: z.string().trim().max(180).optional(),
+  investmentRange: z.string().trim().max(80).optional(),
+  startTimeline: z.string().trim().max(80).optional(),
   message: z.string().trim().max(2_000).optional(),
   // Hidden field, positioned off-screen. A real visitor never sees it.
   company: z.string().max(200).optional(),
@@ -70,6 +78,7 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data;
+  const businessName = data.businessName?.trim() || `${data.name} - CleaningBook inquiry`;
 
   // Bot filled the honeypot. Answer as though it worked so it doesn't retry.
   if (data.company?.trim()) return NextResponse.json({ ok: true });
@@ -84,16 +93,17 @@ export async function POST(req: Request) {
 
   const now = Date.now();
   const ipHash = hashIp(clientIpFrom(req.headers));
+  const cooldownKey = `${ipHash}:${data.formIntent}`;
   pruneCooldowns(now);
 
-  const previous = lastSubmissionByIp.get(ipHash);
+  const previous = lastSubmissionByIp.get(cooldownKey);
   if (previous && now - previous < COOLDOWN_MS) {
     return NextResponse.json(
       { error: "We already have your request — we'll call you shortly." },
       { status: 429 },
     );
   }
-  lastSubmissionByIp.set(ipHash, now);
+  lastSubmissionByIp.set(cooldownKey, now);
 
   const attribution = data.attribution ?? {};
   const attributionRows = [
@@ -105,14 +115,24 @@ export async function POST(req: Request) {
     attribution.fbclid && `Meta click id: ${attribution.fbclid}`,
     attribution.referrer && `Referrer: ${attribution.referrer}`,
   ].filter(Boolean) as string[];
+  const qualificationRows = [
+    data.currentSituation && `Current situation: ${data.currentSituation}`,
+    data.onlinePresence && `Online presence: ${data.onlinePresence}`,
+    data.investmentRange && `Prepared investment: ${data.investmentRange}`,
+    data.startTimeline && `Ready to start: ${data.startTimeline}`,
+  ].filter(Boolean) as string[];
 
   const note = [
-    "— Inbound from the /cleaningbook landing page —",
+    data.formIntent === "gate"
+      ? "— Qualified from the /cleaningbook intro form —"
+      : "— Inbound from the /cleaningbook landing page —",
     `Contact: ${data.name}`,
     `Phone: ${phone.national}`,
     data.email ? `Email: ${data.email}` : null,
     data.city ? `Area: ${data.city}` : null,
+    data.state ? `State: ${data.state}` : null,
     data.bestTime ? `Best time to call: ${data.bestTime}` : null,
+    qualificationRows.length ? `\nQualification:\n${qualificationRows.join("\n")}` : null,
     data.message ? `\nWhat they said:\n${data.message}` : null,
     attributionRows.length ? `\nAttribution:\n${attributionRows.join("\n")}` : null,
   ].filter(Boolean).join("\n");
@@ -121,11 +141,12 @@ export async function POST(req: Request) {
   try {
     const lead = await prisma.lead.create({
       data: {
-        businessName: data.businessName,
-        category: "Cleaning",
+        businessName,
+        category: data.formIntent === "gate" ? "Cleaning · Qualified intro form" : "Cleaning",
         phone: phone.e164,
         email: data.email || null,
         city: data.city || null,
+        state: data.state || null,
         // An inbound lead that asked to be called outranks anything scraped.
         status: "NEW",
         priority: "PRIORITY",
@@ -148,7 +169,7 @@ export async function POST(req: Request) {
   try {
     await sendContactEmail({
       fromEmail: data.email || "no-reply@arkitech-sol.com",
-      subject: `Ad lead: ${data.businessName}`,
+      subject: data.formIntent === "gate" ? `CleaningBook qualified lead: ${data.name}` : `Ad lead: ${businessName}`,
       message: note,
     });
   } catch (error) {
