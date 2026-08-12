@@ -6,6 +6,8 @@ import type { CampaignAttribution } from "@/lib/campaign";
 
 const FIELD_CLASS =
   "w-full rounded-lg border border-white/12 bg-white/[0.05] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/28 focus:border-cyan-300/60 focus:bg-white/[0.08] sm:py-3";
+const CALL_CONSENT_TEXT =
+  "I agree that ArkiTech Solutions can contact me at this phone number, including by automated or AI-generated voice, about my CleaningBook inquiry.";
 
 type ChoiceField = "currentSituation" | "onlinePresence" | "investmentRange" | "startTimeline";
 
@@ -81,6 +83,7 @@ type GateForm = {
   email: string;
   city: string;
   state: string;
+  callConsent: boolean;
   company: string;
 };
 
@@ -155,6 +158,7 @@ export function QualificationGate({
     email: "",
     city: "",
     state: "",
+    callConsent: false,
     company: "",
   });
   const [status, setStatus] = useState<Status>("idle");
@@ -174,7 +178,7 @@ export function QualificationGate({
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const selectedAnswer = currentChoiceStep ? form[currentChoiceStep.field] : "";
 
-  function update(field: keyof GateForm, value: string) {
+  function update<K extends keyof GateForm>(field: K, value: GateForm[K]) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
@@ -215,6 +219,7 @@ export function QualificationGate({
           ...form,
           formIntent: "gate",
           businessName: `${form.name.trim()} - CleaningBook inquiry`,
+          callConsentText: CALL_CONSENT_TEXT,
           attribution,
         }),
       });
@@ -423,6 +428,17 @@ export function QualificationGate({
                   onChange={(event) => update("company", event.target.value)}
                   className="absolute left-[-9999px] h-0 w-0 opacity-0"
                 />
+
+                <label className="mt-5 flex gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-4 text-left text-xs leading-5 text-white/48">
+                  <input
+                    required
+                    type="checkbox"
+                    checked={form.callConsent}
+                    onChange={(event) => update("callConsent", event.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 accent-cyan-300"
+                  />
+                  <span>{CALL_CONSENT_TEXT}</span>
+                </label>
 
                 {error && (
                   <p className="mt-4 rounded-lg border border-red-400/25 bg-red-400/10 px-4 py-3 text-sm text-red-100">

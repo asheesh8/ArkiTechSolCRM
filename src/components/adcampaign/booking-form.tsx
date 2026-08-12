@@ -11,6 +11,8 @@ import type { CampaignAttribution } from "@/lib/campaign";
 const SCHEDULER_URL = process.env.NEXT_PUBLIC_BOOKING_URL?.trim() ?? "";
 
 const BEST_TIMES = ["Morning (8am–12pm)", "Afternoon (12pm–5pm)", "Evening (5pm–8pm)", "Anytime"];
+const CALL_CONSENT_TEXT =
+  "I agree that ArkiTech Solutions can contact me at this phone number, including by automated or AI-generated voice, about my CleaningBook inquiry.";
 
 const FIELD_CLASS =
   "w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3.5 text-[15px] text-white outline-none transition placeholder:text-white/25 focus:border-indigo-400/60 focus:bg-white/[0.07]";
@@ -30,12 +32,13 @@ export function BookingForm({
     phone: "",
     email: "",
     bestTime: BEST_TIMES[0],
+    callConsent: false,
     company: "", // honeypot
   });
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
 
-  function update(field: keyof typeof form, value: string) {
+  function update<K extends keyof typeof form>(field: K, value: (typeof form)[K]) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
@@ -48,7 +51,7 @@ export function BookingForm({
       const res = await fetch("/api/campaign/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, attribution }),
+        body: JSON.stringify({ ...form, callConsentText: CALL_CONSENT_TEXT, attribution }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -175,6 +178,17 @@ export function BookingForm({
                     </option>
                   ))}
                 </select>
+
+                <label className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-left text-xs leading-5 text-white/48">
+                  <input
+                    required
+                    type="checkbox"
+                    checked={form.callConsent}
+                    onChange={(e) => update("callConsent", e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 accent-indigo-400"
+                  />
+                  <span>{CALL_CONSENT_TEXT}</span>
+                </label>
 
                 {/* Honeypot — off-screen rather than display:none, which some bots skip. */}
                 <input

@@ -11,6 +11,8 @@ import { clientIpFrom, hashIp } from "@/lib/voice-agents";
 // pipeline. Two cheap guards keep it from becoming a spam funnel: a honeypot
 // field no human ever fills, and a short per-IP cooldown.
 const COOLDOWN_MS = 45_000;
+const CALL_CONSENT_TEXT =
+  "I agree that ArkiTech Solutions can contact me at this phone number, including by automated or AI-generated voice, about my CleaningBook inquiry.";
 
 // Per-instance rather than in the database — a lead table is the wrong place
 // for rate-limit state, and a serverless instance living long enough to be
@@ -44,6 +46,7 @@ const FIELD_MESSAGES: Record<string, string> = {
   email: "That email address doesn't look right.",
   city: "Tell us your city.",
   state: "Tell us your state.",
+  callConsent: "Please agree to be contacted before submitting.",
 };
 
 const bodySchema = z.object({
@@ -59,6 +62,8 @@ const bodySchema = z.object({
   onlinePresence: z.string().trim().max(180).optional(),
   investmentRange: z.string().trim().max(80).optional(),
   startTimeline: z.string().trim().max(80).optional(),
+  callConsent: z.literal(true),
+  callConsentText: z.string().trim().max(500).optional(),
   message: z.string().trim().max(2_000).optional(),
   // Hidden field, positioned off-screen. A real visitor never sees it.
   company: z.string().max(200).optional(),
@@ -87,6 +92,7 @@ export async function POST(req: Request) {
   const data = parsed.data;
   const businessName = data.businessName?.trim() || `${data.name} - CleaningBook inquiry`;
   const category = campaignLeadCategory(data.formIntent);
+  const callConsentText = data.callConsentText?.trim() || CALL_CONSENT_TEXT;
 
   // Bot filled the honeypot. Answer as though it worked so it doesn't retry.
   if (data.company?.trim()) return NextResponse.json({ ok: true });
@@ -142,6 +148,7 @@ export async function POST(req: Request) {
     data.state ? `State: ${data.state}` : null,
     data.bestTime ? `Best time to call: ${data.bestTime}` : null,
     qualificationRows.length ? `\nQualification:\n${qualificationRows.join("\n")}` : null,
+    `\nConsent:\nOutbound automated/AI phone contact accepted at ${submittedAt}\n${callConsentText}`,
     data.message ? `\nWhat they said:\n${data.message}` : null,
     attributionRows.length ? `\nAttribution:\n${attributionRows.join("\n")}` : null,
   ].filter(Boolean).join("\n");
@@ -180,9 +187,9 @@ export async function POST(req: Request) {
       category,
       phone,
       leadId,
-      note,
       submittedAt,
       source: CAMPAIGN_SOURCE,
+      callConsentText,
     }));
   } catch (error) {
     console.error("[Campaign lead] Zapier webhook failed:", error instanceof Error ? error.message : "unknown error");
