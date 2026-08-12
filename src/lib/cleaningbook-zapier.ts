@@ -1,7 +1,6 @@
 import type { CampaignAttribution } from "@/lib/campaign";
 
-const DEFAULT_ZAPIER_WEBHOOK_URL =
-  process.env.CLEANINGBOOK_ZAPIER_WEBHOOK_URL?.trim() || "https://hooks.zapier.com/hooks/catch/28475263/46j723m/";
+const DEFAULT_ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/28475263/46j723m/";
 const DEFAULT_TIMEOUT_MS = 5_000;
 
 type CleaningBookLeadForm = {
