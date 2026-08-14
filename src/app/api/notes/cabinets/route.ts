@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isOwner } from "@/lib/auth";
+import { COLD_CALL_ACCESS_CABINET_ID } from "@/lib/cold-call-access";
 
 // Owners see every cabinet. Other roles (agents, developers) see only cabinets
 // they created or that an owner has explicitly shared with them.
@@ -21,8 +22,13 @@ export async function GET() {
   const owner = isOwner(user);
   const cabinets = await prisma.noteCabinet.findMany({
     where: owner
-      ? undefined
-      : { OR: [{ createdById: user.id }, { shares: { some: { userId: user.id } } }] },
+      ? { id: { not: COLD_CALL_ACCESS_CABINET_ID } }
+      : {
+          AND: [
+            { id: { not: COLD_CALL_ACCESS_CABINET_ID } },
+            { OR: [{ createdById: user.id }, { shares: { some: { userId: user.id } } }] },
+          ],
+        },
     orderBy: { sortOrder: "asc" },
     include: {
       pages: { select: PAGE_SELECT, orderBy: { sortOrder: "asc" } },
@@ -45,7 +51,9 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const count = await prisma.noteCabinet.count();
+    const count = await prisma.noteCabinet.count({
+      where: { id: { not: COLD_CALL_ACCESS_CABINET_ID } },
+    });
     const cabinet = await prisma.noteCabinet.create({
       data: {
         name: (body.name as string)?.trim() || "New cabinet",

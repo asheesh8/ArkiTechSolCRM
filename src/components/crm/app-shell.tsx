@@ -18,6 +18,7 @@ import {
   MessageSquare,
   MoreHorizontal,
   NotebookText,
+  PhoneCall,
   Search,
   Settings,
   Sparkles,
@@ -35,6 +36,7 @@ type NavItem = {
   label: string;
   icon: LucideIcon;
   roles?: string[];
+  permission?: "coldCall";
 };
 
 type NavSection = { label: string; items: NavItem[] };
@@ -46,6 +48,7 @@ const navSections: NavSection[] = [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/accountability", label: "Accountability", icon: ClipboardCheck, roles: ["OWNER", "MEMBER"] },
       { href: "/leads", label: "Leads / Scraper", icon: Search, roles: ["OWNER", "MEMBER"] },
+      { href: "/cold-call", label: "Cold Call", icon: PhoneCall, permission: "coldCall" },
       { href: "/campaign", label: "Ad Campaign", icon: Megaphone, roles: ["OWNER"] },
       { href: "/outreach", label: "Cold Text", icon: MessageSquare, roles: ["OWNER", "MEMBER"] },
     ],
@@ -91,6 +94,7 @@ const PAGE_DETAILS: Record<string, string> = {
   "/dashboard": "Action items, delivery signals, and live pipeline movement.",
   "/accountability": "Team ownership, follow-through, and calling rhythm.",
   "/leads": "Find high-fit local businesses and move winners into the CRM.",
+  "/cold-call": "Live conversation flow, objection responses, and follow-up prompts.",
   "/campaign": "Inbound leads and traffic from the Facebook ad landing page.",
   "/outreach": "Cold text workflows for timely follow-up.",
   "/receptionist": "AI call handling, conversations, and intake quality.",
@@ -106,13 +110,14 @@ const PAGE_DETAILS: Record<string, string> = {
 // Order the bottom tab bar picks from. Whichever four the signed-in role can
 // actually see become the thumb-reachable tabs; everything else lives in the
 // drawer behind "More".
-const MOBILE_TAB_PRIORITY = ["/dashboard", "/leads", "/clients", "/outreach", "/requests", "/calendar", "/notes"];
+const MOBILE_TAB_PRIORITY = ["/dashboard", "/leads", "/clients", "/cold-call", "/outreach", "/requests", "/calendar", "/notes"];
 
 // Short labels — the full nav labels ("Leads / Scraper") don't fit a fifth of a
 // phone screen.
 const MOBILE_TAB_LABELS: Record<string, string> = {
   "/dashboard": "Home",
   "/leads": "Leads",
+  "/cold-call": "Call",
   "/clients": "Clients",
   "/outreach": "Text",
   "/requests": "Work",
@@ -137,11 +142,23 @@ function initialsOf(name: string) {
   return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 }
 
-export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser }) {
+export function AppShell({
+  children,
+  user,
+  canAccessColdCall,
+}: {
+  children: React.ReactNode;
+  user: ShellUser;
+  canAccessColdCall: boolean;
+}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const canSee = (item: NavItem) => !item.roles || item.roles.includes(user.role);
+  const canSee = (item: NavItem) => {
+    const roleAllowed = !item.roles || item.roles.includes(user.role);
+    const permissionAllowed = item.permission !== "coldCall" || canAccessColdCall;
+    return roleAllowed && permissionAllowed;
+  };
   const labelFor = (item: NavItem) => (item.href === "/requests" && user.role === "DEV" ? "My Work" : item.label);
 
   const visibleSections = navSections
