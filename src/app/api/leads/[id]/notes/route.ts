@@ -37,6 +37,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           noteType: payload.noteType,
           callOutcome: payload.callOutcome,
           followUpDate: payload.followUpDate ? new Date(payload.followUpDate) : null,
+          durationSecs: payload.durationSecs ?? null,
+          providerCallSid: payload.providerCallSid || null,
         },
         include: { user: { select: { name: true, email: true } } },
       }),

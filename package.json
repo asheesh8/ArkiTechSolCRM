@@ -23,6 +23,7 @@
     "@prisma/client": "^6.19.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@twilio/voice-sdk": "^2.18.3",
     "@types/three": "^0.185.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -41,6 +42,7 @@
     "stripe": "^22.3.0",
     "tailwind-merge": "^3.6.0",
     "three": "^0.185.0",
+    "twilio": "^6.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

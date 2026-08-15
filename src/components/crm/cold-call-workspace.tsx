@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
+  Building2,
   CalendarCheck,
   Check,
   CheckCircle2,
@@ -15,22 +17,29 @@ import {
   ExternalLink,
   Loader2,
   MessageSquare,
+  Mic,
+  MicOff,
   Phone,
   PhoneCall,
   PhoneOff,
+  PhoneOutgoing,
   RotateCcw,
+  Save,
   Search,
   Share2,
   ShieldCheck,
   Target,
+  Unlink,
   Users,
   Voicemail,
   X,
 } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
+import { useTwilioDevice, type CompletedCall } from "@/components/crm/use-twilio-device";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/field";
+import { checkPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
 type CallProfile = {
@@ -61,6 +70,16 @@ type TeamUser = {
   name: string;
   email: string;
   role: string;
+};
+
+/** The slice of a lead the call room needs to dial it and log against it. */
+type LeadOption = {
+  id: string;
+  businessName: string;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+  category?: string | null;
 };
 
 const STORAGE_KEY = "arkitech:cold-call-workspace:v1";
@@ -102,6 +121,34 @@ const OUTCOMES = [
   { id: "booked", label: "Meeting booked", icon: CalendarCheck },
   { id: "not-interested", label: "Not interested", icon: X },
 ] as const;
+
+// The wrap-up buttons are worded for someone who just hung up; the database
+// speaks in CallOutcome/NoteType. Saving a note translates between the two, and
+// the notes route moves the lead's status from the outcome on its own.
+const OUTCOME_TO_CRM: Record<string, { callOutcome: string; noteType: string }> = {
+  "no-answer": { callOutcome: "NO_ANSWER", noteType: "GENERAL" },
+  voicemail: { callOutcome: "LEFT_VOICEMAIL", noteType: "GENERAL" },
+  warm: { callOutcome: "CALLED", noteType: "GENERAL" },
+  "follow-up": { callOutcome: "FOLLOW_UP", noteType: "FOLLOW_UP" },
+  booked: { callOutcome: "MEETING_BOOKED", noteType: "MEETING" },
+  "not-interested": { callOutcome: "NOT_INTERESTED", noteType: "GENERAL" },
+};
+
+/** Outcomes where a date is the point of the note rather than a detail. */
+const OUTCOMES_NEEDING_DATE = new Set(["follow-up", "booked"]);
+
+function clockLabel(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function durationLabel(totalSeconds: number) {
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+}
 
 const CALL_EXAMPLES = [
   {
@@ -549,9 +596,11 @@ function AccessDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 export function ColdCallWorkspace({
   callerName,
   canManageAccess,
+  dialerEnabled,
 }: {
   callerName: string;
   canManageAccess: boolean;
+  dialerEnabled: boolean;
 }) {
   const [profile, setProfile] = useState<CallProfile>(DEFAULT_PROFILE);
   const [callPath, setCallPath] = useState<CallPath>("reviews");
@@ -564,6 +613,30 @@ export function ColdCallWorkspace({
   const [setupOpen, setSetupOpen] = useState(true);
   const [hydrated, setHydrated] = useState(false);
 
+  // Which CRM lead this call is against. Without one there is nowhere to file
+  // the note, so the wrap-up stays read-only until a lead is attached.
+  const [lead, setLead] = useState<LeadOption | null>(null);
+  const [leadQuery, setLeadQuery] = useState("");
+  const [leadResults, setLeadResults] = useState<LeadOption[]>([]);
+  const [leadSearching, setLeadSearching] = useState(false);
+  const [dialNumber, setDialNumber] = useState("");
+
+  const [lastCall, setLastCall] = useState<CompletedCall | null>(null);
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedNoteAt, setSavedNoteAt] = useState<string>("");
+
+  const handleCallCompleted = useCallback((call: CompletedCall) => {
+    setLastCall(call);
+    // Nobody picked up, so the outcome is already known. Pre-selecting it is the
+    // difference between logging a dead call and not bothering.
+    if (!call.answered) setOutcome((current) => current || "no-answer");
+    document.getElementById("call-wrap-up")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
+
+  const dialer = useTwilioDevice({ enabled: dialerEnabled, onCallCompleted: handleCallCompleted });
+
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
@@ -575,20 +648,69 @@ export function ColdCallWorkspace({
         setCallPath(saved.callPath);
       }
       if (typeof saved?.outcome === "string") setOutcome(saved.outcome);
+      if (saved?.lead?.id && typeof saved.lead.businessName === "string") setLead(saved.lead);
+      if (typeof saved?.dialNumber === "string") setDialNumber(saved.dialNumber);
     } catch {
       // A stale browser draft should never block the call workspace.
     }
     setHydrated(true);
   }, []);
 
+  // Arriving from a lead row: /cold-call?leadId=... opens the room already
+  // pointed at that business. Read straight off the URL rather than through
+  // useSearchParams, which would drag a Suspense boundary into the page.
+  useEffect(() => {
+    const leadId = new URLSearchParams(window.location.search).get("leadId");
+    if (!leadId) return;
+
+    let cancelled = false;
+    fetch(`/api/leads/${leadId}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.lead) return;
+        applyLead(data.lead as LeadOption);
+      })
+      .catch(() => {
+        // A bad link should leave the room usable, just unattached.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, callPath, activeStep, outcome }));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ profile, callPath, activeStep, outcome, lead, dialNumber }),
+      );
     } catch {
       // Private browsing or storage limits should not interrupt a call.
     }
-  }, [activeStep, callPath, hydrated, outcome, profile]);
+  }, [activeStep, callPath, dialNumber, hydrated, lead, outcome, profile]);
+
+  // Lead search, debounced so typing a business name isn't one request per key.
+  useEffect(() => {
+    const query = leadQuery.trim();
+    if (query.length < 2) {
+      setLeadResults([]);
+      setLeadSearching(false);
+      return;
+    }
+
+    setLeadSearching(true);
+    const timer = window.setTimeout(() => {
+      fetch(`/api/leads?search=${encodeURIComponent(query)}`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => setLeadResults(Array.isArray(data?.leads) ? data.leads.slice(0, 8) : []))
+        .catch(() => setLeadResults([]))
+        .finally(() => setLeadSearching(false));
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [leadQuery]);
 
   const beats = useMemo(
     () => scriptFor(activeStep, profile, callerName, callPath),
@@ -600,6 +722,17 @@ export function ColdCallWorkspace({
   const monthsCovered = price > 0 && jobValue > 0 ? Math.max(1, Math.floor(jobValue / price)) : null;
   const business = valueOr(profile.businessName, "[business name]");
   const prospect = valueOr(profile.prospectName, "[prospect name]");
+
+  const dialCheck = checkPhone(dialNumber);
+  const canDial = dialer.status === "ready" && dialCheck.textable && Boolean(dialCheck.e164);
+  const dialStatusLabel =
+    dialer.status === "connecting"
+      ? "Connecting…"
+      : dialer.status === "ringing"
+        ? "Ringing…"
+        : dialer.status === "on-call"
+          ? clockLabel(dialer.seconds)
+          : "";
 
   const objections = [
     {
@@ -661,6 +794,95 @@ export function ColdCallWorkspace({
     setProfile((current) => ({ ...current, [key]: value }));
   }
 
+  /** Attach a lead and borrow whatever the CRM already knows about it. */
+  function applyLead(next: LeadOption) {
+    setLead({
+      id: next.id,
+      businessName: next.businessName,
+      phone: next.phone ?? null,
+      city: next.city ?? null,
+      state: next.state ?? null,
+      category: next.category ?? null,
+    });
+    setLeadQuery("");
+    setLeadResults([]);
+    setSaveError("");
+    setSavedNoteAt("");
+
+    setProfile((current) => ({
+      ...current,
+      businessName: next.businessName || current.businessName,
+      niche: next.category || current.niche,
+      city: next.city ? [next.city, next.state].filter(Boolean).join(", ") : current.city,
+    }));
+    if (next.phone) setDialNumber(next.phone);
+  }
+
+  function clearLead() {
+    setLead(null);
+    setSaveError("");
+    setSavedNoteAt("");
+  }
+
+  async function placeCall() {
+    const check = checkPhone(dialNumber);
+    if (!check.textable || !check.e164) return;
+
+    setLastCall(null);
+    setSavedNoteAt("");
+    setSaveError("");
+    setSetupOpen(false);
+    await dialer.dial(check.e164);
+  }
+
+  async function saveNote() {
+    if (!lead || saving) return;
+
+    const mapped = OUTCOME_TO_CRM[outcome];
+    if (!mapped) {
+      setSaveError("Pick an outcome before saving.");
+      return;
+    }
+
+    const body = profile.notes.trim();
+    if (!body) {
+      setSaveError("Write a line about the call before saving.");
+      return;
+    }
+
+    setSaving(true);
+    setSaveError("");
+    try {
+      const response = await fetch(`/api/leads/${lead.id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          note: body,
+          noteType: mapped.noteType,
+          callOutcome: mapped.callOutcome,
+          // A date only means something for the outcomes that promise one.
+          followUpDate:
+            followUpDate && OUTCOMES_NEEDING_DATE.has(outcome)
+              ? new Date(`${followUpDate}T12:00:00`).toISOString()
+              : null,
+          durationSecs: lastCall?.answered ? lastCall.durationSecs : null,
+          providerCallSid: lastCall?.callSid ?? null,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setSaveError(data?.error || "Couldn't save the note.");
+        return;
+      }
+      setSavedNoteAt(new Date().toLocaleTimeString(undefined, { timeStyle: "short" }));
+    } catch {
+      setSaveError("Couldn't reach the server. The note is still in the box — try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function copyText(text: string, marker: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -687,6 +909,14 @@ export function ColdCallWorkspace({
     setActiveStep(0);
     setOutcome("");
     setSetupOpen(true);
+    setLead(null);
+    setLeadQuery("");
+    setLeadResults([]);
+    setDialNumber("");
+    setLastCall(null);
+    setFollowUpDate("");
+    setSaveError("");
+    setSavedNoteAt("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -752,6 +982,150 @@ export function ColdCallWorkspace({
           </div>
         ))}
       </section>
+
+      <Card>
+        <CardHeader className="border-b border-[var(--border)]">
+          <CardTitle className="flex min-w-0 items-center gap-2">
+            <PhoneOutgoing className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+            <span className="shrink-0">Dial</span>
+            {lead ? (
+              <span className="truncate text-xs font-normal text-[var(--muted)]">{lead.businessName}</span>
+            ) : null}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-4 sm:pt-5">
+          <div className="space-y-1.5">
+            <Label htmlFor="cold-call-lead">Lead this call is against</Label>
+            {lead ? (
+              <div className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2.5">
+                <Building2 className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">{lead.businessName}</span>
+                  <span className="mt-0.5 block truncate text-xs text-[var(--muted)]">
+                    {[lead.category, [lead.city, lead.state].filter(Boolean).join(", ")]
+                      .filter(Boolean)
+                      .join(" · ") || "No location on file"}
+                  </span>
+                </span>
+                <Button type="button" variant="ghost" size="icon" onClick={clearLead} aria-label="Detach this lead" title="Detach this lead">
+                  <Unlink className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+                  <Input
+                    id="cold-call-lead"
+                    value={leadQuery}
+                    onChange={(event) => setLeadQuery(event.target.value)}
+                    placeholder="Search a saved lead by business or phone…"
+                    className="pl-9"
+                    autoComplete="off"
+                  />
+                  {leadSearching ? (
+                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--muted)]" />
+                  ) : null}
+                </div>
+                {leadResults.length ? (
+                  <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-lg border border-[var(--border)]">
+                    {leadResults.map((result) => (
+                      <li key={result.id}>
+                        <button
+                          type="button"
+                          onClick={() => applyLead(result)}
+                          className="flex w-full items-center gap-3 bg-[var(--surface-strong)] px-3 py-2.5 text-left transition hover:bg-[var(--accent)]/10"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">{result.businessName}</span>
+                            <span className="mt-0.5 block truncate text-xs text-[var(--muted)]">
+                              {[result.phone, [result.city, result.state].filter(Boolean).join(", ")]
+                                .filter(Boolean)
+                                .join(" · ") || "No phone on file"}
+                            </span>
+                          </span>
+                          <Phone className="h-4 w-4 shrink-0 text-[var(--muted)]" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="text-xs text-[var(--muted)]">
+                  Attaching a lead is what lets the wrap-up save straight into that lead&rsquo;s timeline.
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-52 flex-1 space-y-1.5">
+              <Label htmlFor="cold-call-number">Number</Label>
+              <Input
+                id="cold-call-number"
+                value={dialNumber}
+                onChange={(event) => setDialNumber(event.target.value)}
+                placeholder="(802) 555-0192"
+                inputMode="tel"
+                disabled={dialer.busy}
+              />
+            </div>
+
+            {dialer.busy ? (
+              <div className="flex items-center gap-2">
+                <span className="flex h-11 min-w-24 items-center justify-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)]/10 px-3 text-sm font-semibold tabular-nums text-[var(--accent)]">
+                  {dialer.status === "on-call" ? <PhoneCall className="h-4 w-4" /> : <Loader2 className="h-4 w-4 animate-spin" />}
+                  {dialStatusLabel}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={dialer.toggleMute}
+                  disabled={dialer.status !== "on-call"}
+                  aria-pressed={dialer.muted}
+                >
+                  {dialer.muted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {dialer.muted ? "Unmute" : "Mute"}
+                </Button>
+                <Button type="button" variant="outline" onClick={dialer.hangUp}>
+                  <PhoneOff className="h-4 w-4" />
+                  Hang up
+                </Button>
+              </div>
+            ) : (
+              <Button type="button" onClick={placeCall} disabled={!canDial}>
+                {dialer.status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneOutgoing className="h-4 w-4" />}
+                Call
+              </Button>
+            )}
+          </div>
+
+          {dialNumber.trim() && !dialCheck.textable ? (
+            <p className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              {dialCheck.reason}
+            </p>
+          ) : null}
+
+          {dialer.error ? (
+            <p className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              {dialer.error}
+            </p>
+          ) : null}
+
+          {!dialerEnabled ? (
+            <p className="text-xs text-[var(--muted)]">
+              Calling from the browser isn&rsquo;t switched on yet — add the Twilio keys and this dials out on your
+              business number. Everything else on this page works without it, including saving the wrap-up.
+            </p>
+          ) : dialer.callerId ? (
+            <p className="text-xs text-[var(--muted)]">
+              They&rsquo;ll see <span className="font-semibold text-[var(--foreground)]">{checkPhone(dialer.callerId).national || dialer.callerId}</span> on caller ID.
+              Calls aren&rsquo;t recorded.
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="border-b border-[var(--border)]">
@@ -987,6 +1361,15 @@ export function ColdCallWorkspace({
                   );
                 })}
               </div>
+              {lastCall ? (
+                <p className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-xs text-[var(--muted)]">
+                  <PhoneCall className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
+                  {lastCall.answered
+                    ? `Connected for ${durationLabel(lastCall.durationSecs)} — saved with the note.`
+                    : "No answer — nothing connected, so no duration to log."}
+                </p>
+              ) : null}
+
               <div className="space-y-1.5">
                 <Label htmlFor="cold-call-notes">Call notes</Label>
                 <Textarea
@@ -997,14 +1380,55 @@ export function ColdCallWorkspace({
                   className="min-h-32"
                 />
               </div>
+
+              {OUTCOMES_NEEDING_DATE.has(outcome) ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="cold-call-follow-up">
+                    {outcome === "booked" ? "Meeting date" : "Follow up on"}
+                  </Label>
+                  <Input
+                    id="cold-call-follow-up"
+                    type="date"
+                    value={followUpDate}
+                    onChange={(event) => setFollowUpDate(event.target.value)}
+                    className="max-w-56"
+                  />
+                  <p className="text-xs text-[var(--muted)]">
+                    This is what puts the lead on the accountability board.
+                  </p>
+                </div>
+              ) : null}
+
+              {saveError ? (
+                <p className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  {saveError}
+                </p>
+              ) : null}
+
+              {savedNoteAt ? (
+                <p className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  Saved to {lead?.businessName} at {savedNoteAt}. The lead&rsquo;s status moved to match the outcome.
+                </p>
+              ) : !lead ? (
+                <p className="text-xs text-[var(--muted)]">
+                  Attach a lead at the top of the page and this saves straight into their timeline.
+                </p>
+              ) : null}
+
               <div className="flex flex-wrap justify-end gap-2">
                 <Button variant="outline" onClick={copyRecap}>
                   {copied === "recap" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied === "recap" ? "Copied" : "Copy recap"}
                 </Button>
-                <Button onClick={newCall}>
+                <Button variant="outline" onClick={newCall}>
                   <Phone className="h-4 w-4" />
                   Start next call
+                </Button>
+                <Button onClick={saveNote} disabled={!lead || saving || !outcome}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {saving ? "Saving…" : "Save to CRM"}
                 </Button>
               </div>
             </CardContent>

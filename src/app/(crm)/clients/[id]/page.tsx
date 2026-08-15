@@ -18,6 +18,14 @@ import { leadStatuses } from "@/lib/schemas";
 import { kitSlug } from "@/lib/website-kit";
 import { cn, formatStatus } from "@/lib/utils";
 
+/** Only set on notes logged from a call dialled inside the CRM. */
+function callDurationLabel(totalSeconds: number) {
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds ? `${minutes}m ${seconds}s` : `${minutes}m`;
+}
+
 function Stars({ value }: { value: number }) {
   return (
     <span className="inline-flex items-center gap-0.5">
@@ -748,6 +756,7 @@ export default function ClientDetailPage() {
           {/* Quick action bar */}
           <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {lead.phone && <a href={`tel:${lead.phone}`} className="contents"><Button variant="outline" size="sm" className="h-11 min-w-0 sm:h-9"><Phone className="h-4 w-4 shrink-0" /><span className="truncate">{lead.phone}</span></Button></a>}
+            {lead.phone && <a href={`/cold-call?leadId=${id}`} className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><PhoneCall className="h-4 w-4" />Call room</Button></a>}
             {directionsUrl && <a href={directionsUrl} target="_blank" className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><Navigation className="h-4 w-4" />Directions</Button></a>}
             {lead.email && <a href={`mailto:${lead.email}`} className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><Mail className="h-4 w-4" />Email</Button></a>}
             {lead.googleMapsUrl && <a href={lead.googleMapsUrl} target="_blank" className="contents"><Button variant="outline" size="sm" className="h-11 sm:h-9"><ExternalLink className="h-4 w-4" />Google</Button></a>}
@@ -849,7 +858,15 @@ export default function ClientDetailPage() {
                         <span className="absolute -left-4 top-3.5 flex h-3 w-3 items-center justify-center rounded-full border-2 border-white bg-zinc-300 dark:border-zinc-950 dark:bg-zinc-600" />
                         <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Badge value={note.callOutcome} />
+                            <span className="flex items-center gap-2">
+                              <Badge value={note.callOutcome} />
+                              {note.durationSecs ? (
+                                <span className="flex items-center gap-1 text-xs text-zinc-400" title="Dialled from the cold-call room">
+                                  <PhoneCall className="h-3 w-3" />
+                                  {callDurationLabel(note.durationSecs)}
+                                </span>
+                              ) : null}
+                            </span>
                             <span className="text-xs text-zinc-400">{new Date(note.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</span>
                           </div>
                           <p className="mt-3 text-sm leading-6">{note.note}</p>

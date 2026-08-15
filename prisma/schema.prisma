@@ -148,6 +148,11 @@ model CallNote {
   noteType     NoteType    @default(GENERAL)
   callOutcome  CallOutcome
   followUpDate DateTime?
+  // Set when the note came from a call dialed inside the CRM rather than typed
+  // up afterwards. The SID is what a recording and transcript will be joined on
+  // once those exist; until then it is just provenance.
+  durationSecs    Int?
+  providerCallSid String?
   createdAt    DateTime    @default(now())
   lead         Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)

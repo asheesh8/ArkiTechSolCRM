@@ -81,6 +81,11 @@ export const noteCreateSchema = z.object({
   noteType: z.enum(noteTypes).default("GENERAL"),
   callOutcome: z.enum(callOutcomes),
   followUpDate: z.string().datetime().optional().nullable().or(z.literal("")),
+  // Present when the note came from a call dialled inside the CRM. Capped at
+  // four hours so a softphone tab left open overnight can't log a nonsense
+  // number against a lead.
+  durationSecs: z.number().int().min(0).max(4 * 60 * 60).optional().nullable(),
+  providerCallSid: z.string().trim().max(64).optional().nullable(),
 });
 
 export const pageSpeedSchema = z.object({
