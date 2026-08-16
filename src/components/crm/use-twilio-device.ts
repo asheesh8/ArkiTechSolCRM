@@ -155,7 +155,7 @@ export function useTwilioDevice({
   }, []);
 
   const dial = useCallback(
-    async (e164: string) => {
+    async (e164: string, extraParams: Record<string, string> = {}) => {
       const device = deviceRef.current;
       if (!device || callRef.current) return;
 
@@ -164,7 +164,9 @@ export function useTwilioDevice({
       setStatus("connecting");
 
       try {
-        const call = await device.connect({ params: { To: e164 } });
+        // Custom params reach the TwiML endpoint as ordinary POST fields, which
+        // is how the server learns which lead this call belongs to.
+        const call = await device.connect({ params: { To: e164, ...extraParams } });
         callRef.current = call;
         answeredAtRef.current = null;
 

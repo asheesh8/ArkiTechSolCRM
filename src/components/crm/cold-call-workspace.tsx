@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -28,6 +28,7 @@ import {
   Search,
   Share2,
   ShieldCheck,
+  Sparkles,
   Target,
   Unlink,
   Users,
@@ -36,6 +37,9 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
 import { useTwilioDevice, type CompletedCall } from "@/components/crm/use-twilio-device";
+// Type-only, so the server-only module it lives in is never pulled into the
+// browser bundle — the import is erased at compile time.
+import type { CallDraft } from "@/lib/call-summary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/field";
@@ -71,6 +75,8 @@ type TeamUser = {
   email: string;
   role: string;
 };
+
+type DraftState = "idle" | "waiting" | "ready" | "applied" | "failed";
 
 /** The slice of a lead the call room needs to dial it and log against it. */
 type LeadOption = {
@@ -597,10 +603,12 @@ export function ColdCallWorkspace({
   callerName,
   canManageAccess,
   dialerEnabled,
+  recordingEnabled,
 }: {
   callerName: string;
   canManageAccess: boolean;
   dialerEnabled: boolean;
+  recordingEnabled: boolean;
 }) {
   const [profile, setProfile] = useState<CallProfile>(DEFAULT_PROFILE);
   const [callPath, setCallPath] = useState<CallPath>("reviews");
@@ -627,13 +635,20 @@ export function ColdCallWorkspace({
   const [saveError, setSaveError] = useState("");
   const [savedNoteAt, setSavedNoteAt] = useState<string>("");
 
+  // The write-up that arrives once the recording has been transcribed.
+  const [draftState, setDraftState] = useState<DraftState>("idle");
+  const [draftError, setDraftError] = useState("");
+  const [pendingDraft, setPendingDraft] = useState<CallDraft | null>(null);
+
   const handleCallCompleted = useCallback((call: CompletedCall) => {
     setLastCall(call);
     // Nobody picked up, so the outcome is already known. Pre-selecting it is the
     // difference between logging a dead call and not bothering.
     if (!call.answered) setOutcome((current) => current || "no-answer");
+    // Nothing was recorded, so there will be nothing to write up.
+    if (call.answered && recordingEnabled) setDraftState("waiting");
     document.getElementById("call-wrap-up")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
+  }, [recordingEnabled]);
 
   const dialer = useTwilioDevice({ enabled: dialerEnabled, onCallCompleted: handleCallCompleted });
 
@@ -690,6 +705,74 @@ export function ColdCallWorkspace({
       // Private browsing or storage limits should not interrupt a call.
     }
   }, [activeStep, callPath, dialNumber, hydrated, lead, outcome, profile]);
+
+  // Read inside the poll below, which must not restart every time a character
+  // is typed into the notes box.
+  const notesRef = useRef(profile.notes);
+  useEffect(() => {
+    notesRef.current = profile.notes;
+  }, [profile.notes]);
+
+  // Wait for the recording to be transcribed and written up. Downloading,
+  // splitting, transcribing and summarising takes tens of seconds, so this
+  // polls rather than blocking anything the rep might want to do meanwhile.
+  useEffect(() => {
+    if (draftState !== "waiting") return;
+
+    let cancelled = false;
+    let timer = 0;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 40; // roughly two minutes at three seconds apart.
+
+    async function poll() {
+      attempts += 1;
+      try {
+        const query = lastCall?.callSid ? `?callSid=${encodeURIComponent(lastCall.callSid)}` : "";
+        const response = await fetch(`/api/calls/draft${query}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (cancelled) return;
+
+          if (data?.ready && data.draft) {
+            // Never overwrite something the rep already wrote — offer it instead.
+            if (notesRef.current.trim()) {
+              setPendingDraft(data.draft as CallDraft);
+              setDraftState("ready");
+            } else {
+              applyDraft(data.draft as CallDraft);
+            }
+            return;
+          }
+
+          if (data?.status === "failed") {
+            setDraftError(data.error || "The recording couldn't be written up.");
+            setDraftState("failed");
+            return;
+          }
+        }
+      } catch {
+        // A blip shouldn't end the wait; the attempt cap does that.
+      }
+
+      if (cancelled) return;
+      if (attempts >= MAX_ATTEMPTS) {
+        setDraftError("The write-up is taking longer than usual. It'll appear on the receptionist page.");
+        setDraftState("failed");
+        return;
+      }
+      timer = window.setTimeout(poll, 3_000);
+    }
+
+    // A recording is only handed over once the call has fully cleared.
+    timer = window.setTimeout(poll, 4_000);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // applyDraft only touches setters, so the poll can safely close over it.
+  }, [draftState, lastCall]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Lead search, debounced so typing a business name isn't one request per key.
   useEffect(() => {
@@ -831,8 +914,19 @@ export function ColdCallWorkspace({
     setLastCall(null);
     setSavedNoteAt("");
     setSaveError("");
+    setDraftState("idle");
+    setPendingDraft(null);
     setSetupOpen(false);
-    await dialer.dial(check.e164);
+    await dialer.dial(check.e164, lead ? { LeadId: lead.id } : {});
+  }
+
+  /** Put a finished write-up into the wrap-up card. */
+  function applyDraft(draft: CallDraft) {
+    if (draft.note?.trim()) updateProfile("notes", draft.note.trim());
+    if (draft.outcome && OUTCOMES.some((item) => item.id === draft.outcome)) setOutcome(draft.outcome);
+    if (draft.followUpDate) setFollowUpDate(draft.followUpDate);
+    setPendingDraft(null);
+    setDraftState("applied");
   }
 
   async function saveNote() {
@@ -917,6 +1011,9 @@ export function ColdCallWorkspace({
     setFollowUpDate("");
     setSaveError("");
     setSavedNoteAt("");
+    setDraftState("idle");
+    setDraftError("");
+    setPendingDraft(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1120,8 +1217,10 @@ export function ColdCallWorkspace({
             </p>
           ) : dialer.callerId ? (
             <p className="text-xs text-[var(--muted)]">
-              They&rsquo;ll see <span className="font-semibold text-[var(--foreground)]">{checkPhone(dialer.callerId).national || dialer.callerId}</span> on caller ID.
-              Calls aren&rsquo;t recorded.
+              They&rsquo;ll see <span className="font-semibold text-[var(--foreground)]">{checkPhone(dialer.callerId).national || dialer.callerId}</span> on caller ID.{" "}
+              {recordingEnabled
+                ? "They hear the recording notice when they pick up, and the write-up lands here after you hang up."
+                : "Recording is off, so there's no transcript or write-up — you'll type the note yourself."}
             </p>
           ) : null}
         </CardContent>
@@ -1367,6 +1466,40 @@ export function ColdCallWorkspace({
                   {lastCall.answered
                     ? `Connected for ${durationLabel(lastCall.durationSecs)} — saved with the note.`
                     : "No answer — nothing connected, so no duration to log."}
+                </p>
+              ) : null}
+
+              {draftState === "waiting" ? (
+                <p className="flex items-center gap-2 rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/5 px-3 py-2 text-xs text-[var(--muted)]">
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[var(--accent)]" />
+                  Transcribing the call and writing it up. You can start typing — nothing here gets overwritten.
+                </p>
+              ) : null}
+
+              {draftState === "ready" && pendingDraft ? (
+                <div className="space-y-2 rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/5 px-3 py-2.5">
+                  <p className="flex items-center gap-2 text-xs font-semibold text-[var(--accent)]">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    A write-up is ready
+                  </p>
+                  <p className="text-xs leading-5 text-[var(--muted)]">{pendingDraft.summary}</p>
+                  <Button type="button" size="sm" variant="outline" onClick={() => applyDraft(pendingDraft)}>
+                    Replace my notes with it
+                  </Button>
+                </div>
+              ) : null}
+
+              {draftState === "applied" ? (
+                <p className="flex items-center gap-2 text-xs text-[var(--muted)]">
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
+                  Written up from the recording. Read it over and fix anything it got wrong before saving.
+                </p>
+              ) : null}
+
+              {draftState === "failed" && draftError ? (
+                <p className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  {draftError}
                 </p>
               ) : null}
 

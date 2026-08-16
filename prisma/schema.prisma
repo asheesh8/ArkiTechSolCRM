@@ -67,6 +67,7 @@ model User {
   notePages         NotePage[]
   notePresences     NotePresence[]
   devWorkRequests   WorkRequest[]      @relation("AssignedDevWorkRequests")
+  coldCalls         ReceptionistConversation[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -365,7 +366,9 @@ model WorkFile {
 model ReceptionistConversation {
   id                     String    @id @default(cuid())
   providerConversationId String    @unique
-  agentId                String
+  // Null for calls a person placed from the cold-call room: there is no AI
+  // agent behind those, only a teammate. `source` says which kind this is.
+  agentId                String?
   agentName              String?
   status                 String
   callSuccessful         String?
@@ -395,11 +398,22 @@ model ReceptionistConversation {
   leadId                 String?
   detailStatus           String?
   detailSyncedAt         DateTime?
+  // Which pipeline produced this: "elevenlabs" for the AI receptionist,
+  // "cold-call" for a call a teammate dialled from the CRM.
+  source                 String?
+  // The teammate who placed the call. Only ever set for "cold-call".
+  userId                 String?
+  // R2 object key for the recording, when one was kept.
+  recordingKey           String?
+  // Why a cold-call transcript is missing, so a gap is explained rather than
+  // silently empty.
+  processingError        String?   @db.Text
   syncedAt               DateTime  @default(now())
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
   lead     Lead?                 @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  user     User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
   messages ReceptionistMessage[]
 
   @@index([agentId, startedAt])
@@ -408,6 +422,8 @@ model ReceptionistConversation {
   @@index([callSuccessful])
   @@index([callerPhone])
   @@index([leadId])
+  @@index([source, startedAt])
+  @@index([userId])
 }
 
 model ReceptionistMessage {
