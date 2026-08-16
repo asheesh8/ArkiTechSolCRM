@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import { voiceConfigsForAccount } from "@/lib/twilio-credentials";
 import {
   buildAnnouncementTwiml,
-  twilioVoiceConfigured,
   validTwilioSignature,
   announcementWebhookUrl,
 } from "@/lib/twilio-voice";
@@ -10,20 +10,26 @@ import {
 // to them alone before bridging the call. It is the recording notice.
 
 export async function POST(request: Request) {
-  if (!twilioVoiceConfigured()) {
-    return NextResponse.json({ error: "Browser dialling isn't configured." }, { status: 503 });
-  }
-
   const rawBody = await request.text();
   const params = Object.fromEntries(new URLSearchParams(rawBody));
 
-  if (
-    !validTwilioSignature({
+  // The answering leg carries no client identity, so the account SID in the
+  // body is the only handle on whose auth token should have signed this.
+  const candidates = await voiceConfigsForAccount(params.AccountSid);
+  if (candidates.length === 0) {
+    return NextResponse.json({ error: "Browser dialling isn't configured." }, { status: 503 });
+  }
+
+  const config = candidates.find((candidate) =>
+    validTwilioSignature({
       signature: request.headers.get("x-twilio-signature"),
       url: announcementWebhookUrl(),
       params,
-    })
-  ) {
+      authToken: candidate.authToken,
+    }),
+  );
+
+  if (!config) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 403 });
   }
 

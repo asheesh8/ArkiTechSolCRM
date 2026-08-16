@@ -1,11 +1,16 @@
 import "server-only";
 
 import twilio from "twilio";
+import type { TwilioVoiceConfig } from "@/lib/twilio-credentials";
 
 // Browser dialing for the cold-call room. The browser never sees an account
 // credential — it gets a short-lived access token, and every decision about
 // *what* it is allowed to dial is made here, on the server, when Twilio calls
 // back for TwiML.
+//
+// Nothing here reads credentials. Each teammate may be dialling on their own
+// Twilio account, so the config arrives as an argument and `twilio-credentials`
+// is the only module that decides whose it is.
 
 export class TwilioVoiceConfigurationError extends Error {
   constructor(message = "Browser dialing is not configured.") {
@@ -14,14 +19,7 @@ export class TwilioVoiceConfigurationError extends Error {
   }
 }
 
-type TwilioVoiceConfig = {
-  accountSid: string;
-  apiKeySid: string;
-  apiKeySecret: string;
-  authToken: string;
-  twimlAppSid: string;
-  callerId: string;
-};
+export type { TwilioVoiceConfig };
 
 // Longer than any sales call, short enough that a token lifted from a browser
 // stops working the same morning. The device refreshes itself before expiry.
@@ -29,40 +27,6 @@ const TOKEN_TTL_SECONDS = 60 * 60;
 
 // A prospect who hasn't picked up in 30 seconds isn't going to.
 const DIAL_TIMEOUT_SECONDS = 30;
-
-function readConfig(): TwilioVoiceConfig | null {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
-  const apiKeySid = process.env.TWILIO_API_KEY_SID?.trim();
-  const apiKeySecret = process.env.TWILIO_API_KEY_SECRET?.trim();
-  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
-  const twimlAppSid = process.env.TWILIO_TWIML_APP_SID?.trim();
-  const callerId = process.env.TWILIO_CALLER_ID?.trim();
-
-  if (!accountSid || !apiKeySid || !apiKeySecret || !authToken || !twimlAppSid || !callerId) {
-    return null;
-  }
-
-  return { accountSid, apiKeySid, apiKeySecret, authToken, twimlAppSid, callerId };
-}
-
-function requireConfig() {
-  const config = readConfig();
-  if (!config) throw new TwilioVoiceConfigurationError();
-  return config;
-}
-
-/**
- * Whether the dialer can run at all. Screens call this so a missing key shows a
- * quiet "not set up yet" note instead of a broken Call button.
- */
-export function twilioVoiceConfigured() {
-  return readConfig() !== null;
-}
-
-/** The number a prospect sees. Not a secret — it's the business line. */
-export function twilioCallerId() {
-  return readConfig()?.callerId ?? null;
-}
 
 /**
  * Public origin Twilio reaches this app on. Signature validation hashes the
@@ -98,6 +62,9 @@ export function recordingWebhookUrl() {
 // Recording is opt-in on purpose. Turning it on is a decision with legal weight
 // in half the states ArkiTech calls into, so it takes a deliberate env var
 // rather than arriving switched on with a deploy.
+//
+// It stays deployment-wide rather than per-account for the same reason: whether
+// this company records its calls is not a checkbox to hand each new rep.
 export function recordingEnabled() {
   const flag = process.env.TWILIO_RECORD_CALLS?.trim().toLowerCase();
   return flag === "true" || flag === "1";
@@ -124,11 +91,10 @@ export function buildAnnouncementTwiml() {
 
 /**
  * Mint a voice token for one teammate. Identity is the CRM user id, so Twilio's
- * own call logs line up with whoever was signed in.
+ * own call logs line up with whoever was signed in — and so the voice webhook
+ * can tell whose account to dial the leg on.
  */
-export function createVoiceAccessToken(identity: string) {
-  const config = requireConfig();
-
+export function createVoiceAccessToken(identity: string, config: TwilioVoiceConfig) {
   const token = new twilio.jwt.AccessToken(config.accountSid, config.apiKeySid, config.apiKeySecret, {
     identity,
     ttl: TOKEN_TTL_SECONDS,
@@ -160,8 +126,7 @@ export function createVoiceAccessToken(identity: string) {
  * app has no public URL to serve that notice from, the call still goes through
  * — unrecorded.
  */
-export function buildDialTwiml(to: string) {
-  const config = requireConfig();
+export function buildDialTwiml(to: string, config: TwilioVoiceConfig) {
   const response = new twilio.twiml.VoiceResponse();
 
   const announceUrl = announcementWebhookUrl();
@@ -196,8 +161,7 @@ export function buildDialTwiml(to: string) {
  * Download a finished recording. Twilio serves these behind account auth, so
  * the media never becomes a public URL that leaks a client conversation.
  */
-export async function fetchTwilioRecording(recordingUrl: string) {
-  const config = requireConfig();
+export async function fetchTwilioRecording(recordingUrl: string, config: TwilioVoiceConfig) {
   const credentials = Buffer.from(`${config.accountSid}:${config.authToken}`).toString("base64");
 
   // Twilio picks the format from the extension; `.wav` is uncompressed PCM,
@@ -224,18 +188,23 @@ export function buildSpokenErrorTwiml(message: string) {
  * Verify a request really came from Twilio. Without this the TwiML endpoint is
  * an open relay: anyone who can POST to it could place calls billed to the
  * account, with the business number as caller ID.
+ *
+ * The auth token belongs to the account named in the request body, which is
+ * unverified until this passes — that is the point. A forged body can claim any
+ * account SID it likes, but it cannot produce a signature for one.
  */
 export function validTwilioSignature({
   signature,
   url,
   params,
+  authToken,
 }: {
   signature: string | null;
   url: string | null;
   params: Record<string, string>;
+  authToken: string | null;
 }) {
-  const config = readConfig();
-  if (!config || !signature || !url) return false;
+  if (!authToken || !signature || !url) return false;
 
-  return twilio.validateRequest(config.authToken, signature, url, params);
+  return twilio.validateRequest(authToken, signature, url, params);
 }

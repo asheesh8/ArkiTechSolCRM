@@ -40,9 +40,12 @@ function errorMessage(error: unknown, fallback: string) {
 
 export function useTwilioDevice({
   enabled,
+  configurationKey,
   onCallCompleted,
 }: {
   enabled: boolean;
+  /** Changes whenever the active Twilio account or caller ID changes. */
+  configurationKey: string;
   onCallCompleted?: (call: CompletedCall) => void;
 }) {
   const [status, setStatus] = useState<DialerStatus>(enabled ? "loading" : "unconfigured");
@@ -74,6 +77,8 @@ export function useTwilioDevice({
   useEffect(() => {
     if (!enabled) {
       setStatus("unconfigured");
+      setError(null);
+      setCallerId(null);
       return;
     }
 
@@ -82,6 +87,7 @@ export function useTwilioDevice({
     async function boot() {
       setStatus("loading");
       setError(null);
+      setCallerId(null);
       try {
         const { token, callerId: outboundNumber } = await fetchToken();
         const { Device } = await import("@twilio/voice-sdk");
@@ -123,7 +129,7 @@ export function useTwilioDevice({
       deviceRef.current?.destroy();
       deviceRef.current = null;
     };
-  }, [enabled, fetchToken]);
+  }, [configurationKey, enabled, fetchToken]);
 
   // Live duration. Only ticks while someone is actually on the line.
   useEffect(() => {

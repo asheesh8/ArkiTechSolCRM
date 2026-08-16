@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { canAccessColdCall } from "@/lib/cold-call-access";
-import { createVoiceAccessToken, twilioVoiceConfigured } from "@/lib/twilio-voice";
+import { voiceConfigForUser } from "@/lib/twilio-credentials";
+import { createVoiceAccessToken } from "@/lib/twilio-voice";
 
 function noStore(response: NextResponse) {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
@@ -21,12 +22,14 @@ export async function POST() {
     return noStore(NextResponse.json({ error: "You don't have access to the cold-call room." }, { status: 403 }));
   }
 
-  if (!twilioVoiceConfigured()) {
+  // Their own connected account if they have one, otherwise the shared line.
+  const config = await voiceConfigForUser(user.id);
+  if (!config) {
     return noStore(
-      NextResponse.json({ error: "Browser dialling isn't configured yet." }, { status: 503 }),
+      NextResponse.json({ error: "Connect a Twilio account before dialling." }, { status: 503 }),
     );
   }
 
-  const { token, identity, callerId, expiresInSeconds } = createVoiceAccessToken(user.id);
+  const { token, identity, callerId, expiresInSeconds } = createVoiceAccessToken(user.id, config);
   return noStore(NextResponse.json({ token, identity, callerId, expiresInSeconds }));
 }

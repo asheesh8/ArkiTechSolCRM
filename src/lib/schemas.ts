@@ -100,3 +100,20 @@ export const leadExclusionSchema = z.object({
   businessName: z.string().min(1),
   reason: z.enum(leadExclusionReasons),
 });
+
+// The two values printed on the Twilio console home page. Everything else
+// browser dialling needs is created from these rather than asked for.
+export const twilioCredentialsSchema = z.object({
+  accountSid: z
+    .string()
+    .trim()
+    .regex(/^AC[0-9a-fA-F]{32}$/, "An Account SID starts with AC followed by 32 characters"),
+  authToken: z.string().trim().min(32, "That Auth Token looks too short").max(128),
+});
+
+export const twilioConnectSchema = twilioCredentialsSchema.extend({
+  callerId: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{7,14}$/, "Pick one of the numbers on your Twilio account"),
+});

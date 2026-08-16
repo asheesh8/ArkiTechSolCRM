@@ -68,8 +68,43 @@ model User {
   notePresences     NotePresence[]
   devWorkRequests   WorkRequest[]      @relation("AssignedDevWorkRequests")
   coldCalls         ReceptionistConversation[]
+  twilioAccount     TwilioAccount?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+}
+
+/**
+ * One teammate's own Twilio account, connected from the cold-call room.
+ *
+ * Each rep brings their own number and their own bill, so a call is placed on
+ * the credentials of whoever dialled it rather than a single company account.
+ * When a user has no row here the dialer falls back to the TWILIO_* environment
+ * variables, which is how a single shared company line still works.
+ */
+model TwilioAccount {
+  id         String @id @default(cuid())
+  userId     String @unique
+  accountSid String
+  // The API key pair is provisioned for this app rather than pasted in, so it
+  // can be revoked from the Twilio console without touching the auth token.
+  apiKeySid  String
+  // The TwiML app whose voice URL points back at /api/calls/voice. Created here
+  // too — pointing it at the wrong URL is the step people get wrong by hand.
+  twimlAppSid String
+  // E.164. Not a secret: it is what the prospect sees on caller ID.
+  callerId    String
+  friendlyName String?
+  // Encrypted with CREDENTIAL_ENCRYPTION_KEY. These place calls and spend money,
+  // so they never sit in the database as plaintext and never leave the server.
+  authTokenCipher    String @db.Text
+  apiKeySecretCipher String @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Webhooks arrive knowing only the Twilio account, so that is the lookup path
+  // for verifying a signature. Not unique: two teammates may share one account.
+  @@index([accountSid])
 }
 
 model StaffSession {

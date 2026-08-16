@@ -36,6 +36,7 @@ import {
   X,
 } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
+import { TwilioConnectDialog, type TwilioConnection } from "@/components/crm/twilio-connect-dialog";
 import { useTwilioDevice, type CompletedCall } from "@/components/crm/use-twilio-device";
 // Type-only, so the server-only module it lives in is never pulled into the
 // browser bundle — the import is erased at compile time.
@@ -602,14 +603,25 @@ function AccessDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 export function ColdCallWorkspace({
   callerName,
   canManageAccess,
-  dialerEnabled,
   recordingEnabled,
+  connection: initialConnection,
 }: {
   callerName: string;
   canManageAccess: boolean;
-  dialerEnabled: boolean;
   recordingEnabled: boolean;
+  connection: TwilioConnection;
 }) {
+  // Connecting an account switches dialling on without a reload, so this is
+  // state seeded from the server rather than a prop read straight through.
+  const [connection, setConnection] = useState<TwilioConnection>(initialConnection);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const canDialNow = connection.usable;
+  const dialerConfigurationKey = [
+    connection.connected ? "user" : "shared",
+    connection.accountSid ?? "",
+    connection.callerId ?? "",
+    connection.connectedAt ?? "",
+  ].join(":");
   const [profile, setProfile] = useState<CallProfile>(DEFAULT_PROFILE);
   const [callPath, setCallPath] = useState<CallPath>("reviews");
   const [activeStep, setActiveStep] = useState(0);
@@ -650,7 +662,11 @@ export function ColdCallWorkspace({
     document.getElementById("call-wrap-up")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [recordingEnabled]);
 
-  const dialer = useTwilioDevice({ enabled: dialerEnabled, onCallCompleted: handleCallCompleted });
+  const dialer = useTwilioDevice({
+    enabled: canDialNow,
+    configurationKey: dialerConfigurationKey,
+    onCallCompleted: handleCallCompleted,
+  });
 
   useEffect(() => {
     try {
@@ -1210,17 +1226,34 @@ export function ColdCallWorkspace({
             </p>
           ) : null}
 
-          {!dialerEnabled ? (
-            <p className="text-xs text-[var(--muted)]">
-              Calling from the browser isn&rsquo;t switched on yet — add the Twilio keys and this dials out on your
-              business number. Everything else on this page works without it, including saving the wrap-up.
-            </p>
+          {!canDialNow ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+              <div className="min-w-56 flex-1">
+                <p className="text-xs font-semibold">Calling from the browser isn&rsquo;t switched on yet</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
+                  Connect your own Twilio account and this dials out on your number, billed to you. Everything else on
+                  this page works without it, including saving the wrap-up.
+                </p>
+              </div>
+              <Button type="button" onClick={() => setConnectOpen(true)}>
+                <PhoneCall className="h-4 w-4" />
+                {connection.connected ? "Fix connection" : "Connect a number"}
+              </Button>
+            </div>
           ) : dialer.callerId ? (
             <p className="text-xs text-[var(--muted)]">
               They&rsquo;ll see <span className="font-semibold text-[var(--foreground)]">{checkPhone(dialer.callerId).national || dialer.callerId}</span> on caller ID.{" "}
               {recordingEnabled
                 ? "They hear the recording notice when they pick up, and the write-up lands here after you hang up."
-                : "Recording is off, so there's no transcript or write-up — you'll type the note yourself."}
+                : "Recording is off, so there's no transcript or write-up — you'll type the note yourself."}{" "}
+              <button
+                type="button"
+                onClick={() => setConnectOpen(true)}
+                disabled={dialer.busy}
+                className="font-semibold text-[var(--accent)] underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {connection.connected ? "Change number" : "Use your own number"}
+              </button>
             </p>
           ) : null}
         </CardContent>
@@ -1709,6 +1742,11 @@ export function ColdCallWorkspace({
       </div>
 
       <AccessDialog open={shareOpen} onOpenChange={setShareOpen} />
+      <TwilioConnectDialog
+        open={connectOpen}
+        onOpenChange={setConnectOpen}
+        onConnected={setConnection}
+      />
     </div>
   );
 }

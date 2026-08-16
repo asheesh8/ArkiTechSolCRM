@@ -1016,7 +1016,7 @@ export default function ReceptionistPage() {
           )}
         </section>
 
-        <section className={cn("min-w-0", !selectedId && "hidden lg:block")} aria-label="Conversation details">
+        <section className={cn("min-w-0 lg:min-h-0", !selectedId && "hidden lg:block")} aria-label="Conversation details">
           <ConversationDetailPanel
             conversation={detail}
             loading={detailLoading}

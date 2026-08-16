@@ -1,6 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { archiveColdCallRecording } from "@/lib/call-recording";
-import { recordingWebhookUrl, twilioVoiceConfigured, validTwilioSignature } from "@/lib/twilio-voice";
+import { voiceConfigsForAccount } from "@/lib/twilio-credentials";
+import { recordingWebhookUrl, validTwilioSignature } from "@/lib/twilio-voice";
 
 // Twilio posts here once a recording has finished processing.
 //
@@ -13,20 +14,26 @@ import { recordingWebhookUrl, twilioVoiceConfigured, validTwilioSignature } from
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
-  if (!twilioVoiceConfigured()) {
-    return NextResponse.json({ error: "Browser dialling isn't configured." }, { status: 503 });
-  }
-
   const rawBody = await request.text();
   const params = Object.fromEntries(new URLSearchParams(rawBody));
 
-  if (
-    !validTwilioSignature({
+  // The account that owns the recording is also the only one whose auth will
+  // download it, so this config is needed twice: to verify, then to fetch.
+  const candidates = await voiceConfigsForAccount(params.AccountSid);
+  if (candidates.length === 0) {
+    return NextResponse.json({ error: "Browser dialling isn't configured." }, { status: 503 });
+  }
+
+  const config = candidates.find((candidate) =>
+    validTwilioSignature({
       signature: request.headers.get("x-twilio-signature"),
       url: recordingWebhookUrl(),
       params,
-    })
-  ) {
+      authToken: candidate.authToken,
+    }),
+  );
+
+  if (!config) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 403 });
   }
 
@@ -50,6 +57,7 @@ export async function POST(request: Request) {
       recordingSid,
       recordingUrl,
       durationSecs: Number.isFinite(durationSecs) ? durationSecs : 0,
+      config,
     });
   });
 

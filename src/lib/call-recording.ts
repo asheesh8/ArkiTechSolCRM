@@ -3,7 +3,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { uploadObject } from "@/lib/r2";
-import { fetchTwilioRecording } from "@/lib/twilio-voice";
+import { fetchTwilioRecording, type TwilioVoiceConfig } from "@/lib/twilio-voice";
 import { splitWavChannels } from "@/lib/wav";
 import { transcribeAudio, transcriptionConfigured, type TranscriptSegment } from "@/lib/transcribe";
 import { callSummaryConfigured, draftCallLog } from "@/lib/call-summary";
@@ -107,11 +107,15 @@ export async function archiveColdCallRecording({
   recordingSid,
   recordingUrl,
   durationSecs,
+  config,
 }: {
   callSid: string;
   recordingSid: string;
   recordingUrl: string;
   durationSecs: number;
+  // Whichever account placed the call. Twilio serves its recordings behind that
+  // same account's auth, so the media can only be fetched with these.
+  config: TwilioVoiceConfig;
 }) {
   const conversation = await prisma.receptionistConversation.findUnique({
     where: { providerConversationId: callSid },
@@ -139,7 +143,7 @@ export async function archiveColdCallRecording({
   }
 
   try {
-    const audio = await fetchTwilioRecording(recordingUrl);
+    const audio = await fetchTwilioRecording(recordingUrl, config);
 
     // Keep the original before doing anything clever with it — if transcription
     // breaks, the recording is still there to listen to.
