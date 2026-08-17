@@ -159,6 +159,10 @@ model Lead {
   // Where the lead came from. Null for the scraped majority; "adcampaign" for
   // inbound from the paid landing page.
   source                    String?
+  // Other numbers that reach this business — a switchboard, a gatekeeper's
+  // desk, an owner's cell. Kept apart from `phone` so dialling a side door to
+  // get through to someone never overwrites the number that was scraped.
+  altPhones                 String[]                   @default([])
   assignedToId              String?
   assignedTo                User?                      @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
   callNotes                 CallNote[]

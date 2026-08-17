@@ -8,6 +8,8 @@ import {
   Building2,
   CalendarCheck,
   Check,
+  Link2 as LinkIcon,
+  Plus,
   CheckCircle2,
   ChevronDown,
   Clock3,
@@ -709,6 +711,14 @@ export function ColdCallWorkspace({
   const [leadResults, setLeadResults] = useState<LeadOption[]>([]);
   const [leadSearching, setLeadSearching] = useState(false);
   const [dialNumber, setDialNumber] = useState("");
+  // Filing a number that isn't on the lead yet: either as a new business, or as
+  // another way through to one that already exists.
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newBusinessName, setNewBusinessName] = useState("");
+  const [newCity, setNewCity] = useState("");
+  const [attachBusy, setAttachBusy] = useState(false);
+  const [attachError, setAttachError] = useState("");
+  const [numberSaved, setNumberSaved] = useState(false);
 
   const [lastCall, setLastCall] = useState<CompletedCall | null>(null);
   const [followUpDate, setFollowUpDate] = useState("");
@@ -963,6 +973,67 @@ export function ColdCallWorkspace({
   }
 
   /** Attach a lead and borrow whatever the CRM already knows about it. */
+  /**
+   * Start a lead from a number that isn't on file.
+   *
+   * Cold calling runs ahead of the CRM — a number off a van, a referral, a
+   * switchboard — and without somewhere to file it the wrap-up has nowhere to
+   * save. The new lead is created as CALLED because it plainly was.
+   */
+  async function createLeadFromNumber() {
+    const name = newBusinessName.trim();
+    if (!name || !dialCheck.e164) return;
+
+    setAttachBusy(true);
+    setAttachError("");
+    try {
+      const response = await fetch("/api/cold-call/attach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "create", phone: dialCheck.e164, businessName: name, city: newCity.trim() }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setAttachError(data.error || "Couldn't create that lead.");
+        return;
+      }
+      applyLead(data.lead);
+      setCreateOpen(false);
+      setNewBusinessName("");
+      setNewCity("");
+    } catch {
+      setAttachError("Couldn't reach the server.");
+    } finally {
+      setAttachBusy(false);
+    }
+  }
+
+  /** Record the dialled number as another way through to an attached business. */
+  async function attachNumberToLead() {
+    if (!lead || !dialCheck.e164) return;
+
+    setAttachBusy(true);
+    setAttachError("");
+    try {
+      const response = await fetch("/api/cold-call/attach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "attach", leadId: lead.id, phone: dialCheck.e164 }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setAttachError(data.error || "Couldn't save that number.");
+        return;
+      }
+      setLead((current) => (current ? { ...current, phone: data.lead.phone ?? current.phone } : current));
+      setNumberSaved(true);
+    } catch {
+      setAttachError("Couldn't reach the server.");
+    } finally {
+      setAttachBusy(false);
+    }
+  }
+
   function applyLead(next: LeadOption) {
     setLead({
       id: next.id,
@@ -1220,7 +1291,45 @@ export function ColdCallWorkspace({
                   <Unlink className="h-4 w-4" />
                 </Button>
               </div>
-            ) : (
+            ) : null}
+
+            {/* Dialling a switchboard to reach someone is worth remembering, so
+                offer to file the number the moment it differs from what's on
+                the lead. */}
+            {lead && dialCheck.e164 && dialCheck.e164 !== lead.phone ? (
+              numberSaved ? (
+                <p className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                  <Check className="h-3.5 w-3.5 shrink-0" />
+                  Saved as another way to reach {lead.businessName}.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={attachNumberToLead}
+                  disabled={attachBusy}
+                  className="flex w-full items-center gap-2 rounded-lg border border-dashed border-[var(--border)] px-3 py-2.5 text-left text-xs transition hover:border-[var(--accent)]/50 hover:bg-[var(--accent)]/5 disabled:opacity-60"
+                >
+                  {attachBusy ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--accent)]" />
+                  ) : (
+                    <LinkIcon className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    Save <span className="font-semibold text-[var(--foreground)]">{dialCheck.national || dialNumber}</span>{" "}
+                    as another way to reach {lead.businessName}
+                  </span>
+                </button>
+              )
+            ) : null}
+
+            {lead && attachError ? (
+              <p className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400" role="alert">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                {attachError}
+              </p>
+            ) : null}
+
+            {!lead ? (
               <>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
@@ -1259,11 +1368,76 @@ export function ColdCallWorkspace({
                     ))}
                   </ul>
                 ) : null}
+                {/* A dialled number that matches nothing still needs a home. */}
+                {dialCheck.e164 && !createOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateOpen(true);
+                      setAttachError("");
+                      if (!newBusinessName) setNewBusinessName(leadQuery.trim());
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg border border-dashed border-[var(--border)] px-3 py-2.5 text-left text-xs transition hover:border-[var(--accent)]/50 hover:bg-[var(--accent)]/5"
+                  >
+                    <Plus className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                    <span className="min-w-0 flex-1">
+                      Not on file? Start a lead from{" "}
+                      <span className="font-semibold text-[var(--foreground)]">{dialCheck.national || dialNumber}</span>
+                    </span>
+                  </button>
+                ) : null}
+
+                {createOpen ? (
+                  <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cold-call-new-business">Business name</Label>
+                      <Input
+                        id="cold-call-new-business"
+                        value={newBusinessName}
+                        onChange={(event) => setNewBusinessName(event.target.value)}
+                        placeholder="Green Mountain Plumbing"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cold-call-new-city">City (optional)</Label>
+                      <Input
+                        id="cold-call-new-city"
+                        value={newCity}
+                        onChange={(event) => setNewCity(event.target.value)}
+                        placeholder="Burlington, VT"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <p className="text-xs text-[var(--muted)]">
+                      Saved with{" "}
+                      <span className="font-semibold text-[var(--foreground)]">{dialCheck.national || dialNumber}</span>{" "}
+                      as its number, marked called, and assigned to you.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button onClick={createLeadFromNumber} disabled={attachBusy || !newBusinessName.trim()}>
+                        {attachBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                        Create lead
+                      </Button>
+                      <Button variant="ghost" onClick={() => setCreateOpen(false)} disabled={attachBusy}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {attachError ? (
+                  <p className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400" role="alert">
+                    <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    {attachError}
+                  </p>
+                ) : null}
+
                 <p className="text-xs text-[var(--muted)]">
                   Attaching a lead is what lets the wrap-up save straight into that lead&rsquo;s timeline.
                 </p>
               </>
-            )}
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
