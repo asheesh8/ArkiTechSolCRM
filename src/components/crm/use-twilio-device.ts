@@ -38,6 +38,70 @@ function errorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+/**
+ * Ringback for the rep's own ear.
+ *
+ * `answerOnBridge` keeps the caller's leg unanswered until the prospect picks
+ * up, which is what makes a no-answer log as a no-answer instead of a
+ * thirty-second call. The cost is silence: nothing is bridged yet, so unless
+ * the carrier happens to send early media there is no audio at all and the
+ * rep can't tell a ringing line from a dead one. Twilio reports which case it
+ * is on the `ringing` event, and this fills the gap when it has to.
+ *
+ * Synthesised rather than shipped as an audio file so it needs no asset and no
+ * network round trip: US ringback is 440Hz and 480Hz together, two seconds on,
+ * four seconds off.
+ */
+function createRingback() {
+  let context: AudioContext | null = null;
+  let timer: number | null = null;
+  let stopped = true;
+
+  function burst() {
+    if (!context || stopped) return;
+    const gain = context.createGain();
+    gain.connect(context.destination);
+    // Eased on and off — a square-edged tone clicks.
+    const now = context.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.04);
+    gain.gain.setValueAtTime(0.12, now + 1.96);
+    gain.gain.linearRampToValueAtTime(0, now + 2);
+
+    for (const frequency of [440, 480]) {
+      const oscillator = context.createOscillator();
+      oscillator.frequency.value = frequency;
+      oscillator.connect(gain);
+      oscillator.start(now);
+      oscillator.stop(now + 2);
+    }
+  }
+
+  return {
+    start() {
+      if (!stopped) return;
+      stopped = false;
+      try {
+        const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!Ctor) return;
+        context = new Ctor();
+        burst();
+        timer = window.setInterval(burst, 6_000);
+      } catch {
+        // No audio context available. A silent ring is worse than a crash is
+        // worth, so this stays best-effort.
+      }
+    },
+    stop() {
+      stopped = true;
+      if (timer !== null) window.clearInterval(timer);
+      timer = null;
+      void context?.close().catch(() => {});
+      context = null;
+    },
+  };
+}
+
 export function useTwilioDevice({
   enabled,
   configurationKey,
@@ -57,6 +121,7 @@ export function useTwilioDevice({
   const deviceRef = useRef<Device | null>(null);
   const callRef = useRef<Call | null>(null);
   const answeredAtRef = useRef<number | null>(null);
+  const ringbackRef = useRef(createRingback());
 
   // Held in a ref so a caller can pass an inline arrow without tearing down and
   // rebuilding the device on every render.
@@ -122,8 +187,12 @@ export function useTwilioDevice({
 
     void boot();
 
+    const ringback = ringbackRef.current;
     return () => {
       cancelled = true;
+      // Leaving the tab mid-ring would otherwise leave the tone running with
+      // no call behind it.
+      ringback.stop();
       callRef.current?.disconnect();
       callRef.current = null;
       deviceRef.current?.destroy();
@@ -146,6 +215,8 @@ export function useTwilioDevice({
     // Twilio can emit more than one terminal event for a single leg — a
     // cancelled call also disconnects — and the first one is the truthful one.
     if (!call) return;
+
+    ringbackRef.current.stop();
 
     const answeredAt = answeredAtRef.current;
     const durationSecs = answeredAt ? Math.max(0, Math.round((Date.now() - answeredAt) / 1_000)) : 0;
@@ -176,8 +247,15 @@ export function useTwilioDevice({
         callRef.current = call;
         answeredAtRef.current = null;
 
-        call.on("ringing", () => setStatus("ringing"));
+        // `hasEarlyMedia` is true when the carrier is already sending real
+        // ringing down the line; generating a second tone over it would just
+        // beat against it.
+        call.on("ringing", (hasEarlyMedia: boolean) => {
+          setStatus("ringing");
+          if (!hasEarlyMedia) ringbackRef.current.start();
+        });
         call.on("accept", () => {
+          ringbackRef.current.stop();
           answeredAtRef.current = Date.now();
           setSeconds(0);
           setStatus("on-call");
