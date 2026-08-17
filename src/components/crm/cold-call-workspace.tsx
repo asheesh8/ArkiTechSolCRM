@@ -39,6 +39,7 @@ import {
 import { CallRecents } from "@/components/crm/call-recents";
 import { ColdTextWorkspace } from "@/components/crm/cold-text-workspace";
 import { Dialpad } from "@/components/crm/dialpad";
+import { VoicemailList } from "@/components/crm/voicemail-list";
 import { PageHeader } from "@/components/crm/page-header";
 import { TwilioConnectDialog, type TwilioConnection } from "@/components/crm/twilio-connect-dialog";
 import { useTwilioDevice, type CompletedCall } from "@/components/crm/use-twilio-device";
@@ -721,7 +722,7 @@ export function ColdCallWorkspace({
   const [attachBusy, setAttachBusy] = useState(false);
   const [attachError, setAttachError] = useState("");
   const [numberSaved, setNumberSaved] = useState(false);
-  const [padTab, setPadTab] = useState<"keypad" | "recents">("keypad");
+  const [padTab, setPadTab] = useState<"keypad" | "recents" | "voicemail">("keypad");
   // Bumped when a call ends so Recents refetches — the list a rep looks at
   // after hanging up should already have that call on it.
   const [recentsKey, setRecentsKey] = useState(0);
@@ -1869,10 +1870,11 @@ export function ColdCallWorkspace({
 
         <div className="space-y-5 xl:sticky xl:top-28">
         <Card className="overflow-hidden">
-          <div className="grid grid-cols-2 border-b border-[var(--border)] bg-[var(--surface)] p-1.5" role="tablist" aria-label="Dialpad">
+          <div className="grid grid-cols-3 border-b border-[var(--border)] bg-[var(--surface)] p-1.5" role="tablist" aria-label="Dialpad">
             {([
               ["keypad", "Keypad", PhoneOutgoing],
               ["recents", "Recents", Clock],
+              ["voicemail", "Voicemail", Voicemail],
             ] as const).map(([id, label, Icon]) => (
               <button
                 key={id}
@@ -1906,10 +1908,17 @@ export function ColdCallWorkspace({
                 disabled={!canDialNow}
                 seconds={dialer.seconds}
               />
-            ) : (
+            ) : padTab === "recents" ? (
               <CallRecents
                 refreshKey={recentsKey}
                 onPick={(number) => {
+                  setDialNumber(checkPhone(number).national || number);
+                  setPadTab("keypad");
+                }}
+              />
+            ) : (
+              <VoicemailList
+                onCallBack={(number) => {
                   setDialNumber(checkPhone(number).national || number);
                   setPadTab("keypad");
                 }}
