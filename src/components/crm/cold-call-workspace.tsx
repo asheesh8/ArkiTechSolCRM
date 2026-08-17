@@ -10,10 +10,8 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  ChevronUp,
   Clock3,
   Copy,
-  DollarSign,
   ExternalLink,
   Loader2,
   MessageSquare,
@@ -35,6 +33,7 @@ import {
   Voicemail,
   X,
 } from "lucide-react";
+import { ColdTextWorkspace } from "@/components/crm/cold-text-workspace";
 import { PageHeader } from "@/components/crm/page-header";
 import { TwilioConnectDialog, type TwilioConnection } from "@/components/crm/twilio-connect-dialog";
 import { useTwilioDevice, type CompletedCall } from "@/components/crm/use-twilio-device";
@@ -600,17 +599,83 @@ function AccessDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
   );
 }
 
+export type OutreachMode = "call" | "text";
+
+/**
+ * A section that stays out of the way until it's wanted.
+ *
+ * During a live call the only things worth screen space are the dial bar, the
+ * notes, and the objection you are being hit with right now. Everything else —
+ * the script, the setup fields — is reference material, so it collapses to a
+ * single row that still says what's inside.
+ */
+function CollapsibleCard({
+  id,
+  icon: Icon,
+  title,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  id?: string;
+  icon: typeof Users;
+  title: string;
+  summary?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  const headingId = `${id ?? title.toLowerCase().replace(/\s+/g, "-")}-heading`;
+  const regionId = `${headingId}-region`;
+
+  return (
+    <Card id={id} className="overflow-hidden">
+      <CardHeader className={cn("border-[var(--border)] p-0", open && "border-b")}>
+        <button
+          type="button"
+          id={headingId}
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={regionId}
+          className="flex w-full min-h-14 items-center gap-3 px-4 py-3 text-left transition hover:bg-[var(--surface-strong)] sm:px-5"
+        >
+          <Icon className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">{title}</span>
+            {!open && summary ? (
+              <span className="mt-0.5 block truncate text-xs font-normal text-[var(--muted)]">{summary}</span>
+            ) : null}
+          </span>
+          <ChevronDown
+            className={cn("h-5 w-5 shrink-0 text-[var(--muted)] transition-transform", open && "rotate-180")}
+            aria-hidden="true"
+          />
+        </button>
+      </CardHeader>
+      {open ? <div id={regionId} role="region" aria-labelledby={headingId}>{children}</div> : null}
+    </Card>
+  );
+}
+
 export function ColdCallWorkspace({
   callerName,
   canManageAccess,
+  canCall,
+  canText,
+  initialMode,
   recordingEnabled,
   connection: initialConnection,
 }: {
   callerName: string;
   canManageAccess: boolean;
+  canCall: boolean;
+  canText: boolean;
+  initialMode: OutreachMode;
   recordingEnabled: boolean;
   connection: TwilioConnection;
 }) {
+  const [mode, setMode] = useState<OutreachMode>(initialMode);
   // Connecting an account switches dialling on without a reload, so this is
   // state seeded from the server rather than a prop read straight through.
   const [connection, setConnection] = useState<TwilioConnection>(initialConnection);
@@ -630,7 +695,10 @@ export function ColdCallWorkspace({
   const [outcome, setOutcome] = useState("");
   const [copied, setCopied] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
-  const [setupOpen, setSetupOpen] = useState(true);
+  // Both start closed: the room opens ready to dial and take notes, and the
+  // reference material is one click away rather than in the way.
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [scriptOpen, setScriptOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Which CRM lead this call is against. Without one there is nowhere to file
@@ -1018,7 +1086,10 @@ export function ColdCallWorkspace({
     }));
     setActiveStep(0);
     setOutcome("");
+    // A fresh call reopens setup — the prospect and business are the first
+    // things to fill in — and folds the script back down.
     setSetupOpen(true);
+    setScriptOpen(false);
     setLead(null);
     setLeadQuery("");
     setLeadResults([]);
@@ -1033,8 +1104,12 @@ export function ColdCallWorkspace({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // "Ready to call" hands the screen over to the script: setup folds away and
+  // the script opens, since scrolling to a collapsed card would land on a bar
+  // with nothing under it.
   function startCall() {
     setSetupOpen(false);
+    setScriptOpen(true);
     window.requestAnimationFrame(() => {
       document.getElementById("cold-call-script")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -1060,8 +1135,12 @@ export function ColdCallWorkspace({
     <div className="mx-auto max-w-[1500px] space-y-5">
       <PageHeader
         eyebrow="Sales playbook"
-        title="Cold call room"
-        description="A natural call flow for opening a conversation, finding the gap, handling resistance, and earning the next meeting."
+        title="Cold outreach"
+        description={
+          mode === "call"
+            ? "Dial, take the call, and file the note without leaving the page."
+            : "Work a list of leads by text, with every number validated before you send."
+        }
         actions={
           <>
             {canManageAccess ? (
@@ -1070,32 +1149,48 @@ export function ColdCallWorkspace({
                 Share access
               </Button>
             ) : null}
-            <Button onClick={newCall}>
-              <RotateCcw className="h-4 w-4" />
-              New call
-            </Button>
+            {mode === "call" ? (
+              <Button onClick={newCall}>
+                <RotateCcw className="h-4 w-4" />
+                New call
+              </Button>
+            ) : null}
           </>
         }
       />
 
-      <section className="grid gap-px overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--border)] sm:grid-cols-3">
-        {[
-          [Target, "Get in conversation", "The first win is earning 30 seconds."],
-          [DollarSign, "Sell the outcome", "Talk booked work, trust, and better jobs."],
-          [PhoneCall, "Follow up", "Warm interest deserves more than one attempt."],
-        ].map(([Icon, title, body]) => (
-          <div key={String(title)} className="flex min-h-20 items-center gap-3 bg-[var(--surface-strong)] px-4 py-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
+      {canCall && canText ? (
+        <div
+          className="flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-1"
+          role="tablist"
+          aria-label="Outreach channel"
+        >
+          {([
+            ["call", "Call", PhoneCall],
+            ["text", "Text", MessageSquare],
+          ] as const).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={mode === id}
+              onClick={() => setMode(id)}
+              className={cn(
+                "flex min-h-10 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition",
+                mode === id
+                  ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm ring-1 ring-[var(--border)]"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]",
+              )}
+            >
               <Icon className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block text-sm font-semibold">{title as string}</span>
-              <span className="mt-0.5 block text-xs leading-5 text-[var(--muted)]">{body as string}</span>
-            </span>
-          </div>
-        ))}
-      </section>
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
+      {mode === "text" ? <ColdTextWorkspace /> : (
+      <>
       <Card>
         <CardHeader className="border-b border-[var(--border)]">
           <CardTitle className="flex min-w-0 items-center gap-2">
@@ -1259,210 +1354,8 @@ export function ColdCallWorkspace({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="border-b border-[var(--border)]">
-          <div className="flex items-center gap-3">
-            <CardTitle className="flex min-w-0 flex-1 items-center gap-2">
-              <Users className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-              <span className="shrink-0">Call setup</span>
-              {!setupOpen ? (
-                <span className="truncate text-xs font-normal text-[var(--muted)]">
-                  {prospect} / {business} / {CALL_PATHS.find((path) => path.id === callPath)?.label}
-                </span>
-              ) : null}
-            </CardTitle>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setSetupOpen((open) => !open)}
-              aria-label={setupOpen ? "Collapse call setup" : "Expand call setup"}
-              title={setupOpen ? "Collapse call setup" : "Expand call setup"}
-            >
-              {setupOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </Button>
-          </div>
-        </CardHeader>
-        {setupOpen ? (
-          <CardContent className="pt-4 sm:pt-5">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="cold-call-prospect">Prospect</Label>
-              <Input id="cold-call-prospect" value={profile.prospectName} onChange={(event) => updateProfile("prospectName", event.target.value)} placeholder="First name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cold-call-business">Business</Label>
-              <Input id="cold-call-business" value={profile.businessName} onChange={(event) => updateProfile("businessName", event.target.value)} placeholder="Business name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cold-call-niche">Niche</Label>
-              <Input id="cold-call-niche" value={profile.niche} onChange={(event) => updateProfile("niche", event.target.value)} placeholder="Plumber, cleaner, roofer" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cold-call-city">City / area</Label>
-              <Input id="cold-call-city" value={profile.city} onChange={(event) => updateProfile("city", event.target.value)} placeholder="Burlington, VT" />
-            </div>
-            {callPath === "julie" ? (
-              <>
-                <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
-                  <Label htmlFor="cold-call-referrer">Referrer name</Label>
-                  <Input id="cold-call-referrer" value={profile.referralName} onChange={(event) => updateProfile("referralName", event.target.value)} placeholder="Julie Becker" />
-                </div>
-                <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
-                  <Label htmlFor="cold-call-relationship">Relationship</Label>
-                  <Input id="cold-call-relationship" value={profile.referralRelationship} onChange={(event) => updateProfile("referralRelationship", event.target.value)} placeholder="my mom's friend" />
-                  <p className="text-xs text-[var(--muted)]">Use the real name and relationship behind the referral.</p>
-                </div>
-              </>
-            ) : null}
-            <div className="space-y-1.5 sm:col-span-2 xl:col-span-2">
-              <Label htmlFor="cold-call-offer">Outcome to lead with</Label>
-              <Input id="cold-call-offer" value={profile.offer} onChange={(event) => updateProfile("offer", event.target.value)} />
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:col-span-2 xl:col-span-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="cold-call-price">Monthly price</Label>
-                <Input id="cold-call-price" inputMode="decimal" value={profile.monthlyPrice} onChange={(event) => updateProfile("monthlyPrice", event.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cold-call-job-value">Average job value</Label>
-                <Input id="cold-call-job-value" inputMode="decimal" value={profile.averageJobValue} onChange={(event) => updateProfile("averageJobValue", event.target.value)} />
-              </div>
-            </div>
-            <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
-              <Label htmlFor="cold-call-time-one">Appointment option 1</Label>
-              <Input id="cold-call-time-one" value={profile.timeOne} onChange={(event) => updateProfile("timeOne", event.target.value)} />
-            </div>
-            <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
-              <Label htmlFor="cold-call-time-two">Appointment option 2</Label>
-              <Input id="cold-call-time-two" value={profile.timeTwo} onChange={(event) => updateProfile("timeTwo", event.target.value)} />
-            </div>
-            </div>
-            <div className="mt-4 flex justify-end border-t border-[var(--border)] pt-4">
-              <Button onClick={startCall}>
-                <PhoneCall className="h-4 w-4" />
-                Ready to call
-              </Button>
-            </div>
-          </CardContent>
-        ) : null}
-      </Card>
-
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,0.8fr)]">
         <div className="space-y-5">
-          <Card id="cold-call-script" className="scroll-mt-4 overflow-hidden lg:scroll-mt-28">
-            <div className="border-b border-[var(--border)] bg-[var(--surface-strong)] p-2.5 sm:flex sm:items-center sm:gap-3">
-              <p className="mb-2 shrink-0 text-xs font-semibold text-[var(--muted)] sm:mb-0">Call path</p>
-              <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5" role="radiogroup" aria-label="Call path">
-                {CALL_PATHS.map((path) => {
-                  const Icon = path.id === "reviews" ? Target : path.id === "julie" ? Users : Search;
-                  const selected = callPath === path.id;
-                  return (
-                    <button
-                      key={path.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => setCallPath(path.id)}
-                      className={cn(
-                        "flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-lg border px-2 py-2 text-left transition sm:justify-start sm:px-3",
-                        selected
-                          ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--accent)]/40",
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="min-w-0">
-                        <span className="block text-xs font-semibold sm:text-sm">{path.label}</span>
-                        <span className="hidden truncate text-[11px] sm:block">{path.note}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="scrollbar-none crm-rail overflow-x-auto border-b border-[var(--border)] bg-[var(--surface)]" role="tablist" aria-label="Call stages">
-              <div className="flex min-w-[620px] p-2">
-                {CALL_STEPS.map((step, index) => (
-                  <button
-                    key={step.title}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeStep === index}
-                    onClick={() => setActiveStep(index)}
-                    className={cn(
-                      "flex h-14 min-w-0 flex-1 items-center gap-2 rounded-lg px-3 text-left transition",
-                      activeStep === index
-                        ? "bg-[var(--surface-strong)] text-zinc-950 shadow-sm ring-1 ring-[var(--border)] dark:text-white"
-                        : "text-[var(--muted)] hover:bg-[var(--surface-strong)]/70",
-                    )}
-                  >
-                    <span className={cn(
-                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
-                      activeStep === index
-                        ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]"
-                        : index < activeStep
-                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-600"
-                          : "border-[var(--border)]",
-                    )}>
-                      {index < activeStep ? <Check className="h-3.5 w-3.5" /> : index + 1}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold">{step.title}</span>
-                      <span className="block truncate text-[11px]">{step.intent}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <CardContent className="pt-5 sm:pt-6">
-              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold text-[var(--accent)]">Stage {activeStep + 1} of {CALL_STEPS.length}</p>
-                  <h3 className="mt-1 text-xl font-semibold">{CALL_STEPS[activeStep].title}</h3>
-                  <p className="mt-1 text-sm text-[var(--muted)]">{CALL_STEPS[activeStep].intent}</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => copyText(beats.map((beat) => `${beat.label}: ${beat.line}`).join("\n\n"), "script")}>
-                  {copied === "script" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copied === "script" ? "Copied" : "Copy script"}
-                </Button>
-              </div>
-
-              <div className="min-h-[390px] divide-y divide-[var(--border)] sm:min-h-[360px]">
-                {beats.map((beat) => (
-                  <div key={`${beat.label}-${beat.line}`} className={cn("py-4 first:pt-0 last:pb-0", beat.kind === "coach" && "text-[var(--muted)]")}>
-                    <p className={cn(
-                      "mb-1.5 text-xs font-semibold",
-                      beat.kind === "ask" ? "text-cyan-700 dark:text-cyan-300" : beat.kind === "coach" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300",
-                    )}>
-                      {beat.label}
-                    </p>
-                    <p className={cn("max-w-4xl leading-7", beat.kind === "coach" ? "text-sm" : "text-[17px] font-medium text-zinc-900 dark:text-zinc-100")}>{beat.line}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
-                <Button variant="outline" onClick={() => setActiveStep((step) => Math.max(0, step - 1))} disabled={activeStep === 0}>
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </Button>
-                {activeStep < CALL_STEPS.length - 1 ? (
-                  <Button onClick={() => setActiveStep((step) => Math.min(CALL_STEPS.length - 1, step + 1))}>
-                    Next stage
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button onClick={finishCall}>
-                    Wrap up
-                    <CheckCircle2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
           <Card id="call-wrap-up">
             <CardHeader className="border-b border-[var(--border)]">
               <CardTitle className="flex items-center gap-2">
@@ -1599,6 +1492,196 @@ export function ColdCallWorkspace({
               </div>
             </CardContent>
           </Card>
+
+          <CollapsibleCard
+            id="cold-call-script"
+            icon={Target}
+            title="Call script"
+            summary={`${CALL_PATHS.find((path) => path.id === callPath)?.label} · stage ${activeStep + 1} of ${CALL_STEPS.length} · ${CALL_STEPS[activeStep].title}`}
+            open={scriptOpen}
+            onToggle={() => setScriptOpen((open) => !open)}
+          >
+            <div className="border-b border-[var(--border)] bg-[var(--surface-strong)] p-2.5 sm:flex sm:items-center sm:gap-3">
+              <p className="mb-2 shrink-0 text-xs font-semibold text-[var(--muted)] sm:mb-0">Call path</p>
+              <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5" role="radiogroup" aria-label="Call path">
+                {CALL_PATHS.map((path) => {
+                  const Icon = path.id === "reviews" ? Target : path.id === "julie" ? Users : Search;
+                  const selected = callPath === path.id;
+                  return (
+                    <button
+                      key={path.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setCallPath(path.id)}
+                      className={cn(
+                        "flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-lg border px-2 py-2 text-left transition sm:justify-start sm:px-3",
+                        selected
+                          ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
+                          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--accent)]/40",
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block text-xs font-semibold sm:text-sm">{path.label}</span>
+                        <span className="hidden truncate text-[11px] sm:block">{path.note}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="scrollbar-none crm-rail overflow-x-auto border-b border-[var(--border)] bg-[var(--surface)]" role="tablist" aria-label="Call stages">
+              <div className="flex min-w-[620px] p-2">
+                {CALL_STEPS.map((step, index) => (
+                  <button
+                    key={step.title}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeStep === index}
+                    onClick={() => setActiveStep(index)}
+                    className={cn(
+                      "flex h-14 min-w-0 flex-1 items-center gap-2 rounded-lg px-3 text-left transition",
+                      activeStep === index
+                        ? "bg-[var(--surface-strong)] text-zinc-950 shadow-sm ring-1 ring-[var(--border)] dark:text-white"
+                        : "text-[var(--muted)] hover:bg-[var(--surface-strong)]/70",
+                    )}
+                  >
+                    <span className={cn(
+                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
+                      activeStep === index
+                        ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)]"
+                        : index < activeStep
+                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-600"
+                          : "border-[var(--border)]",
+                    )}>
+                      {index < activeStep ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">{step.title}</span>
+                      <span className="block truncate text-[11px]">{step.intent}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <CardContent className="pt-5 sm:pt-6">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-[var(--accent)]">Stage {activeStep + 1} of {CALL_STEPS.length}</p>
+                  <h3 className="mt-1 text-xl font-semibold">{CALL_STEPS[activeStep].title}</h3>
+                  <p className="mt-1 text-sm text-[var(--muted)]">{CALL_STEPS[activeStep].intent}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => copyText(beats.map((beat) => `${beat.label}: ${beat.line}`).join("\n\n"), "script")}>
+                  {copied === "script" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied === "script" ? "Copied" : "Copy script"}
+                </Button>
+              </div>
+
+              <div className="min-h-[390px] divide-y divide-[var(--border)] sm:min-h-[360px]">
+                {beats.map((beat) => (
+                  <div key={`${beat.label}-${beat.line}`} className={cn("py-4 first:pt-0 last:pb-0", beat.kind === "coach" && "text-[var(--muted)]")}>
+                    <p className={cn(
+                      "mb-1.5 text-xs font-semibold",
+                      beat.kind === "ask" ? "text-cyan-700 dark:text-cyan-300" : beat.kind === "coach" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300",
+                    )}>
+                      {beat.label}
+                    </p>
+                    <p className={cn("max-w-4xl leading-7", beat.kind === "coach" ? "text-sm" : "text-[17px] font-medium text-zinc-900 dark:text-zinc-100")}>{beat.line}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
+                <Button variant="outline" onClick={() => setActiveStep((step) => Math.max(0, step - 1))} disabled={activeStep === 0}>
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+                {activeStep < CALL_STEPS.length - 1 ? (
+                  <Button onClick={() => setActiveStep((step) => Math.min(CALL_STEPS.length - 1, step + 1))}>
+                    Next stage
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button onClick={finishCall}>
+                    Wrap up
+                    <CheckCircle2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </CollapsibleCard>
+
+          <CollapsibleCard
+            icon={Users}
+            title="Call setup"
+            summary={`${prospect} / ${business}`}
+            open={setupOpen}
+            onToggle={() => setSetupOpen((open) => !open)}
+          >
+              <CardContent className="pt-4 sm:pt-5">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cold-call-prospect">Prospect</Label>
+                  <Input id="cold-call-prospect" value={profile.prospectName} onChange={(event) => updateProfile("prospectName", event.target.value)} placeholder="First name" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cold-call-business">Business</Label>
+                  <Input id="cold-call-business" value={profile.businessName} onChange={(event) => updateProfile("businessName", event.target.value)} placeholder="Business name" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cold-call-niche">Niche</Label>
+                  <Input id="cold-call-niche" value={profile.niche} onChange={(event) => updateProfile("niche", event.target.value)} placeholder="Plumber, cleaner, roofer" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cold-call-city">City / area</Label>
+                  <Input id="cold-call-city" value={profile.city} onChange={(event) => updateProfile("city", event.target.value)} placeholder="Burlington, VT" />
+                </div>
+                {callPath === "julie" ? (
+                  <>
+                    <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
+                      <Label htmlFor="cold-call-referrer">Referrer name</Label>
+                      <Input id="cold-call-referrer" value={profile.referralName} onChange={(event) => updateProfile("referralName", event.target.value)} placeholder="Julie Becker" />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
+                      <Label htmlFor="cold-call-relationship">Relationship</Label>
+                      <Input id="cold-call-relationship" value={profile.referralRelationship} onChange={(event) => updateProfile("referralRelationship", event.target.value)} placeholder="my mom's friend" />
+                      <p className="text-xs text-[var(--muted)]">Use the real name and relationship behind the referral.</p>
+                    </div>
+                  </>
+                ) : null}
+                <div className="space-y-1.5 sm:col-span-2 xl:col-span-2">
+                  <Label htmlFor="cold-call-offer">Outcome to lead with</Label>
+                  <Input id="cold-call-offer" value={profile.offer} onChange={(event) => updateProfile("offer", event.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:col-span-2 xl:col-span-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cold-call-price">Monthly price</Label>
+                    <Input id="cold-call-price" inputMode="decimal" value={profile.monthlyPrice} onChange={(event) => updateProfile("monthlyPrice", event.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cold-call-job-value">Average job value</Label>
+                    <Input id="cold-call-job-value" inputMode="decimal" value={profile.averageJobValue} onChange={(event) => updateProfile("averageJobValue", event.target.value)} />
+                  </div>
+                </div>
+                <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
+                  <Label htmlFor="cold-call-time-one">Appointment option 1</Label>
+                  <Input id="cold-call-time-one" value={profile.timeOne} onChange={(event) => updateProfile("timeOne", event.target.value)} />
+                </div>
+                <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
+                  <Label htmlFor="cold-call-time-two">Appointment option 2</Label>
+                  <Input id="cold-call-time-two" value={profile.timeTwo} onChange={(event) => updateProfile("timeTwo", event.target.value)} />
+                </div>
+                </div>
+                <div className="mt-4 flex justify-end border-t border-[var(--border)] pt-4">
+                  <Button onClick={startCall}>
+                    <PhoneCall className="h-4 w-4" />
+                    Ready to call
+                  </Button>
+                </div>
+              </CardContent>
+          </CollapsibleCard>
         </div>
 
         <Card className="overflow-hidden xl:sticky xl:top-28">
@@ -1740,6 +1823,8 @@ export function ColdCallWorkspace({
           </CardContent>
         </Card>
       </div>
+      </>
+      )}
 
       <AccessDialog open={shareOpen} onOpenChange={setShareOpen} />
       <TwilioConnectDialog

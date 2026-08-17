@@ -15,7 +15,6 @@ import {
   LayoutDashboard,
   Megaphone,
   Menu,
-  MessageSquare,
   MoreHorizontal,
   NotebookText,
   PhoneCall,
@@ -37,6 +36,10 @@ type NavItem = {
   icon: LucideIcon;
   roles?: string[];
   permission?: "coldCall";
+  // Normally a nav item needs its role *and* its permission. The outreach room
+  // is the exception: calling and texting have different rules, and holding
+  // either one is a reason to see the door.
+  eitherRoleOrPermission?: boolean;
 };
 
 type NavSection = { label: string; items: NavItem[] };
@@ -48,9 +51,15 @@ const navSections: NavSection[] = [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/accountability", label: "Accountability", icon: ClipboardCheck, roles: ["OWNER", "MEMBER"] },
       { href: "/leads", label: "Leads / Scraper", icon: Search, roles: ["OWNER", "MEMBER"] },
-      { href: "/cold-call", label: "Cold Call", icon: PhoneCall, permission: "coldCall" },
+      {
+        href: "/cold-call",
+        label: "Cold Outreach",
+        icon: PhoneCall,
+        roles: ["OWNER", "MEMBER"],
+        permission: "coldCall",
+        eitherRoleOrPermission: true,
+      },
       { href: "/campaign", label: "Ad Campaign", icon: Megaphone, roles: ["OWNER"] },
-      { href: "/outreach", label: "Cold Text", icon: MessageSquare, roles: ["OWNER", "MEMBER"] },
     ],
   },
   {
@@ -94,9 +103,8 @@ const PAGE_DETAILS: Record<string, string> = {
   "/dashboard": "Action items, delivery signals, and live pipeline movement.",
   "/accountability": "Team ownership, follow-through, and calling rhythm.",
   "/leads": "Find high-fit local businesses and move winners into the CRM.",
-  "/cold-call": "Live conversation flow, objection responses, and follow-up prompts.",
+  "/cold-call": "Dial, text, and file the note — objection responses on hand throughout.",
   "/campaign": "Inbound leads and traffic from the Facebook ad landing page.",
-  "/outreach": "Cold text workflows for timely follow-up.",
   "/receptionist": "AI call handling, conversations, and intake quality.",
   "/agents": "Voice agents, client assignments, and public demo links.",
   "/clients": "Client relationships, active leads, assignments, and sales stages.",
@@ -110,16 +118,15 @@ const PAGE_DETAILS: Record<string, string> = {
 // Order the bottom tab bar picks from. Whichever four the signed-in role can
 // actually see become the thumb-reachable tabs; everything else lives in the
 // drawer behind "More".
-const MOBILE_TAB_PRIORITY = ["/dashboard", "/leads", "/clients", "/cold-call", "/outreach", "/requests", "/calendar", "/notes"];
+const MOBILE_TAB_PRIORITY = ["/dashboard", "/leads", "/clients", "/cold-call", "/requests", "/calendar", "/notes"];
 
 // Short labels — the full nav labels ("Leads / Scraper") don't fit a fifth of a
 // phone screen.
 const MOBILE_TAB_LABELS: Record<string, string> = {
   "/dashboard": "Home",
   "/leads": "Leads",
-  "/cold-call": "Call",
+  "/cold-call": "Outreach",
   "/clients": "Clients",
-  "/outreach": "Text",
   "/requests": "Work",
   "/calendar": "Calendar",
   "/notes": "Notes",
@@ -157,7 +164,9 @@ export function AppShell({
   const canSee = (item: NavItem) => {
     const roleAllowed = !item.roles || item.roles.includes(user.role);
     const permissionAllowed = item.permission !== "coldCall" || canAccessColdCall;
-    return roleAllowed && permissionAllowed;
+    return item.eitherRoleOrPermission
+      ? roleAllowed || permissionAllowed
+      : roleAllowed && permissionAllowed;
   };
   const labelFor = (item: NavItem) => (item.href === "/requests" && user.role === "DEV" ? "My Work" : item.label);
 
