@@ -3,7 +3,7 @@ import twilio from "twilio";
 import { getCurrentUser } from "@/lib/auth";
 import { canAccessColdCall } from "@/lib/cold-call-access";
 import { checkPhone } from "@/lib/phone";
-import { voiceConfigForUser } from "@/lib/twilio-credentials";
+import { messagingConfigForUser } from "@/lib/twilio-credentials";
 
 // Send one cold text from the rep's own Twilio number.
 //
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const config = await voiceConfigForUser(user.id);
+  const config = await messagingConfigForUser(user.id);
   if (!config) {
     return noStore(
       NextResponse.json({ error: "Connect a Twilio number before texting." }, { status: 503 }),
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     const client = twilio(config.accountSid, config.authToken, { lazyLoading: true });
     const sent = await client.messages.create({
       to: phone.e164,
-      from: config.callerId,
+      from: config.from,
       body: message,
     });
 

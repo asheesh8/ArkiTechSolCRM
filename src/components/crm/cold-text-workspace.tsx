@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/field";
 import { MessageThread } from "@/components/crm/message-thread";
+import { TextingSenderCard } from "@/components/crm/texting-sender-card";
 import { checkPhone, fillTemplate, smsLink, type PhoneCheck } from "@/lib/phone";
 
 // The batch half of the outreach room: pick leads, validate every number, and
@@ -32,6 +33,8 @@ const STATUS_STYLE: Record<PhoneCheck["status"], string> = {
 };
 
 export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | null }) {
+  // The number texts actually leave from, which may not be the calling one.
+  const [sendFrom, setSendFrom] = useState<string | null>(twilioNumber);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [demo, setDemo] = useState(false);
@@ -171,11 +174,11 @@ export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | nul
   return (
     <div className="space-y-5">
       <p className="text-sm text-[var(--muted)]">
-        {twilioNumber ? (
+        {sendFrom ? (
           <>
             Pick leads, we validate every phone, then send from{" "}
             <span className="font-semibold text-[var(--foreground)]">
-              {checkPhone(twilioNumber).national || twilioNumber}
+              {checkPhone(sendFrom).national || sendFrom}
             </span>{" "}
             — replies go to that number, not your mobile.
           </>
@@ -184,6 +187,8 @@ export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | nul
         )}
         {demo && <span className="ml-1 font-medium text-amber-600">Showing demo leads.</span>}
       </p>
+
+      <TextingSenderCard onChanged={setSendFrom} />
 
       {/* Message composer */}
       <Card>
@@ -343,7 +348,7 @@ export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | nul
                         {copiedId === lead.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                         Copy
                       </Button>
-                      {twilioNumber ? (
+                      {sendFrom ? (
                         <Button
                           variant="outline"
                           size="sm"
@@ -355,7 +360,7 @@ export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | nul
                           Thread
                         </Button>
                       ) : null}
-                      {twilioNumber ? (
+                      {sendFrom ? (
                         <Button
                           size="sm"
                           className="h-11 w-full sm:h-9 sm:w-auto"

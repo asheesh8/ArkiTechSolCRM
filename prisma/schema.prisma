@@ -98,6 +98,16 @@ model TwilioAccount {
   // so they never sit in the database as plaintext and never leave the server.
   authTokenCipher    String @db.Text
   apiKeySecretCipher String @db.Text
+  // An optional second account used only for texting.
+  //
+  // US carriers filter application-sent SMS from numbers whose A2P brand and
+  // campaign aren't registered, and that registration takes days. Voice has no
+  // such gate, so a rep whose own number can already call but not yet text can
+  // point texting at a number that has cleared while their own is in review.
+  // Null on both means texts go out on the same account as calls.
+  smsAccountSid      String?
+  smsAuthTokenCipher String? @db.Text
+  smsFrom            String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

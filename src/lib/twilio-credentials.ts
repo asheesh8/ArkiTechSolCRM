@@ -140,6 +140,43 @@ export async function voiceConfigsForAccount(accountSid: string | undefined): Pr
   return configs;
 }
 
+/** Just enough to send and read texts — no API key pair, no TwiML app. */
+export type TwilioMessagingConfig = {
+  accountSid: string;
+  authToken: string;
+  from: string;
+  /** True when texting runs on a different account than calling. */
+  separate: boolean;
+};
+
+/**
+ * The account a teammate's texts go out on.
+ *
+ * Usually the same one they call from, but not always: US carriers filter
+ * application-sent SMS until the sending number's A2P brand and campaign are
+ * registered, and that clears days after voice already works. A rep in that gap
+ * can point texting at a number that has cleared, and keep calling on their own.
+ */
+export async function messagingConfigForUser(userId: string): Promise<TwilioMessagingConfig | null> {
+  const account = await prisma.twilioAccount.findUnique({
+    where: { userId },
+    select: { smsAccountSid: true, smsAuthTokenCipher: true, smsFrom: true },
+  });
+
+  if (account?.smsAccountSid && account.smsAuthTokenCipher && account.smsFrom) {
+    const authToken = decryptSecret(account.smsAuthTokenCipher);
+    if (authToken) {
+      return { accountSid: account.smsAccountSid, authToken, from: account.smsFrom, separate: true };
+    }
+  }
+
+  // No override, so texts ride on whatever calls ride on.
+  const voice = await voiceConfigForUser(userId);
+  return voice
+    ? { accountSid: voice.accountSid, authToken: voice.authToken, from: voice.callerId, separate: false }
+    : null;
+}
+
 /** What the cold-call room needs to describe the connection without exposing it. */
 export async function twilioConnectionForUser(userId: string) {
   const account = await prisma.twilioAccount.findUnique({

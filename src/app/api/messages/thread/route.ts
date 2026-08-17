@@ -3,7 +3,7 @@ import twilio from "twilio";
 import { getCurrentUser } from "@/lib/auth";
 import { canAccessColdCall } from "@/lib/cold-call-access";
 import { checkPhone } from "@/lib/phone";
-import { voiceConfigForUser } from "@/lib/twilio-credentials";
+import { messagingConfigForUser } from "@/lib/twilio-credentials";
 
 // One SMS conversation, both directions.
 //
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     return noStore(NextResponse.json({ error: "Which number's thread?" }, { status: 400 }));
   }
 
-  const config = await voiceConfigForUser(user.id);
+  const config = await messagingConfigForUser(user.id);
   if (!config) {
     return noStore(NextResponse.json({ messages: [], configured: false }));
   }
@@ -47,15 +47,15 @@ export async function GET(request: Request) {
     // Twilio filters on one direction at a time, so a conversation is two
     // queries stitched back together in time order.
     const [outbound, inbound] = await Promise.all([
-      client.messages.list({ to: other.e164, from: config.callerId, limit: PAGE_SIZE }),
-      client.messages.list({ to: config.callerId, from: other.e164, limit: PAGE_SIZE }),
+      client.messages.list({ to: other.e164, from: config.from, limit: PAGE_SIZE }),
+      client.messages.list({ to: config.from, from: other.e164, limit: PAGE_SIZE }),
     ]);
 
     const messages = [...outbound, ...inbound]
       .map((message) => ({
         sid: message.sid,
         body: message.body ?? "",
-        outbound: message.from === config.callerId,
+        outbound: message.from === config.from,
         status: message.status,
         // `dateSent` is null until Twilio hands the message off, so a just-queued
         // message falls back to when it was created rather than sorting to 1970.
@@ -64,7 +64,7 @@ export async function GET(request: Request) {
       }))
       .sort((a, b) => (a.at ?? "").localeCompare(b.at ?? ""));
 
-    return noStore(NextResponse.json({ configured: true, callerId: config.callerId, messages }));
+    return noStore(NextResponse.json({ configured: true, from: config.from, messages }));
   } catch (error) {
     console.error("[Message thread] Couldn't load:", error);
     return noStore(NextResponse.json({ error: "Couldn't load that conversation." }, { status: 502 }));

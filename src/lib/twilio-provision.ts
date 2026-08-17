@@ -81,6 +81,7 @@ export type TwilioNumber = {
   phoneNumber: string;
   friendlyName: string;
   voiceCapable: boolean;
+  smsCapable: boolean;
 };
 
 /**
@@ -98,6 +99,7 @@ export async function listNumbers(accountSid: string, authToken: string): Promis
       phoneNumber: number.phoneNumber,
       friendlyName: number.friendlyName || number.phoneNumber,
       voiceCapable: Boolean(number.capabilities?.voice),
+      smsCapable: Boolean(number.capabilities?.sms),
     }));
   } catch {
     throw new TwilioProvisionError("Couldn't list the numbers on that Twilio account.");
