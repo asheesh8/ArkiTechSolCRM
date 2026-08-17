@@ -5,6 +5,7 @@ import { AlertTriangle, Check, CheckCheck, Copy, Loader2, MapPin, MessageSquare,
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/field";
+import { MessageThread } from "@/components/crm/message-thread";
 import { checkPhone, fillTemplate, smsLink, type PhoneCheck } from "@/lib/phone";
 
 // The batch half of the outreach room: pick leads, validate every number, and
@@ -45,6 +46,9 @@ export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | nul
   // no outcome this app ever learns about.
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sendError, setSendError] = useState<Record<string, string>>({});
+  // The open conversation, when a rep has drilled into one. Threads only exist
+  // where there is a Twilio number to have had them on.
+  const [thread, setThread] = useState<{ phone: string; title: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/leads")
@@ -156,6 +160,12 @@ export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | nul
     } finally {
       setSendingId(null);
     }
+  }
+
+  if (thread) {
+    return (
+      <MessageThread phone={thread.phone} title={thread.title} onBack={() => setThread(null)} />
+    );
   }
 
   return (
@@ -333,6 +343,18 @@ export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | nul
                         {copiedId === lead.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                         Copy
                       </Button>
+                      {twilioNumber ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-11 sm:h-9"
+                          onClick={() => setThread({ phone: check.e164!, title: lead.businessName })}
+                          aria-label={`Open the conversation with ${lead.businessName}`}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          Thread
+                        </Button>
+                      ) : null}
                       {twilioNumber ? (
                         <Button
                           size="sm"

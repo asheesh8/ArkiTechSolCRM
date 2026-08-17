@@ -8,6 +8,7 @@ import {
   Building2,
   CalendarCheck,
   Check,
+  Clock,
   Link2 as LinkIcon,
   Plus,
   CheckCircle2,
@@ -35,6 +36,7 @@ import {
   Voicemail,
   X,
 } from "lucide-react";
+import { CallRecents } from "@/components/crm/call-recents";
 import { ColdTextWorkspace } from "@/components/crm/cold-text-workspace";
 import { Dialpad } from "@/components/crm/dialpad";
 import { PageHeader } from "@/components/crm/page-header";
@@ -719,6 +721,10 @@ export function ColdCallWorkspace({
   const [attachBusy, setAttachBusy] = useState(false);
   const [attachError, setAttachError] = useState("");
   const [numberSaved, setNumberSaved] = useState(false);
+  const [padTab, setPadTab] = useState<"keypad" | "recents">("keypad");
+  // Bumped when a call ends so Recents refetches — the list a rep looks at
+  // after hanging up should already have that call on it.
+  const [recentsKey, setRecentsKey] = useState(0);
 
   const [lastCall, setLastCall] = useState<CompletedCall | null>(null);
   const [followUpDate, setFollowUpDate] = useState("");
@@ -738,6 +744,8 @@ export function ColdCallWorkspace({
     if (!call.answered) setOutcome((current) => current || "no-answer");
     // Nothing was recorded, so there will be nothing to write up.
     if (call.answered && recordingEnabled) setDraftState("waiting");
+    // Twilio needs a beat to finalise the leg before it shows up in the log.
+    window.setTimeout(() => setRecentsKey((key) => key + 1), 1_500);
     document.getElementById("call-wrap-up")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [recordingEnabled]);
 
@@ -1861,25 +1869,52 @@ export function ColdCallWorkspace({
 
         <div className="space-y-5 xl:sticky xl:top-28">
         <Card className="overflow-hidden">
-          <CardHeader className="border-b border-[var(--border)]">
-            <CardTitle className="flex items-center gap-2">
-              <PhoneOutgoing className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-              Dialpad
-            </CardTitle>
-          </CardHeader>
+          <div className="grid grid-cols-2 border-b border-[var(--border)] bg-[var(--surface)] p-1.5" role="tablist" aria-label="Dialpad">
+            {([
+              ["keypad", "Keypad", PhoneOutgoing],
+              ["recents", "Recents", Clock],
+            ] as const).map(([id, label, Icon]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={padTab === id}
+                onClick={() => setPadTab(id)}
+                className={cn(
+                  "flex min-h-9 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition",
+                  padTab === id
+                    ? "bg-[var(--surface-strong)] text-[var(--foreground)] shadow-sm ring-1 ring-[var(--border)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
           <CardContent className="pt-4">
-            <Dialpad
-              value={dialNumber}
-              onChange={setDialNumber}
-              onCall={placeCall}
-              onHangUp={dialer.hangUp}
-              onDigit={dialer.sendDigits}
-              callerId={dialer.callerId}
-              status={dialer.status}
-              busy={dialer.busy}
-              disabled={!canDialNow}
-              seconds={dialer.seconds}
-            />
+            {padTab === "keypad" ? (
+              <Dialpad
+                value={dialNumber}
+                onChange={setDialNumber}
+                onCall={placeCall}
+                onHangUp={dialer.hangUp}
+                onDigit={dialer.sendDigits}
+                callerId={dialer.callerId}
+                status={dialer.status}
+                busy={dialer.busy}
+                disabled={!canDialNow}
+                seconds={dialer.seconds}
+              />
+            ) : (
+              <CallRecents
+                refreshKey={recentsKey}
+                onPick={(number) => {
+                  setDialNumber(checkPhone(number).national || number);
+                  setPadTab("keypad");
+                }}
+              />
+            )}
           </CardContent>
         </Card>
 
