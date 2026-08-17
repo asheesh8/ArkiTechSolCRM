@@ -3,6 +3,7 @@ import Link from "next/link";
 const DOCS = [
   { href: "/legal/privacy", label: "Privacy Policy", key: "privacy" },
   { href: "/legal/terms", label: "Terms of Service", key: "terms" },
+  { href: "/legal/sms", label: "SMS Terms", key: "sms" },
 ] as const;
 
 export type LegalDoc = (typeof DOCS)[number]["key"];

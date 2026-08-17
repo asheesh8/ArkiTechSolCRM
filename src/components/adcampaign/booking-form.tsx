@@ -11,8 +11,12 @@ import type { CampaignAttribution } from "@/lib/campaign";
 const SCHEDULER_URL = process.env.NEXT_PUBLIC_BOOKING_URL?.trim() ?? "";
 
 const BEST_TIMES = ["Morning (8am–12pm)", "Afternoon (12pm–5pm)", "Evening (5pm–8pm)", "Anytime"];
+// This checkbox is the opt-in an A2P 10DLC reviewer asks to see, so it names
+// text messages explicitly and links the terms that govern them. Consent to be
+// texted cannot be buried in consent to be called — a reviewer reading only
+// this sentence has to be able to tell what was agreed to.
 const CALL_CONSENT_TEXT =
-  "I agree that ArkiTech Solutions can contact me at this phone number, including by automated or AI-generated voice, about my CleaningBook inquiry.";
+  "I agree that ArkiTech Solutions can contact me at this phone number about my CleaningBook inquiry, including by automated or AI-generated voice and by text message. Message frequency varies, message and data rates may apply, and I can reply STOP at any time.";
 
 const FIELD_CLASS =
   "w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3.5 text-[15px] text-white outline-none transition placeholder:text-white/25 focus:border-indigo-400/60 focus:bg-white/[0.07]";
@@ -187,7 +191,27 @@ export function BookingForm({
                     onChange={(e) => update("callConsent", e.target.checked)}
                     className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 accent-indigo-400"
                   />
-                  <span>{CALL_CONSENT_TEXT}</span>
+                  <span>
+                    {CALL_CONSENT_TEXT}{" "}
+                    <a
+                      href="/legal/sms"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-semibold text-indigo-300 underline underline-offset-2"
+                    >
+                      SMS Terms
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="/legal/privacy"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-semibold text-indigo-300 underline underline-offset-2"
+                    >
+                      Privacy Policy
+                    </a>
+                    .
+                  </span>
                 </label>
 
                 {/* Honeypot — off-screen rather than display:none, which some bots skip. */}

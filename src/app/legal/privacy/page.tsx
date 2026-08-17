@@ -127,6 +127,16 @@ export default function PrivacyPolicyPage() {
             them, and "the above categories" has to have something above it. */}
         <Subhead>Mobile and text messaging information</Subhead>
         <P>
+          ArkiTech may use text messaging (SMS) to reply to inquiries, confirm appointments and calls, and share updates on active work. You consent to
+          receive those messages by giving us your mobile number and agreeing to be contacted — on a booking or inquiry form, during onboarding, or in
+          writing. Message frequency varies with your activity, message and data rates may apply, and you can stop at any time by replying STOP. Our{" "}
+          <InlineLink href="/legal/sms">SMS Terms</InlineLink> cover this in full.
+        </P>
+        <P>
+          Mobile numbers are used only to provide the services you asked for. We share them with the vendor that delivers the messages — our telephony
+          provider, Twilio — solely so a message reaches you, and with nobody else.
+        </P>
+        <P>
           No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. All of the above categories exclude
           text messaging originator opt-in data and consent; this information will not be shared with any third parties.
         </P>

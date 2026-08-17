@@ -1,0 +1,276 @@
+"use client";
+
+import { FormEvent, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { CheckCircle2, Loader2, Phone, Send, X } from "lucide-react";
+import { CALLBACK_CONSENT_TEXT } from "@/lib/callback-consent";
+import { checkPhone } from "@/lib/phone";
+
+// The intake widget on the main site.
+//
+// It replaced a chat assistant, and the trade is deliberate: a conversation is
+// pleasant but ends with nothing actionable unless the visitor volunteers a way
+// to reach them. Name and number is the whole job, and the same form doubles as
+// the documented SMS opt-in an A2P 10DLC reviewer asks to see — which is why
+// the consent wording is visible next to the button rather than tucked behind a
+// link.
+
+type Status = "idle" | "sending" | "sent" | "error";
+
+const FIELD_CLASS =
+  "w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3.5 text-[15px] text-white outline-none transition placeholder:text-white/25 focus:border-violet-400/60 focus:bg-white/[0.07]";
+
+export function CallbackWidget({ suppressed = false }: { suppressed?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [company, setCompany] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [error, setError] = useState("");
+  const launcherRef = useRef<HTMLButtonElement | null>(null);
+  const reduceMotion = useReducedMotion();
+
+  const check = checkPhone(phone);
+  const ready = name.trim().length > 0 && check.textable && consent;
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!ready || status === "sending") return;
+
+    setStatus("sending");
+    setError("");
+
+    try {
+      const response = await fetch("/api/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          message: message.trim() || undefined,
+          smsConsent: true,
+          consentText: CALLBACK_CONSENT_TEXT,
+          company,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setError(data.error || "Something went wrong. Try again in a moment.");
+        setStatus("error");
+        return;
+      }
+
+      setStatus("sent");
+    } catch {
+      setError("Couldn't reach us just now. Try again in a moment.");
+      setStatus("error");
+    }
+  }
+
+  function close() {
+    setOpen(false);
+    window.setTimeout(() => launcherRef.current?.focus(), 0);
+  }
+
+  return (
+    <AnimatePresence>
+      {!suppressed && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: reduceMotion ? 0 : 0.22 }}
+          className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-[80] flex justify-end sm:bottom-5 sm:left-auto sm:right-5"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            {open ? (
+              <motion.section
+                key="callback-panel"
+                id="arkitech-callback-panel"
+                role="dialog"
+                aria-label="Request a callback from ArkiTech"
+                initial={{ opacity: 0, y: 20, scale: reduceMotion ? 1 : 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: reduceMotion ? 1 : 0.97 }}
+                transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] }}
+                className="flex max-h-[calc(100dvh-1.5rem-env(safe-area-inset-bottom))] w-full flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[#11111d]/95 shadow-[0_28px_100px_rgba(0,0,0,0.62),0_0_60px_rgba(124,58,237,0.13)] backdrop-blur-2xl sm:w-[398px]"
+              >
+                <header className="relative flex shrink-0 items-center gap-3 overflow-hidden border-b border-white/[0.07] px-4 py-4">
+                  <div className="pointer-events-none absolute -left-8 -top-12 h-28 w-40 rounded-full bg-violet-500/15 blur-3xl" />
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-gradient-to-br from-violet-500/25 to-sky-400/15">
+                    <Phone className="h-5 w-5 text-violet-200" aria-hidden="true" />
+                  </div>
+                  <div className="relative min-w-0 flex-1">
+                    <h2 className="truncate text-sm font-bold text-white">Get a callback</h2>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/40">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.8)]" />
+                      Usually same day
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={close}
+                    className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.035] text-white/45 transition hover:border-white/15 hover:bg-white/[0.08] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+                    aria-label="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </header>
+
+                {status === "sent" ? (
+                  <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+                    <CheckCircle2 className="h-10 w-10 text-emerald-400" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-white">Got it, {name.trim().split(/\s+/)[0]}.</p>
+                    <p className="text-[13px] leading-5 text-white/45">
+                      We&rsquo;ll reach you at{" "}
+                      <span className="font-semibold text-white/75">{check.national || phone}</span>. Usually the same
+                      day.
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-5">
+                    <div className="space-y-1.5">
+                      <label htmlFor="callback-name" className="block text-[11px] font-semibold text-white/45">
+                        Your name
+                      </label>
+                      <input
+                        id="callback-name"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        placeholder="Sam Robinson"
+                        autoComplete="name"
+                        className={FIELD_CLASS}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="callback-phone" className="block text-[11px] font-semibold text-white/45">
+                        Phone number
+                      </label>
+                      <div className="flex items-stretch gap-2">
+                        <span className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.04] px-3 text-[15px] text-white/55">
+                          <span aria-hidden="true">🇺🇸</span> +1
+                        </span>
+                        <input
+                          id="callback-phone"
+                          value={phone}
+                          onChange={(event) => setPhone(event.target.value)}
+                          placeholder="(802) 555-0192"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          className={FIELD_CLASS}
+                          required
+                        />
+                      </div>
+                      {phone.trim() && !check.textable ? (
+                        <p className="text-[11px] leading-4 text-amber-300/80">{check.reason}</p>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="callback-message" className="block text-[11px] font-semibold text-white/45">
+                        What do you need? <span className="font-normal text-white/25">Optional</span>
+                      </label>
+                      <textarea
+                        id="callback-message"
+                        value={message}
+                        onChange={(event) => setMessage(event.target.value)}
+                        placeholder="I want to know more"
+                        rows={3}
+                        className={`${FIELD_CLASS} resize-y`}
+                      />
+                    </div>
+
+                    <label className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 text-left text-[11px] leading-4 text-white/48">
+                      <input
+                        required
+                        type="checkbox"
+                        checked={consent}
+                        onChange={(event) => setConsent(event.target.checked)}
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 accent-violet-400"
+                      />
+                      <span>
+                        {CALLBACK_CONSENT_TEXT}{" "}
+                        <a
+                          href="/legal/sms"
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="font-semibold text-violet-200 underline underline-offset-2"
+                        >
+                          SMS Terms
+                        </a>{" "}
+                        and{" "}
+                        <a
+                          href="/legal/privacy"
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="font-semibold text-violet-200 underline underline-offset-2"
+                        >
+                          Privacy Policy
+                        </a>
+                        .
+                      </span>
+                    </label>
+
+                    {/* Honeypot — off-screen rather than display:none, which some bots skip. */}
+                    <input
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                      value={company}
+                      onChange={(event) => setCompany(event.target.value)}
+                      className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+                    />
+
+                    {error ? (
+                      <p className="text-[11px] leading-4 text-red-300" role="alert">
+                        {error}
+                      </p>
+                    ) : null}
+
+                    <button
+                      type="submit"
+                      disabled={!ready || status === "sending"}
+                      className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-sm font-bold text-white shadow-lg shadow-violet-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+                    >
+                      {status === "sending" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      {status === "sending" ? "Sending…" : "Request a callback"}
+                    </button>
+                  </form>
+                )}
+              </motion.section>
+            ) : (
+              <motion.button
+                key="callback-launcher"
+                ref={launcherRef}
+                type="button"
+                initial={{ opacity: 0, y: 8, scale: reduceMotion ? 1 : 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 5, scale: reduceMotion ? 1 : 0.96 }}
+                transition={{ duration: reduceMotion ? 0 : 0.2 }}
+                onClick={() => setOpen(true)}
+                aria-expanded="false"
+                aria-controls="arkitech-callback-panel"
+                className="group relative flex min-h-14 items-center gap-3 overflow-hidden rounded-full border border-white/15 bg-[#151523]/92 py-2 pl-2 pr-5 text-left shadow-[0_18px_55px_rgba(0,0,0,.5),0_0_38px_rgba(124,58,237,.2)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-violet-300/30 hover:bg-[#1a1a2b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+              >
+                <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-violet-500/10 via-transparent to-sky-400/[0.06] opacity-0 transition group-hover:opacity-100" />
+                <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-950/50">
+                  <Phone className="h-5 w-5 text-white" aria-hidden="true" />
+                  <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-[#151523] bg-emerald-400" />
+                </span>
+                <span className="relative">
+                  <span className="block text-xs font-bold text-white">Get a callback</span>
+                  <span className="mt-0.5 block text-[10px] text-white/40">Name and number, that&rsquo;s it</span>
+                </span>
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
