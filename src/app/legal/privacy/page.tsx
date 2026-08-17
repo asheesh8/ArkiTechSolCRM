@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <article>
-      <DocHeader title="Privacy Policy" updated="August 1, 2026" active="privacy" />
+      <DocHeader title="Privacy Policy" updated="August 17, 2026" active="privacy" />
 
       <P>
         This Privacy Policy explains how ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects,
@@ -119,6 +119,18 @@ export default function PrivacyPolicyPage() {
           </Bullet>
           <Bullet>Other parties with your consent or at your direction.</Bullet>
         </Bullets>
+
+        {/* Required by US mobile carriers for A2P 10DLC campaign registration.
+            The wording is close to prescribed — reviewers look for these exact
+            commitments, so edit it only with that in mind. It sits directly
+            under the sharing categories because it carves an exception out of
+            them, and "the above categories" has to have something above it. */}
+        <Subhead>Mobile and text messaging information</Subhead>
+        <P>
+          No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. All of the above categories exclude
+          text messaging originator opt-in data and consent; this information will not be shared with any third parties.
+        </P>
+
         <P>
           Some privacy laws define &ldquo;sale&rdquo; or &ldquo;sharing&rdquo; broadly to include certain advertising, analytics, or tracking activities. If
           we engage in activities that qualify as a sale or sharing under applicable law, we will provide any required notices and choices.
