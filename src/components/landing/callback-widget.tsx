@@ -140,7 +140,7 @@ export function CallbackWidget({ suppressed = false }: { suppressed?: boolean })
                         id="callback-name"
                         value={name}
                         onChange={(event) => setName(event.target.value)}
-                        placeholder="Sam Robinson"
+                        placeholder="Jane Doe"
                         autoComplete="name"
                         className={FIELD_CLASS}
                         required
@@ -159,7 +159,7 @@ export function CallbackWidget({ suppressed = false }: { suppressed?: boolean })
                           id="callback-phone"
                           value={phone}
                           onChange={(event) => setPhone(event.target.value)}
-                          placeholder="(802) 555-0192"
+                          placeholder="(802) 555-0123"
                           inputMode="tel"
                           autoComplete="tel"
                           className={FIELD_CLASS}

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import twilio from "twilio";
 import { getCurrentUser } from "@/lib/auth";
 import { canAccessColdCall } from "@/lib/cold-call-access";
+import { blooioConfigured, listBlooioMessages } from "@/lib/blooio";
 import { checkPhone } from "@/lib/phone";
 import { messagingConfigForUser } from "@/lib/twilio-credentials";
 
@@ -34,6 +35,17 @@ export async function GET(request: Request) {
   const other = checkPhone(new URL(request.url).searchParams.get("with"));
   if (!other.e164) {
     return noStore(NextResponse.json({ error: "Which number's thread?" }, { status: 400 }));
+  }
+
+  // Read the thread from whichever provider sent it. Blooio holds the
+  // iMessage and RCS history that Twilio never sees.
+  if (blooioConfigured()) {
+    try {
+      const messages = await listBlooioMessages(other.e164);
+      return noStore(NextResponse.json({ configured: true, via: "blooio", messages }));
+    } catch (error) {
+      console.error("[Message thread] Blooio read failed, falling back to Twilio:", error);
+    }
   }
 
   const config = await messagingConfigForUser(user.id);

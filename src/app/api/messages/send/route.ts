@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import twilio from "twilio";
 import { getCurrentUser } from "@/lib/auth";
 import { canAccessColdCall } from "@/lib/cold-call-access";
+import { blooioConfigured, sendBlooioMessage } from "@/lib/blooio";
 import { checkPhone } from "@/lib/phone";
 import { messagingConfigForUser } from "@/lib/twilio-credentials";
 
@@ -50,6 +51,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // Blooio first when it's configured: it reaches iMessage and RCS, and only
+  // drops to SMS when the handset can't do better. Twilio is the fallback
+  // rather than the alternative — a send that fails at Blooio is retried
+  // rather than reported, because the rep cares that it arrived, not how.
+  if (blooioConfigured()) {
+    try {
+      const sent = await sendBlooioMessage(phone.e164, message);
+      return noStore(NextResponse.json({ sid: sent.id, status: sent.status, via: "blooio" }));
+    } catch (error) {
+      console.error("[Cold text] Blooio send failed, falling back to Twilio:", error);
+    }
+  }
+
   const config = await messagingConfigForUser(user.id);
   if (!config) {
     return noStore(
@@ -65,7 +79,7 @@ export async function POST(request: Request) {
       body: message,
     });
 
-    return noStore(NextResponse.json({ sid: sent.sid, status: sent.status }));
+    return noStore(NextResponse.json({ sid: sent.sid, status: sent.status, via: "twilio" }));
   } catch (error) {
     const { code, message: twilioMessage } = (error ?? {}) as { code?: number; message?: string };
 
