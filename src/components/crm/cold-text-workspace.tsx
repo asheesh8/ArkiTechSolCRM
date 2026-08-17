@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Check, CheckCheck, Copy, MapPin, MessageSquare, Phone, Search, Send } from "lucide-react";
+import { AlertTriangle, Check, CheckCheck, Copy, Loader2, MapPin, MessageSquare, Phone, Search, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/field";
@@ -30,7 +30,7 @@ const STATUS_STYLE: Record<PhoneCheck["status"], string> = {
   invalid: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
 };
 
-export function ColdTextWorkspace() {
+export function ColdTextWorkspace({ twilioNumber }: { twilioNumber: string | null }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [demo, setDemo] = useState(false);
@@ -41,6 +41,10 @@ export function ColdTextWorkspace() {
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  // Only meaningful when sending through Twilio — the handoff to Messages has
+  // no outcome this app ever learns about.
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/api/leads")
@@ -118,10 +122,56 @@ export function ColdTextWorkspace() {
     setSentIds((prev) => new Set(prev).add(id));
   }
 
+  /**
+   * Send from the connected Twilio number.
+   *
+   * Only reached when one is connected; without it the button stays an `sms:`
+   * link that opens the rep's own Messages app, which is how this worked before
+   * and still beats nothing.
+   */
+  async function sendViaTwilio(lead: Lead, e164: string) {
+    setSendingId(lead.id);
+    setSendError((current) => {
+      const next = { ...current };
+      delete next[lead.id];
+      return next;
+    });
+
+    try {
+      const response = await fetch("/api/messages/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: e164, body: messageFor(lead) }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setSendError((current) => ({ ...current, [lead.id]: data.error || "Couldn't send that text." }));
+        return;
+      }
+
+      markSent(lead.id);
+    } catch {
+      setSendError((current) => ({ ...current, [lead.id]: "Couldn't reach the server." }));
+    } finally {
+      setSendingId(null);
+    }
+  }
+
   return (
     <div className="space-y-5">
       <p className="text-sm text-[var(--muted)]">
-        Pick leads, we validate every phone, then tap to open each text pre-filled in your Messages app.
+        {twilioNumber ? (
+          <>
+            Pick leads, we validate every phone, then send from{" "}
+            <span className="font-semibold text-[var(--foreground)]">
+              {checkPhone(twilioNumber).national || twilioNumber}
+            </span>{" "}
+            — replies go to that number, not your mobile.
+          </>
+        ) : (
+          "Pick leads, we validate every phone, then tap to open each text pre-filled in your Messages app."
+        )}
         {demo && <span className="ml-1 font-medium text-amber-600">Showing demo leads.</span>}
       </p>
 
@@ -268,6 +318,13 @@ export function ColdTextWorkspace() {
                         />
                       </div>
                     )}
+
+                    {sendError[lead.id] ? (
+                      <p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-red-600 dark:text-red-400" role="alert">
+                        <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                        {sendError[lead.id]}
+                      </p>
+                    ) : null}
                   </div>
 
                   {check.textable && (
@@ -276,11 +333,27 @@ export function ColdTextWorkspace() {
                         {copiedId === lead.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                         Copy
                       </Button>
-                      <a href={smsLink(check.e164!, msg)} onClick={() => markSent(lead.id)} className="contents">
-                        <Button size="sm" className="h-11 w-full sm:h-9 sm:w-auto">
-                          <Send className="h-3.5 w-3.5" /> Text
+                      {twilioNumber ? (
+                        <Button
+                          size="sm"
+                          className="h-11 w-full sm:h-9 sm:w-auto"
+                          onClick={() => sendViaTwilio(lead, check.e164!)}
+                          disabled={sendingId === lead.id}
+                        >
+                          {sendingId === lead.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                          {sendingId === lead.id ? "Sending…" : "Text"}
                         </Button>
-                      </a>
+                      ) : (
+                        <a href={smsLink(check.e164!, msg)} onClick={() => markSent(lead.id)} className="contents">
+                          <Button size="sm" className="h-11 w-full sm:h-9 sm:w-auto">
+                            <Send className="h-3.5 w-3.5" /> Text
+                          </Button>
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

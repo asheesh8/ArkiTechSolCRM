@@ -213,7 +213,22 @@ export function useTwilioDevice({
     });
   }, []);
 
+  /**
+   * Send touch tones into a live call.
+   *
+   * This is what gets a rep past "press 2 for scheduling". Without it the
+   * keypad is only useful before dialling, and every gatekeeper menu is a dead
+   * end. Returns false when there is no call to send into, so the keypad can
+   * fall back to composing a number instead.
+   */
+  const sendDigits = useCallback((digits: string) => {
+    const call = callRef.current;
+    if (!call) return false;
+    call.sendDigits(digits);
+    return true;
+  }, []);
+
   const busy = status === "connecting" || status === "ringing" || status === "on-call";
 
-  return { status, error, callerId, seconds, muted, busy, dial, hangUp, toggleMute };
+  return { status, error, callerId, seconds, muted, busy, dial, hangUp, toggleMute, sendDigits };
 }

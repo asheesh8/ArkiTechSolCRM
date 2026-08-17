@@ -34,6 +34,7 @@ import {
   X,
 } from "lucide-react";
 import { ColdTextWorkspace } from "@/components/crm/cold-text-workspace";
+import { Dialpad } from "@/components/crm/dialpad";
 import { PageHeader } from "@/components/crm/page-header";
 import { TwilioConnectDialog, type TwilioConnection } from "@/components/crm/twilio-connect-dialog";
 import { useTwilioDevice, type CompletedCall } from "@/components/crm/use-twilio-device";
@@ -1189,7 +1190,7 @@ export function ColdCallWorkspace({
         </div>
       ) : null}
 
-      {mode === "text" ? <ColdTextWorkspace /> : (
+      {mode === "text" ? <ColdTextWorkspace twilioNumber={canDialNow ? connection.callerId : null} /> : (
       <>
       <Card>
         <CardHeader className="border-b border-[var(--border)]">
@@ -1684,7 +1685,31 @@ export function ColdCallWorkspace({
           </CollapsibleCard>
         </div>
 
-        <Card className="overflow-hidden xl:sticky xl:top-28">
+        <div className="space-y-5 xl:sticky xl:top-28">
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b border-[var(--border)]">
+            <CardTitle className="flex items-center gap-2">
+              <PhoneOutgoing className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+              Dialpad
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <Dialpad
+              value={dialNumber}
+              onChange={setDialNumber}
+              onCall={placeCall}
+              onHangUp={dialer.hangUp}
+              onDigit={dialer.sendDigits}
+              callerId={dialer.callerId}
+              status={dialer.status}
+              busy={dialer.busy}
+              disabled={!canDialNow}
+              seconds={dialer.seconds}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden">
           <div className="grid grid-cols-3 border-b border-[var(--border)] bg-[var(--surface)] p-1.5" role="tablist" aria-label="Call support">
             {([
               ["objections", "Objections"],
@@ -1822,6 +1847,7 @@ export function ColdCallWorkspace({
             ) : null}
           </CardContent>
         </Card>
+        </div>
       </div>
       </>
       )}
