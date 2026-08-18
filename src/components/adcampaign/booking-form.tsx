@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { CalendarCheck, CheckCircle2, Loader2, Phone } from "lucide-react";
+import { useCachedForm } from "@/lib/use-cached-form";
 import type { CampaignAttribution } from "@/lib/campaign";
 
 // Set this once there's a real scheduler to point at and a "pick a time"
@@ -18,10 +19,22 @@ const BEST_TIMES = ["Morning (8am–12pm)", "Afternoon (12pm–5pm)", "Evening (
 const CALL_CONSENT_TEXT =
   "I agree that ArkiTech Solutions can contact me at this phone number about my CleaningBook inquiry, including by automated or AI-generated voice and by text message. Message frequency varies, message and data rates may apply, and I can reply STOP at any time.";
 
+const BOOKING_STORAGE_KEY = "arkitech:cleaningbook-booking:v1";
+
 const FIELD_CLASS =
   "w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3.5 text-[15px] text-white outline-none transition placeholder:text-white/25 focus:border-indigo-400/60 focus:bg-white/[0.07]";
 
 type Status = "idle" | "sending" | "sent" | "error";
+
+type BookingFormValues = {
+  name: string;
+  businessName: string;
+  phone: string;
+  email: string;
+  bestTime: string;
+  callConsent: boolean;
+  company: string;
+};
 
 export function BookingForm({
   attribution,
@@ -30,21 +43,23 @@ export function BookingForm({
   attribution: CampaignAttribution;
   onBooked: () => void;
 }) {
-  const [form, setForm] = useState({
-    name: "",
-    businessName: "",
-    phone: "",
-    email: "",
-    bestTime: BEST_TIMES[0],
-    callConsent: false,
-    company: "", // honeypot
-  });
+  // Kept between visits so a returning visitor isn't retyping. Consent and the
+  // honeypot are never restored — see the hook.
+  const { form, update, forget } = useCachedForm<BookingFormValues>(
+    BOOKING_STORAGE_KEY,
+    {
+      name: "",
+      businessName: "",
+      phone: "",
+      email: "",
+      bestTime: BEST_TIMES[0],
+      callConsent: false,
+      company: "", // honeypot
+    },
+    ["callConsent", "company"],
+  );
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
-
-  function update<K extends keyof typeof form>(field: K, value: (typeof form)[K]) {
-    setForm((current) => ({ ...current, [field]: value }));
-  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -66,6 +81,9 @@ export function BookingForm({
       }
 
       setStatus("sent");
+      // Booked, so the saved answers have done their job — and the confirmation
+      // above still reads them from state, so clearing storage is safe here.
+      forget();
       onBooked();
     } catch {
       setError("Network error. Try calling (802) 310-3749 instead.");

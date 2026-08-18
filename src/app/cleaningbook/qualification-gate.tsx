@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
+import { useCachedForm } from "@/lib/use-cached-form";
 import { ArrowRight, Check, CheckCircle2, ChevronLeft, Loader2, Sparkles } from "lucide-react";
 import type { CampaignAttribution } from "@/lib/campaign";
 
@@ -89,6 +90,8 @@ type GateForm = {
 
 type Status = "idle" | "sending" | "sent" | "error";
 
+const GATE_STORAGE_KEY = "arkitech:cleaningbook-gate:v1";
+
 function ChoiceButton({
   value,
   selected,
@@ -148,19 +151,25 @@ export function QualificationGate({
   onQualified: () => void;
 }) {
   const advanceTimer = useRef<number | null>(null);
-  const [form, setForm] = useState<GateForm>({
-    currentSituation: "",
-    onlinePresence: "",
-    investmentRange: "",
-    startTimeline: "",
-    name: "",
-    phone: "",
-    email: "",
-    city: "",
-    state: "",
-    callConsent: false,
-    company: "",
-  });
+  // Answers survive a reload and a trip away to check something. Consent and
+  // the honeypot never do — see the hook.
+  const { form, update, forget } = useCachedForm<GateForm>(
+    GATE_STORAGE_KEY,
+    {
+      currentSituation: "",
+      onlinePresence: "",
+      investmentRange: "",
+      startTimeline: "",
+      name: "",
+      phone: "",
+      email: "",
+      city: "",
+      state: "",
+      callConsent: false,
+      company: "",
+    },
+    ["callConsent", "company"],
+  );
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [step, setStep] = useState(0);
@@ -177,10 +186,6 @@ export function QualificationGate({
   const currentChoiceStep = step < CONTACT_STEP_INDEX ? CHOICE_STEPS[step] : null;
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const selectedAnswer = currentChoiceStep ? form[currentChoiceStep.field] : "";
-
-  function update<K extends keyof GateForm>(field: K, value: GateForm[K]) {
-    setForm((current) => ({ ...current, [field]: value }));
-  }
 
   function chooseOption(field: ChoiceField, value: string) {
     update(field, value);
@@ -232,6 +237,10 @@ export function QualificationGate({
       }
 
       setStatus("sent");
+      // Once it's in, the saved answers have done their job. Leaving them
+      // behind would refill the form for whoever opens the page next on a
+      // shared machine.
+      forget();
       window.setTimeout(onQualified, 450);
     } catch {
       setError("Network error. Try again, or call (802) 310-3749.");
