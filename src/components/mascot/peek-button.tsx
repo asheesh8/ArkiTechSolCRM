@@ -134,8 +134,8 @@ export function PeekButton({
   return (
     <span ref={root} className="relative inline-flex">
       {/* head, clipped to the rim so it can rise from behind the button */}
-      <span className={`pointer-events-none absolute bottom-full z-0 h-[60px] w-[86px] overflow-hidden ${align}`}>
-        <Head ref={head} season={season} className="h-[78px] w-[86px]" />
+      <span className={`pointer-events-none absolute bottom-full z-0 h-[66px] w-[98px] overflow-hidden ${align}`}>
+        <Head ref={head} season={season} className="h-[85px] w-[98px]" />
       </span>
 
       <button
@@ -147,8 +147,8 @@ export function PeekButton({
       </button>
 
       {/* hands, in front of the button face */}
-      <span className={`pointer-events-none absolute -top-[6px] z-20 w-[108px] ${align}`}>
-        <Hands ref={hands} className="w-[108px]" />
+      <span className={`pointer-events-none absolute -top-[7px] z-20 w-[122px] ${align}`}>
+        <Hands ref={hands} className="w-[122px]" />
       </span>
     </span>
   );
