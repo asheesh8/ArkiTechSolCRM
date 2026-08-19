@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import gsap from "gsap";
-import { Hands, Head } from "./arki-mascot";
+import { Hands, Head, type Season } from "./arki-mascot";
 
 /**
  * A button that Arki peeks over.
@@ -20,23 +20,27 @@ export function PeekButton({
   onClick,
   className = "",
   side = "center",
+  season = "none",
 }: {
   children: ReactNode;
   onClick?: () => void;
   className?: string;
   side?: "left" | "center" | "right";
+  season?: Season;
 }) {
   const root = useRef<HTMLSpanElement>(null);
   const head = useRef<SVGSVGElement>(null);
   const hands = useRef<SVGSVGElement>(null);
-  const shown = useRef(false);
+  const celebrate = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const headEl = head.current;
     const handsEl = hands.current;
-    if (!root.current || !headEl || !handsEl) return;
+    const rootEl = root.current;
+    if (!rootEl || !headEl || !handsEl) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let shown = false;
 
     const ctx = gsap.context(() => {
       const handGroups = handsEl.querySelectorAll("[data-part^='hand-']");
@@ -57,8 +61,8 @@ export function PeekButton({
       }
 
       function show() {
-        if (shown.current) return;
-        shown.current = true;
+        if (shown) return;
+        shown = true;
 
         if (reduce) {
           gsap.set(headEl, { yPercent: 0 });
@@ -81,8 +85,8 @@ export function PeekButton({
       }
 
       function hide() {
-        if (!shown.current) return;
-        shown.current = false;
+        if (!shown) return;
+        shown = false;
         idle?.kill();
         idle = null;
         if (blink) { window.clearTimeout(blink); blink = null; }
@@ -98,17 +102,26 @@ export function PeekButton({
           .to(handGroups, { y: 30, opacity: 0, duration: 0.2, stagger: 0.04, ease: "power2.in" }, "-=0.16");
       }
 
-      const el = root.current!;
-      el.addEventListener("pointerenter", show);
-      el.addEventListener("pointerleave", hide);
-      el.addEventListener("focusin", show);
-      el.addEventListener("focusout", hide);
+      // A quick hop on click — he reacts to the thing you just did.
+      celebrate.current = () => {
+        if (reduce || !shown) return;
+        idle?.pause();
+        gsap.timeline({ onComplete: () => idle?.resume() })
+          .to(headEl, { yPercent: -16, duration: 0.18, ease: "power2.out" })
+          .to(headEl, { yPercent: -3.5, duration: 0.42, ease: "bounce.out" })
+          .fromTo(antenna, { rotate: 20 }, { rotate: 0, duration: 0.8, ease: "elastic.out(1, 0.3)" }, 0);
+      };
+
+      rootEl.addEventListener("pointerenter", show);
+      rootEl.addEventListener("pointerleave", hide);
+      rootEl.addEventListener("focusin", show);
+      rootEl.addEventListener("focusout", hide);
 
       return () => {
-        el.removeEventListener("pointerenter", show);
-        el.removeEventListener("pointerleave", hide);
-        el.removeEventListener("focusin", show);
-        el.removeEventListener("focusout", hide);
+        rootEl.removeEventListener("pointerenter", show);
+        rootEl.removeEventListener("pointerleave", hide);
+        rootEl.removeEventListener("focusin", show);
+        rootEl.removeEventListener("focusout", hide);
         if (blink) window.clearTimeout(blink);
       };
     }, root);
@@ -122,12 +135,12 @@ export function PeekButton({
     <span ref={root} className="relative inline-flex">
       {/* head, clipped to the rim so it can rise from behind the button */}
       <span className={`pointer-events-none absolute bottom-full z-0 h-[60px] w-[86px] overflow-hidden ${align}`}>
-        <Head ref={head} className="h-[78px] w-[86px]" />
+        <Head ref={head} season={season} className="h-[78px] w-[86px]" />
       </span>
 
       <button
         type="button"
-        onClick={onClick}
+        onClick={() => { celebrate.current?.(); onClick?.(); }}
         className={`relative z-10 rounded-full px-7 py-3 text-sm font-semibold tracking-tight transition active:scale-[0.98] ${className}`}
       >
         {children}
