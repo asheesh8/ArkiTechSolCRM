@@ -252,6 +252,12 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
           <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: project.color }}>
             {String(idx + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
           </span>
+          <span
+            className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+            style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)" }}
+          >
+            Demo build
+          </span>
         </div>
         <h3 className="text-3xl font-black tracking-tight text-white leading-none">{project.name}</h3>
         <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{project.desc}</p>
@@ -263,7 +269,7 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
             className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
             style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
           >
-            {project.url.replace("https://", "")} <ExternalLink className="h-3 w-3" />
+            Open demo <ExternalLink className="h-3 w-3" />
           </a>
         ) : (
           // Nothing to link to, so nothing that looks like a link.
@@ -334,13 +340,16 @@ export function ImmersiveShowcase() {
 
         {/* ── Section label ── */}
         <div className="mb-10 text-center lg:mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>Demos we&apos;ve built</p>
+          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>All demo builds</p>
           <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
             Every pixel.<br />
-            <span style={{ color: "rgba(255,255,255,0.2)" }}>Built from scratch.</span>
+            <span style={{ color: "rgba(255,255,255,0.2)" }}>Every one a demo.</span>
           </h2>
-          <p className="mx-auto mt-5 max-w-xl text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Every project below is a demo we built to show what we can do — not a live client site.
+          <p
+            className="mx-auto mt-6 w-fit rounded-full border px-5 py-2.5 text-sm font-semibold"
+            style={{ borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.72)", background: "rgba(255,255,255,0.04)" }}
+          >
+            Every project here is a demo we designed and built ourselves — none are live client sites.
           </p>
         </div>
 
