@@ -10,19 +10,17 @@ type Project = {
   desc: string;
   color: string;
   accent: string;
-  /** A demo we built to show the work, or a live site we built for a client. */
-  kind: "demo" | "client";
-  /** Where it is deployed. Absent while a build has no live preview. */
+  /** Where the demo is deployed. Absent while a build has no live preview. */
   url?: string;
   /** What the device frames show. Falls back to `url`. */
   iframeSrc?: string;
 };
 
 const PROJECTS: Project[] = [
-  { id: "bible",    name: "Village Server Initiative", desc: "Community & event platform", kind: "demo", url: "https://villageservers.org",            color: "#c084fc", accent: "#9333ea" },
-  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase", kind: "demo", url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
-  { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume", kind: "demo", url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
-  { id: "blacksheep", name: "Black Sheep Property Management", desc: "Property management site", kind: "client", url: "https://black-sheep-property-mgmt.vercel.app", color: "#f59e0b", accent: "#b45309" },
+  { id: "bible",    name: "Village Server Initiative", desc: "Community & event platform", url: "https://villageservers.org",            color: "#c084fc", accent: "#9333ea" },
+  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase", url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
+  { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume", url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
+  { id: "blacksheep", name: "Black Sheep Property Management", desc: "Property management site", url: "https://black-sheep-property-mgmt.vercel.app", color: "#f59e0b", accent: "#b45309" },
 ];
 
 const AUTOPLAY_MS = 4500;
@@ -52,7 +50,7 @@ function FallbackCard({ project }: { project: Project }) {
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-80"
           style={{ background: project.color }}
         >
-          {project.kind === "client" ? "Visit site" : "Open demo"} <ArrowUpRight className="h-4 w-4" />
+          Open demo <ArrowUpRight className="h-4 w-4" />
         </a>
       ) : (
         <p
@@ -245,13 +243,9 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
           </span>
           <span
             className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-            style={
-              project.kind === "client"
-                ? { borderColor: `${project.color}66`, color: project.color, background: `${project.color}14` }
-                : { borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)" }
-            }
+            style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)" }}
           >
-            {project.kind === "client" ? "Client site" : "Demo build"}
+            Demo build
           </span>
         </div>
         <h3 className="text-3xl font-black tracking-tight text-white leading-none">{project.name}</h3>
@@ -264,7 +258,7 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
             className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
             style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
           >
-            {project.kind === "client" ? "Visit site" : "Open demo"} <ExternalLink className="h-3 w-3" />
+            Open demo <ExternalLink className="h-3 w-3" />
           </a>
         ) : (
           // Nothing to link to, so nothing that looks like a link.
@@ -335,16 +329,16 @@ export function ImmersiveShowcase() {
 
         {/* ── Section label ── */}
         <div className="mb-10 text-center lg:mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>Our work</p>
+          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>All demo builds</p>
           <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
             Every pixel.<br />
-            <span style={{ color: "rgba(255,255,255,0.2)" }}>Built from scratch.</span>
+            <span style={{ color: "rgba(255,255,255,0.2)" }}>Every one a demo.</span>
           </h2>
           <p
             className="mx-auto mt-6 w-fit rounded-full border px-5 py-2.5 text-sm font-semibold"
             style={{ borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.72)", background: "rgba(255,255,255,0.04)" }}
           >
-            Every project is labelled — demos we built to show what we can do, and live client sites.
+            Every project here is a demo we designed and built ourselves — none are live client sites.
           </p>
         </div>
 
