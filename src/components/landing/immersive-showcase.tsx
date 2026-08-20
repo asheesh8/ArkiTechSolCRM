@@ -22,7 +22,6 @@ const PROJECTS: Project[] = [
   { id: "mollie",   name: "Mollie Bachner Dressage", desc: "Equestrian business showcase",          url: "https://mollie-bachner-dressage-llc.vercel.app", color: "#7f67a8", accent: "#5b4282" },
   { id: "jeffrey",  name: "Jeffrey Danaher Property Management", desc: "Property management demo",  url: "https://jeffrey-danaher-property-mgmt.vercel.app", color: "#f15a24", accent: "#b83a16" },
   { id: "davis",    name: "Davis Steadman Percy & Sluka", desc: "Professional services demo",       url: "https://davis-steadman-percy-sluka-llc.vercel.app", color: "#bf8a3a", accent: "#8a5e21" },
-  { id: "vermont",  name: "Vermont Exterior Construction", desc: "Commercial construction showcase", url: "https://vermont-exterior-construction.vercel.app", color: "#34d399", accent: "#047857" },
   { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
   { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
   { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen (demo built)",     url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
