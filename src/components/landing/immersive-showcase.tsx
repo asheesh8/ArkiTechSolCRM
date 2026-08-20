@@ -17,21 +17,9 @@ type Project = {
 };
 
 const PROJECTS: Project[] = [
-  { id: "ohara",    name: "O'Hara & Gercke",        desc: "Hero video site for a Vermont creative", url: "https://oharagercke.vercel.app",                  color: "#c26a3a", accent: "#9a4b27" },
-  { id: "maple",    name: "Maple Glow Cleaning",    desc: "Cleaning service lead-gen demo",         url: "https://maple-glow-cleaning-llc.vercel.app",     color: "#d4a92f", accent: "#a97714" },
-  { id: "mollie",   name: "Mollie Bachner Dressage", desc: "Equestrian business showcase",          url: "https://mollie-bachner-dressage-llc.vercel.app", color: "#7f67a8", accent: "#5b4282" },
-  { id: "jeffrey",  name: "Jeffrey Danaher Property Management", desc: "Property management demo",  url: "https://jeffrey-danaher-property-mgmt.vercel.app", color: "#f15a24", accent: "#b83a16" },
-  { id: "davis",    name: "Davis Steadman Percy & Sluka", desc: "Professional services demo",       url: "https://davis-steadman-percy-sluka-llc.vercel.app", color: "#bf8a3a", accent: "#8a5e21" },
-  { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
-  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
-  { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen (demo built)",     url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
-  { id: "noah",     name: "Noah's Landscaping",     desc: "Landscaping and yard-care lead capture",                                                       color: "#84cc16", accent: "#4d7c0f" },
-  { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
-  { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
-  { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
-  { id: "pit",      name: "ThePit",                 desc: "Trader community & dashboard",       url: "https://pittrader.vercel.app",                   color: "#fb923c", accent: "#ea580c" },
   { id: "bible",    name: "Village Server Initiative", desc: "Community & event platform",         url: "https://villageservers.org",            color: "#c084fc", accent: "#9333ea" },
-  { id: "crm",      name: "ArkiTech CRM",           desc: "Custom SaaS CRM platform",           url: "https://arkitech-sol.vercel.app",                color: "#a855f7", accent: "#7c3aed" },
+  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
+  { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
 ];
 
 const AUTOPLAY_MS = 4500;
