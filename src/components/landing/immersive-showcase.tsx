@@ -10,12 +10,10 @@ type Project = {
   desc: string;
   color: string;
   accent: string;
-  /** The live client site. Demo builds have none, and so link nowhere. */
+  /** Where the demo is deployed. Absent while a build has no live preview. */
   url?: string;
   /** What the device frames show. Falls back to `url`. */
   iframeSrc?: string;
-  /** Spec work built to show the idea — not a shipped client site. */
-  demo?: boolean;
 };
 
 const PROJECTS: Project[] = [
@@ -28,8 +26,7 @@ const PROJECTS: Project[] = [
   { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
   { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
   { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen (demo built)",     url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
-  { id: "shine",    name: "HomeSHINE",              desc: "Home services booking",              demo: true, iframeSrc: "https://home-shine-v2.vercel.app", color: "#f87171", accent: "#dc2626" },
-  { id: "noah",     name: "Noah's Landscaping",     desc: "Landscaping and yard-care lead capture", demo: true,                                            color: "#84cc16", accent: "#4d7c0f" },
+  { id: "noah",     name: "Noah's Landscaping",     desc: "Landscaping and yard-care lead capture",                                                       color: "#84cc16", accent: "#4d7c0f" },
   { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
   { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
   { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
@@ -65,14 +62,14 @@ function FallbackCard({ project }: { project: Project }) {
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-80"
           style={{ background: project.color }}
         >
-          Visit live site <ArrowUpRight className="h-4 w-4" />
+          Open demo <ArrowUpRight className="h-4 w-4" />
         </a>
       ) : (
         <p
           className="rounded-xl border px-5 py-2.5 text-xs font-bold uppercase tracking-widest"
           style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
         >
-          Demo build
+          No live preview yet
         </p>
       )}
     </div>
@@ -256,14 +253,6 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
           <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: project.color }}>
             {String(idx + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
           </span>
-          {project.demo && (
-            <span
-              className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-              style={{ borderColor: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.55)" }}
-            >
-              Demo
-            </span>
-          )}
         </div>
         <h3 className="text-3xl font-black tracking-tight text-white leading-none">{project.name}</h3>
         <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{project.desc}</p>
@@ -283,7 +272,7 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
             className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold"
             style={{ borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.4)" }}
           >
-            Demo build &middot; not a live site
+            No live preview yet
           </p>
         )}
       </motion.div>
@@ -346,11 +335,14 @@ export function ImmersiveShowcase() {
 
         {/* ── Section label ── */}
         <div className="mb-10 text-center lg:mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>Our work</p>
+          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>Demos we&apos;ve built</p>
           <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
             Every pixel.<br />
-            <span style={{ color: "rgba(255,255,255,0.2)" }}>Every client. Shipped.</span>
+            <span style={{ color: "rgba(255,255,255,0.2)" }}>Built from scratch.</span>
           </h2>
+          <p className="mx-auto mt-5 max-w-xl text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+            Every project below is a demo we built to show what we can do — not a live client site.
+          </p>
         </div>
 
         {/* ── Main layout: info left + devices right ── */}

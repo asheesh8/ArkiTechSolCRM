@@ -16,7 +16,6 @@ const PROJECTS = [
   { id: "crm",      name: "ArkiTech CRM",          short: "ArkiTech CRM",   url: "https://arkitech-sol.vercel.app",                   color: "#a855f7", dot: "bg-purple-500" },
   { id: "darkroom", name: "Jon's Darkroom",         short: "Jon's Darkroom", url: "https://jon-darkroom.vercel.app",                   color: "#a16207", dot: "bg-yellow-700" },
   { id: "protech",  name: "ProTech Contracting",    short: "ProTech",        url: "https://pro-tech-contracting.vercel.app",           color: "#22c55e", dot: "bg-green-500" },
-  { id: "shine",    name: "HomeSHINE",              short: "HomeSHINE",      url: "https://home-shine-v2.vercel.app",                  color: "#ef4444", dot: "bg-red-500" },
   { id: "petspa",   name: "Pet Spa Grooming",       short: "Pet Spa",        url: "https://petspagrooming.vercel.app",                 color: "#eab308", dot: "bg-yellow-500" },
   { id: "bible",    name: "Bible Runners",           short: "Bible Runners",  url: "https://project-bible-runners-site.vercel.app",     color: "#71717a", dot: "bg-zinc-500" },
   { id: "art",      name: "Christine Art Folio",    short: "Art Folio",      url: "https://christine-art-folio-ityx.vercel.app",       color: "#60a5fa", dot: "bg-blue-400" },
