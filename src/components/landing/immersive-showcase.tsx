@@ -4,7 +4,21 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ExternalLink, ArrowUpRight, Pause, Play } from "lucide-react";
 
-const PROJECTS = [
+type Project = {
+  id: string;
+  name: string;
+  desc: string;
+  color: string;
+  accent: string;
+  /** The live client site. Demo builds have none, and so link nowhere. */
+  url?: string;
+  /** What the device frames show. Falls back to `url`. */
+  iframeSrc?: string;
+  /** Spec work built to show the idea — not a shipped client site. */
+  demo?: boolean;
+};
+
+const PROJECTS: Project[] = [
   { id: "ohara",    name: "O'Hara & Gercke",        desc: "Hero video site for a Vermont creative", url: "https://oharagercke.vercel.app",                  color: "#c26a3a", accent: "#9a4b27" },
   { id: "maple",    name: "Maple Glow Cleaning",    desc: "Cleaning service lead-gen demo",         url: "https://maple-glow-cleaning-llc.vercel.app",     color: "#d4a92f", accent: "#a97714" },
   { id: "mollie",   name: "Mollie Bachner Dressage", desc: "Equestrian business showcase",          url: "https://mollie-bachner-dressage-llc.vercel.app", color: "#7f67a8", accent: "#5b4282" },
@@ -14,16 +28,16 @@ const PROJECTS = [
   { id: "petspa",   name: "Pet Spa Grooming",       desc: "Appointment & business site",        url: "https://petspagrooming.vercel.app",              color: "#fbbf24", accent: "#d97706" },
   { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase",     url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
   { id: "protech",  name: "ProTech Contracting",    desc: "Local contractor lead gen (demo built)",     url: "https://pro-tech-contracting.vercel.app",       color: "#22c55e", accent: "#15803d" },
-  { id: "shine",    name: "HomeSHINE",              desc: "Home services booking",              url: "https://home-shine-v2.vercel.app",               color: "#f87171", accent: "#dc2626" },
+  { id: "shine",    name: "HomeSHINE",              desc: "Home services booking",              demo: true, iframeSrc: "https://home-shine-v2.vercel.app", color: "#f87171", accent: "#dc2626" },
+  { id: "noah",     name: "Noah's Landscaping",     desc: "Landscaping and yard-care lead capture", demo: true,                                            color: "#84cc16", accent: "#4d7c0f" },
   { id: "art",      name: "Christine Art Folio",    desc: "Artist portfolio & gallery",         url: "https://christine-art-folio-ityx.vercel.app",   color: "#67e8f9", accent: "#0891b2" },
   { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume",            url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
   { id: "darkroom", name: "Jon's Darkroom",         desc: "Photography portfolio & store",      url: "https://jon-darkroom.vercel.app",                color: "#f59e0b", accent: "#b45309" },
   { id: "pit",      name: "ThePit",                 desc: "Trader community & dashboard",       url: "https://pittrader.vercel.app",                   color: "#fb923c", accent: "#ea580c" },
   { id: "bible",    name: "Village Server Initiative", desc: "Community & event platform",         url: "https://villageservers.org",            color: "#c084fc", accent: "#9333ea" },
   { id: "crm",      name: "ArkiTech CRM",           desc: "Custom SaaS CRM platform",           url: "https://arkitech-sol.vercel.app",                color: "#a855f7", accent: "#7c3aed" },
-] as const;
+];
 
-type Project = typeof PROJECTS[number];
 const AUTOPLAY_MS = 4500;
 
 // ── Fallback card shown when iframe is blocked ────────────────────────────────
@@ -43,27 +57,39 @@ function FallbackCard({ project }: { project: Project }) {
         <p className="font-bold text-white">{project.name}</p>
         <p className="mt-1 text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{project.desc}</p>
       </div>
-      <a
-        href={project.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-80"
-        style={{ background: project.color }}
-      >
-        Visit live site <ArrowUpRight className="h-4 w-4" />
-      </a>
+      {project.url ? (
+        <a
+          href={project.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-80"
+          style={{ background: project.color }}
+        >
+          Visit live site <ArrowUpRight className="h-4 w-4" />
+        </a>
+      ) : (
+        <p
+          className="rounded-xl border px-5 py-2.5 text-xs font-bold uppercase tracking-widest"
+          style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
+        >
+          Demo build
+        </p>
+      )}
     </div>
   );
 }
 
 // ── MacBook device ────────────────────────────────────────────────────────────
-function MacBook({ project }: { project: Project & { iframeSrc?: string } }) {
+function MacBook({ project }: { project: Project }) {
+  // A demo with no deployment has nothing to frame; fall straight to the card.
+  const preview = project.iframeSrc ?? project.url;
   const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
   useEffect(() => {
+    if (!preview) return;
     setState("loading");
     const t = setTimeout(() => setState((s) => s === "loading" ? "failed" : s), 9000);
     return () => clearTimeout(t);
-  }, [project.id]);
+  }, [project.id, preview]);
 
   return (
     <div className="relative select-none" style={{ width: 580, maxWidth: "100%" }}>
@@ -92,22 +118,22 @@ function MacBook({ project }: { project: Project & { iframeSrc?: string } }) {
           {/* URL bar */}
           <div className="absolute left-0 right-0 top-0 z-10 flex items-center gap-2 border-b border-white/5 bg-black/80 px-3 pb-1.5 pt-1.5 backdrop-blur">
             <div className="flex h-5 flex-1 items-center rounded bg-white/5 px-2">
-              <span className="truncate font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{project.url.replace("https://", "")}</span>
+              <span className="truncate font-mono text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{project.url ? project.url.replace("https://", "") : "demo build"}</span>
             </div>
           </div>
           {/* Content — iframe renders at 1280px then scales to fit 552px screen */}
           <div className="absolute inset-0 top-[28px] overflow-hidden">
-            {state === "loading" && (
+            {preview && state === "loading" && (
               <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: "#0a0a14" }}>
                 <div className="h-6 w-6 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
               </div>
             )}
-            {state === "failed" ? (
+            {!preview || state === "failed" ? (
               <FallbackCard project={project} />
             ) : (
               <iframe
                 key={project.id}
-                src={"iframeSrc" in project ? (project as any).iframeSrc : project.url}
+                src={preview}
                 title={project.name}
                 className="border-0"
                 style={{
@@ -148,13 +174,16 @@ function MacBook({ project }: { project: Project & { iframeSrc?: string } }) {
 }
 
 // ── iPhone device ─────────────────────────────────────────────────────────────
-function IPhone({ project }: { project: Project & { iframeSrc?: string } }) {
+function IPhone({ project }: { project: Project }) {
+  // A demo with no deployment has nothing to frame; fall straight to the card.
+  const preview = project.iframeSrc ?? project.url;
   const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
   useEffect(() => {
+    if (!preview) return;
     setState("loading");
     const t = setTimeout(() => setState((s) => s === "loading" ? "failed" : s), 9000);
     return () => clearTimeout(t);
-  }, [project.id]);
+  }, [project.id, preview]);
 
   return (
     <div
@@ -177,17 +206,17 @@ function IPhone({ project }: { project: Project & { iframeSrc?: string } }) {
       <div className="absolute left-1/2 top-3 z-20 h-5 w-14 -translate-x-1/2 rounded-full bg-black" />
       {/* Screen — iframe renders at 390px (iPhone width) then scales to 138px */}
       <div className="absolute inset-[5px] overflow-hidden rounded-[30px] bg-black">
-        {state === "loading" && (
+        {preview && state === "loading" && (
           <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: "#0a0a14" }}>
             <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-white/50 animate-spin" />
           </div>
         )}
-        {state === "failed" ? (
+        {!preview || state === "failed" ? (
           <FallbackCard project={project} />
         ) : (
           <iframe
             key={project.id}
-            src={"iframeSrc" in project ? (project as any).iframeSrc : project.url}
+            src={preview}
             title={project.name + " mobile"}
             className="border-0"
             style={{
@@ -227,18 +256,36 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
           <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: project.color }}>
             {String(idx + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
           </span>
+          {project.demo && (
+            <span
+              className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+              style={{ borderColor: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.55)" }}
+            >
+              Demo
+            </span>
+          )}
         </div>
         <h3 className="text-3xl font-black tracking-tight text-white leading-none">{project.name}</h3>
         <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{project.desc}</p>
-        <a
-          href={project.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
-          style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
-        >
-          {project.url.replace("https://", "")} <ExternalLink className="h-3 w-3" />
-        </a>
+        {project.url ? (
+          <a
+            href={project.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
+            style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
+          >
+            {project.url.replace("https://", "")} <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : (
+          // Nothing to link to, so nothing that looks like a link.
+          <p
+            className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold"
+            style={{ borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.4)" }}
+          >
+            Demo build &middot; not a live site
+          </p>
+        )}
       </motion.div>
     </AnimatePresence>
   );
