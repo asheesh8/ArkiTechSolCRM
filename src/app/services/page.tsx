@@ -4,7 +4,6 @@ import { ArrowRight } from "lucide-react";
 import { services } from "@/lib/services-content";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { ArkiCompanion } from "@/components/mascot/arki-companion";
 
 export const metadata: Metadata = {
   title: "Services — ArkiTech Solutions",
@@ -17,18 +16,15 @@ export default function ServicesIndex() {
       <SiteNav />
 
       <section className="mx-auto max-w-7xl px-6 pb-20 pt-40">
-        <div className="flex flex-wrap items-end justify-between gap-10">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">What we do</p>
-            <h1 className="mt-4 max-w-2xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
-              Five things, done properly.
-            </h1>
-            <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white/50">
-              We don&apos;t sell a package and retrofit your business into it. Pick the piece you actually need — most
-              people start with one and add the next when it earns its place.
-            </p>
-          </div>
-          <ArkiCompanion mood="point" className="hidden h-40 w-40 lg:block" label="Arki, pointing at the service list" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">What we do</p>
+          <h1 className="mt-4 max-w-2xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+            Five things, done properly.
+          </h1>
+          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white/50">
+            We don&apos;t sell a package and retrofit your business into it. Pick the piece you actually need — most
+            people start with one and add the next when it earns its place.
+          </p>
         </div>
 
         <div className="mt-16 grid gap-5 md:grid-cols-2">

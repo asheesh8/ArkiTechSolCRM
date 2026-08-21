@@ -12,13 +12,11 @@ import { CallbackWidget } from "@/components/landing/callback-widget";
 import { CookieNotice } from "@/components/landing/cookie-notice";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { currentSeason } from "@/lib/season";
 
 export default function Home() {
   const [contactOpen, setContactOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.25 });
-  const season = currentSeason();
 
   useEffect(() => {
     fetch("/api/track", {
@@ -50,7 +48,7 @@ export default function Home() {
 
       <ClosingSections onStartProject={() => setContactOpen(true)} />
 
-      <SiteFooter season={season} />
+      <SiteFooter />
     </main>
   );
 }

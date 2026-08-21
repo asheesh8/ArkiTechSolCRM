@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { services } from "@/lib/services-content";
-import { ArkiCompanion } from "@/components/mascot/arki-companion";
-import type { Season } from "@/components/mascot/arki-mascot";
 import { FooterLogo } from "./footer-logo";
 
 const COMPANY = [
@@ -12,8 +10,7 @@ const COMPANY = [
   { href: "/#team", label: "Team" },
 ];
 
-/** Arki clocks off down here. The sleep mood is the whole joke — don't remove it. */
-export function SiteFooter({ season = "none" }: { season?: Season }) {
+export function SiteFooter() {
   return (
     <footer className="relative border-t border-white/[0.06] bg-[#08080f] px-6 pb-10 pt-20">
       <div className="pointer-events-none absolute -top-px left-1/2 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
@@ -25,7 +22,6 @@ export function SiteFooter({ season = "none" }: { season?: Season }) {
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/40">
               Websites, automations, and the systems behind them — built by hand in Burlington, Vermont.
             </p>
-            <ArkiCompanion mood="sleep" season={season} className="mt-6 h-28 w-28 opacity-70" label="Arki, asleep" />
           </div>
 
           <div>

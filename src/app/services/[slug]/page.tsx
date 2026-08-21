@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { getService, services } from "@/lib/services-content";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { ArkiCompanion } from "@/components/mascot/arki-companion";
 
 export function generateStaticParams() {
   return services.map((service) => ({ slug: service.slug }));
@@ -34,13 +33,10 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           <ArrowLeft size={15} /> All services
         </Link>
 
-        <div className="mt-8 flex flex-wrap items-start justify-between gap-8">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">{service.tagline}</p>
-            <h1 className="mt-4 text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">{service.name}</h1>
-            <p className="mt-6 text-lg leading-relaxed text-white/55">{service.summary}</p>
-          </div>
-          <ArkiCompanion mood="wave" className="hidden h-36 w-36 shrink-0 sm:block" label={`Arki waving beside ${service.name}`} />
+        <div className="mt-8 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">{service.tagline}</p>
+          <h1 className="mt-4 text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">{service.name}</h1>
+          <p className="mt-6 text-lg leading-relaxed text-white/55">{service.summary}</p>
         </div>
 
         <ul className="mt-14 grid gap-3 sm:grid-cols-2">

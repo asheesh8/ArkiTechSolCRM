@@ -123,9 +123,6 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
           <a href="tel:+18023103749" className="rounded-lg px-3 py-2 transition hover:text-white">Call us</a>
         </div>
 
-        {/* Deliberately not a PeekButton. The nav is pinned to the top of the viewport, so
-            there is no headroom above it for Arki to rise into — he'd be clipped off-screen.
-            He lives on in-page CTAs, which have space above them. */}
         <button
           type="button"
           onClick={onStartProject}

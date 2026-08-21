@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { getPost, services } from "@/lib/services-content";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { PeekButton } from "@/components/mascot/peek-button";
 
 export function generateStaticParams() {
   return services.map((service) => ({ slug: service.post.slug }));
@@ -60,7 +59,12 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
         <div className="mt-20 flex flex-col items-start gap-5">
           <p className="text-lg text-white/60">Want this looked at for your business?</p>
-          <PeekButton side="left" className="bg-white text-[#0c0c18] hover:bg-white/90">Get a quote</PeekButton>
+          <a
+            href="tel:+18023103749"
+            className="rounded-full bg-white px-7 py-3 text-sm font-semibold tracking-tight text-[#0c0c18] transition hover:bg-white/90 active:scale-[0.98]"
+          >
+            Get a quote
+          </a>
         </div>
       </article>
 
