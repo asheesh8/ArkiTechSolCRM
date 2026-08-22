@@ -12,7 +12,7 @@ const WORDS = ["websites.", "platforms.", "automations.", "portals.", "stores.",
 /** The spec strip along the bottom edge. Facts, set like a colophon. */
 const FACTS = [
   { label: "Based", value: "Burlington, VT" },
-  { label: "Founded", value: "2024" },
+  { label: "Founded", value: "July 2026" },
   { label: "Practice", value: "Design & engineering" },
   { label: "Engagements", value: "Project & retained" },
 ];

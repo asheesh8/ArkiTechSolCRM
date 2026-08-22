@@ -123,6 +123,28 @@ export function ServiceMap() {
               role="img"
               aria-label="Map of northern Vermont from Lake Champlain to Stowe, marking the towns we serve."
             >
+              <defs>
+                {/* The two ridge fills are closed polygons, so their left ends
+                    are vertical cuts — straight down from the first ridge point
+                    to the bottom edge at x=300 and x=292. That reads as a seam
+                    down the middle of the band, as though the mountains had
+                    been trimmed with scissors.
+
+                    Fading the whole group out across that span dissolves the
+                    cut instead of hiding it. The ridge line itself does not
+                    move: it is real terrain, Mount Mansfield included, and the
+                    projection is the one thing on this map that has to stay
+                    honest. Masking the stroke along with the fills also takes
+                    care of the ridge outline, which otherwise began in mid-air
+                    at the same x. */}
+                <linearGradient id="ridge-fade" gradientUnits="userSpaceOnUse" x1="284" y1="0" x2="374" y2="0">
+                  <stop offset="0" stopColor="#fff" stopOpacity="0" />
+                  <stop offset="1" stopColor="#fff" stopOpacity="1" />
+                </linearGradient>
+                <mask id="ridge-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="396">
+                  <rect x="0" y="0" width="600" height="396" fill="url(#ridge-fade)" />
+                </mask>
+              </defs>
               {/* Lake Champlain */}
               <path d={LAKE} fill="rgba(10,10,14,0.06)" />
               <path d={LAKE} fill="none" stroke="var(--rule)" strokeWidth="1.2" />
@@ -134,14 +156,16 @@ export function ServiceMap() {
               </text>
 
               {/* Green Mountains */}
-              <path d={RIDGE_BACK} fill="rgba(10,10,14,0.035)" />
-              <path d={RIDGE_FRONT} fill="rgba(10,10,14,0.055)" />
-              <path
-                d={RIDGE_FRONT.replace(/ L600,396 L292,396 Z$/, "")}
-                fill="none"
-                stroke="var(--rule)"
-                strokeWidth="1.2"
-              />
+              <g mask="url(#ridge-mask)">
+                <path d={RIDGE_BACK} fill="rgba(10,10,14,0.035)" />
+                <path d={RIDGE_FRONT} fill="rgba(10,10,14,0.055)" />
+                <path
+                  d={RIDGE_FRONT.replace(/ L600,396 L292,396 Z$/, "")}
+                  fill="none"
+                  stroke="var(--rule)"
+                  strokeWidth="1.2"
+                />
+              </g>
               <text x="448.7" y="122" textAnchor="middle" fill="var(--dim)" style={{ fontSize: 10, letterSpacing: "0.12em" }}>
                 MT MANSFIELD
               </text>
