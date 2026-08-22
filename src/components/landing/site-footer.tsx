@@ -5,6 +5,7 @@ import { FooterLogo } from "./footer-logo";
 const COMPANY = [
   { href: "/services", label: "All services" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/faq", label: "FAQ" },
   { href: "/blog", label: "Blog" },
   { href: "/#showcase", label: "Work" },
   { href: "/#team", label: "Team" },

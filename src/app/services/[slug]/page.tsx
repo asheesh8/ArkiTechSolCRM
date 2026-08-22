@@ -8,6 +8,7 @@ import { Reveal } from "@/components/landing/reveal";
 import { PageSpeedScores } from "@/components/landing/pagespeed-scores";
 import { Integrations } from "@/components/landing/integrations";
 import { MissedCallCalculator } from "@/components/landing/missed-call-calculator";
+import { SpeedGuarantee } from "@/components/landing/speed-guarantee";
 import { formatMoney, getServicePrice } from "@/lib/pricing";
 
 // Prices are read from the database, so these pages revalidate rather than
@@ -100,6 +101,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           the audit we run, the stack we connect, the money the phone is
           leaking. */}
       {service.slug === "brand-seo" ? <PageSpeedScores /> : null}
+      {service.slug === "websites" ? <SpeedGuarantee /> : null}
       {service.slug === "automations" ? <Integrations /> : null}
       {service.slug === "ai-receptionist" ? <MissedCallCalculator /> : null}
 

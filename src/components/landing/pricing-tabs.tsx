@@ -117,7 +117,7 @@ export function PricingTabs({ plans }: { plans: PricingPlan[] }) {
                 href="/#contact"
                 className={`btn mt-8 w-full ${plan.featured ? "btn-solid" : "btn-outline"}`}
               >
-                Book a call
+                Book a free call
               </Link>
             </article>
           </Reveal>

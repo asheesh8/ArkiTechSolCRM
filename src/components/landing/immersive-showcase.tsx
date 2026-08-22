@@ -9,7 +9,9 @@ type Project = {
   desc: string;
   color: string;
   accent: string;
-  /** Where the demo is deployed. Absent while a build has no live preview. */
+  /** A paying client's live site, or a build we made to show the work. */
+  kind: "client" | "demo";
+  /** Where it is deployed. Absent while a build has no live preview. */
   url?: string;
   /** What the device frames show. Falls back to `url`. */
   iframeSrc?: string;
@@ -23,10 +25,10 @@ const PROJECTS: Project[] = [
   // The deploy still lives on the old black-sheep-property-mgmt subdomain, but
   // the client brands itself Black Sheep Landscaping on every page of the site,
   // so that is the name shown here.
-  { id: "blacksheep", name: "Black Sheep Landscaping", desc: "Landscaping & seasonal property care", url: "https://black-sheep-property-mgmt.vercel.app", color: "#f59e0b", accent: "#b45309" },
-  { id: "bible",      name: "Village Server Initiative", desc: "Community & nonprofit outreach", url: "https://villageservers.org", color: "#c084fc", accent: "#9333ea" },
-  { id: "bb",         name: "BB Open Box", desc: "E-commerce & product showcase", url: "https://bb-openbox.vercel.app", iframeSrc: "https://bb-openbox.vercel.app/inventory", color: "#3b82f6", accent: "#1d4ed8" },
-  { id: "ashish",     name: "Ashish Portfolio", desc: "Personal brand & resume", url: "https://ashish.network", color: "#e2e8f0", accent: "#94a3b8" },
+  { id: "blacksheep", name: "Black Sheep Landscaping", desc: "Landscaping & seasonal property care", kind: "client", url: "https://black-sheep-property-mgmt.vercel.app", color: "#f59e0b", accent: "#b45309" },
+  { id: "bible",      name: "Village Server Initiative", desc: "Community & nonprofit outreach", kind: "demo", url: "https://villageservers.org", color: "#c084fc", accent: "#9333ea" },
+  { id: "bb",         name: "BB Open Box", desc: "E-commerce & product showcase", kind: "demo", url: "https://bb-openbox.vercel.app", iframeSrc: "https://bb-openbox.vercel.app/inventory", color: "#3b82f6", accent: "#1d4ed8" },
+  { id: "ashish",     name: "Ashish Portfolio", desc: "Personal brand & resume", kind: "demo", url: "https://ashish.network", color: "#e2e8f0", accent: "#94a3b8" },
 ];
 
 const AUTOPLAY_MS = 4500;
@@ -241,8 +243,15 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
           <span className="figure-index" style={{ color: "var(--violet-lift)" }}>
             {String(idx + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
           </span>
-          <span className="mono border px-2 py-1" style={{ borderColor: "var(--rule)", color: "var(--dim)", fontSize: "0.55rem" }}>
-            Demo build
+          <span
+            className="mono border px-2 py-1"
+            style={{
+              borderColor: project.kind === "client" ? "var(--violet-lift)" : "var(--rule)",
+              color: project.kind === "client" ? "var(--violet-lift)" : "var(--dim)",
+              fontSize: "0.55rem",
+            }}
+          >
+            {project.kind === "client" ? "Live client" : "Demo build"}
           </span>
         </div>
 
@@ -304,19 +313,20 @@ export function ImmersiveShowcase() {
         {/* ── Section label ── */}
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="eyebrow">All demo builds</p>
+            <p className="eyebrow">Selected work</p>
             <h2 className="d2 max-w-[12ch]">
               Every pixel.{" "}
-              <span style={{ color: "rgba(236,233,227,0.56)" }}>Every one a demo.</span>
+              <span style={{ color: "rgba(236,233,227,0.56)" }}>Built here, start to finish.</span>
             </h2>
           </div>
-          {/* The disclaimer is load-bearing, so it is set as a note on a rule
+          {/* Which is which is load-bearing, so it is set as a note on a rule
               rather than hidden inside a pill. */}
           <p
-            className="max-w-[38ch] border-l pl-5 text-sm lg:max-w-[32ch]"
+            className="max-w-[40ch] border-l pl-5 text-sm lg:max-w-[34ch]"
             style={{ borderColor: "var(--rule)", color: "var(--dim)", lineHeight: 1.6 }}
           >
-            Every project here is a demo we designed and built ourselves — none are live client sites.
+            Black Sheep Landscaping is a live client site. The other three are demos we designed and
+            built ourselves, so you can judge the work without booking a call first.
           </p>
         </div>
 
@@ -422,7 +432,14 @@ export function ImmersiveShowcase() {
                 <span className="figure-index" style={{ color: active ? "var(--violet-lift)" : "var(--dim)" }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="d3" style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.6rem)" }}>{p.name}</span>
+                <span className="d3" style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.6rem)" }}>
+                  {p.name}
+                  {p.kind === "client" ? (
+                    <span className="mono ml-3 align-middle" style={{ color: "var(--violet-lift)", fontSize: "0.5rem" }}>
+                      Live client
+                    </span>
+                  ) : null}
+                </span>
                 <span className="mono hidden sm:block" style={{ color: "var(--dim)" }}>{p.desc}</span>
               </button>
             );

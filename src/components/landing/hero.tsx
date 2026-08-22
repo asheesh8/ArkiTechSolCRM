@@ -173,7 +173,7 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
 
             <div className="flex flex-wrap items-center gap-3">
               <button type="button" onClick={onStartProject} className="btn btn-solid">
-                Start a project
+                Book a free call
               </button>
               <a href="#showcase" className="btn btn-outline">
                 See the work

@@ -56,7 +56,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
           <div className="mt-20 border-t pt-12" style={{ borderColor: "var(--rule)" }}>
             <p className="d3">Want this looked at for your business?</p>
-            <Link href="/#contact" className="btn btn-solid mt-8">Get a quote</Link>
+            <Link href="/#contact" className="btn btn-solid mt-8">Book a free call</Link>
           </div>
         </div>
       </article>

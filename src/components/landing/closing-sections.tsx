@@ -29,13 +29,20 @@ export function ClosingSections({ onStartProject }: { onStartProject: () => void
               keeping up. We&apos;ll help shape the clearest way forward.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={onStartProject} className="btn btn-solid">
-                Start a project
-              </button>
-              <a href="tel:+18023103749" className="btn btn-outline">
-                Call (802) 310-3749
-              </a>
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" onClick={onStartProject} className="btn btn-solid">
+                  Book a free call
+                </button>
+                <a href="tel:+18023103749" className="btn btn-outline">
+                  Call (802) 310-3749
+                </a>
+              </div>
+              {/* The reassurance belongs next to the button, not in the
+                  paragraph above it — this is the moment someone hesitates. */}
+              <p className="mono mt-4" style={{ color: "var(--dim)", fontSize: "0.56rem" }}>
+                No obligation · 20 minutes · we&apos;ll tell you if we&apos;re not the right fit
+              </p>
             </div>
           </div>
         </Reveal>

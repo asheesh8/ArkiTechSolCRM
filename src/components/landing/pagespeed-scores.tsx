@@ -1,31 +1,6 @@
 import Image from "next/image";
+import { AUDIT } from "@/lib/pagespeed-audit";
 import { Reveal } from "./reveal";
-
-/**
- * Our own PageSpeed Insights result, shown as the demo of the audit work.
- *
- * Both the screenshot and the figures are REAL and must stay that way — the
- * whole argument of the section is that you don't have to take our word for
- * it, which is worth nothing the moment the numbers become aspirational.
- * `scripts/capture-pagespeed.mjs` re-shoots the gauge row; update AUDIT here to
- * match whenever you do.
- *
- * The CRM runs this same audit against client sites via /api/pagespeed, which
- * needs GOOGLE_PAGESPEED_API_KEY set.
- */
-const AUDIT = {
-  url: "arkitech-sol.com",
-  strategy: "Mobile",
-  measuredOn: "21 August 2026",
-  report: "https://pagespeed.web.dev/analysis/https-arkitech-sol-com/76dri7u07s?form_factor=mobile",
-  shot: "/pagespeed-arkitech-mobile.png",
-  scores: [
-    { label: "Performance", value: 92 },
-    { label: "Accessibility", value: 97 },
-    { label: "Best Practices", value: 100 },
-    { label: "SEO", value: 100 },
-  ],
-} as const;
 
 export function PageSpeedScores() {
   return (

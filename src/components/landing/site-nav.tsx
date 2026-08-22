@@ -129,6 +129,7 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
           </Dropdown>
 
           <Link href="/pricing" className="nav-link">Pricing</Link>
+          <Link href="/faq" className="nav-link">FAQ</Link>
           <Link href="/blog" className="nav-link">Blog</Link>
           <a href="tel:+18023103749" className="nav-link">Call us</a>
         </div>
@@ -139,7 +140,7 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
           className="btn btn-outline hidden lg:inline-flex"
           style={{ minHeight: "2.85rem", padding: "0.55rem 1.15rem", borderColor: "rgba(236,233,227,0.4)" }}
         >
-          Get a quote
+          Book a free call
         </button>
 
         {/* mobile trigger — a hamburger drawn in rules, not an icon font */}
@@ -202,7 +203,7 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
 
           <p className="eyebrow mt-9">Studio</p>
           <div className="ledger" style={{ borderTopColor: "var(--rule)" }}>
-            {[...ABOUT_LINKS, { href: "/pricing", label: "Pricing" }, { href: "/blog", label: "Blog" }].map((link) => (
+            {[...ABOUT_LINKS, { href: "/pricing", label: "Pricing" }, { href: "/faq", label: "FAQ" }, { href: "/blog", label: "Blog" }].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -221,7 +222,7 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
             onClick={() => { setMobileOpen(false); onStartProject?.(); }}
             className="btn btn-solid mt-8 w-full"
           >
-            Get a quote
+            Book a free call
           </button>
         </div>
       ) : null}

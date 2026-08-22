@@ -191,3 +191,47 @@ function paymentConfirmHtml(opts: { clientName: string; amount: number; descript
 <p>Your receipt is in your client portal. We appreciate your business and are hard at work on your project.</p>
 `);
 }
+
+/**
+ * The missed-call breakdown, emailed to whoever ran the numbers.
+ *
+ * Deliberately reports back exactly the figures they set rather than a generic
+ * brochure — the whole reason they handed over an address is that the number
+ * they saw was about their business, not ours.
+ */
+export async function sendMissedCallReport(opts: {
+  to: string;
+  name: string;
+  missedPerWeek: number;
+  averageJob: string;
+  closeRate: number;
+  weekly: string;
+  monthly: string;
+  yearly: string;
+}) {
+  return send({
+    from: FROM,
+    to: opts.to,
+    subject: `${opts.name}, here's what those missed calls add up to`,
+    html: base(`
+<h1>${opts.weekly} a week</h1>
+<p>You ran the numbers on our site. Here they are again, so you have them.</p>
+<div class="info">
+  <p><strong>Calls missed a week:</strong> ${opts.missedPerWeek}</p>
+  <p style="margin-top:8px"><strong>Average job value:</strong> ${opts.averageJob}</p>
+  <p style="margin-top:8px"><strong>Share who'd have booked:</strong> ${opts.closeRate}%</p>
+</div>
+<div class="info">
+  <p><strong>Every week:</strong> ${opts.weekly}</p>
+  <p style="margin-top:8px"><strong>Every month:</strong> ${opts.monthly}</p>
+  <p style="margin-top:8px"><strong>Every year:</strong> ${opts.yearly}</p>
+</div>
+<p>These are your figures, not ours — change any of them and the shape holds. The point is that
+the loss doesn't arrive as a bill. It arrives as a slightly quieter month.</p>
+<p>If you want to talk about answering those calls, reply here or ring
+<strong>(802) 310-3749</strong>. Twenty minutes, no obligation, and we'll tell you if we're not the
+right fit.</p>
+<p>— Ashish, ArkiTech Solutions</p>
+`),
+  });
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useMotionValueEvent, useReducedMotion, useSpring } from "framer-motion";
 import { Reveal } from "./reveal";
 
@@ -175,6 +175,8 @@ export function MissedCallCalculator() {
                 </div>
               </dl>
             </div>
+
+            <ReportForm missedPerWeek={missedPerWeek} averageJob={averageJob} closeRate={closeRate} />
           </Reveal>
         </div>
 
@@ -188,5 +190,121 @@ export function MissedCallCalculator() {
         </Reveal>
       </div>
     </section>
+  );
+}
+
+const FIELD =
+  "w-full border bg-transparent px-3.5 py-3 text-[0.95rem] outline-none transition placeholder:text-[rgba(236,233,227,0.32)] focus:border-[var(--violet-lift)]";
+
+/**
+ * Emails the visitor their own figures, and files them as a lead.
+ *
+ * Sits directly under the number rather than at the bottom of the page: the
+ * moment someone is willing to trade an address is the moment they've just
+ * watched their own losses add up, not four paragraphs later.
+ */
+function ReportForm({
+  missedPerWeek, averageJob, closeRate,
+}: {
+  missedPerWeek: number;
+  averageJob: number;
+  closeRate: number;
+}) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [business, setBusiness] = useState("");
+  const [company, setCompany] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setStatus("sending");
+    setMessage(null);
+
+    try {
+      const res = await fetch("/api/missed-call-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, business, company, missedPerWeek, averageJob, closeRate }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "That didn't send.");
+      setStatus("sent");
+    } catch (err) {
+      setStatus("error");
+      setMessage(err instanceof Error ? err.message : "That didn't send.");
+    }
+  }
+
+  if (status === "sent") {
+    return (
+      <div className="mt-4 border p-8" style={{ borderColor: "var(--rule)" }}>
+        <p className="mono" style={{ color: "var(--violet-lift)", fontSize: "0.58rem" }}>On its way</p>
+        <p className="mt-4" style={{ lineHeight: 1.7 }}>
+          Sent to <strong>{email}</strong> — your numbers, not a brochure. If it hasn&apos;t landed in
+          a couple of minutes, check spam and then ring us.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-4 border p-7 sm:p-8" style={{ borderColor: "var(--rule)" }}>
+      <p className="mono" style={{ color: "var(--dim)", fontSize: "0.58rem" }}>Want these in writing?</p>
+      <p className="mt-3.5 text-sm" style={{ color: "var(--dim)", lineHeight: 1.65 }}>
+        We&apos;ll email you this breakdown. No sequence, no newsletter — one message with your
+        figures in it.
+      </p>
+
+      <div className="mt-6 flex flex-col gap-3">
+        <input
+          className={FIELD}
+          style={{ borderColor: "var(--rule)", color: "var(--bone)" }}
+          placeholder="Your name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          aria-label="Your name"
+        />
+        <input
+          className={FIELD}
+          style={{ borderColor: "var(--rule)", color: "var(--bone)" }}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          aria-label="Email"
+        />
+        <input
+          className={FIELD}
+          style={{ borderColor: "var(--rule)", color: "var(--bone)" }}
+          placeholder="Business name (optional)"
+          value={business}
+          onChange={(e) => setBusiness(e.target.value)}
+          aria-label="Business name"
+        />
+
+        {/* Honeypot. Off-screen rather than hidden so bots that skip
+            display:none fields still fill it in. */}
+        <input
+          className="absolute left-[-9999px] h-px w-px"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+        />
+      </div>
+
+      <button type="submit" className="btn btn-solid mt-5 w-full" disabled={status === "sending"}>
+        {status === "sending" ? "Sending…" : "Email me the breakdown"}
+      </button>
+
+      {message ? (
+        <p className="mono mt-4" style={{ color: "#ffb4b4", fontSize: "0.56rem" }}>{message}</p>
+      ) : null}
+    </form>
   );
 }
