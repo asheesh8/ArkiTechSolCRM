@@ -862,3 +862,37 @@ textarea {
   }
 
 }
+
+/* ─── Link-buttons: unlayered on purpose ─────────────────────────────────────
+   The base `a { color: inherit }` near the top of this file is unlayered, and
+   an unlayered rule beats every rule inside a cascade layer regardless of
+   specificity. So `.btn-solid`, which lives in @layer components above, lost
+   its colour on any <a> — painting the label in the inherited text colour and
+   vanishing it into the button's own background. <button> was unaffected,
+   which is what made it look like only some buttons were broken.
+
+   These few declarations sit outside the layer so they can answer the base
+   reset on its own terms. */
+.site a.btn-solid {
+  color: var(--solid-fg);
+}
+
+.site a.btn-solid:hover {
+  color: var(--solid-bg);
+}
+
+.site a.btn-violet {
+  color: #fff;
+}
+
+.site a.btn-violet:hover {
+  color: var(--violet-lift);
+}
+
+.site a.nav-link {
+  color: rgba(236, 233, 227, 0.62);
+}
+
+.site a.nav-link:hover {
+  color: #ece9e3;
+}
