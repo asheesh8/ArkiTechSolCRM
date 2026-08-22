@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { getPost, services } from "@/lib/services-content";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { PeekButton } from "@/components/mascot/peek-button";
 
 export function generateStaticParams() {
   return services.map((service) => ({ slug: service.post.slug }));
@@ -25,42 +23,41 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
   const { service, post } = found;
 
   return (
-    <main className="min-h-screen bg-[#0c0c18] text-white">
+    <main className="site min-h-screen">
       <SiteNav />
 
-      <article className="mx-auto max-w-2xl px-6 pb-20 pt-40">
-        <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-white/40 transition hover:text-white">
-          <ArrowLeft size={15} /> Blog
-        </Link>
-
-        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">
-          {service.name} · {post.readingTime}
-        </p>
-        <h1 className="mt-4 text-4xl font-semibold leading-[1.12] tracking-tight sm:text-5xl">{post.title}</h1>
-
-        <div className="mt-10 space-y-6">
-          {post.body.map((paragraph) => (
-            <p key={paragraph.slice(0, 40)} className="text-[17px] leading-[1.75] text-white/65">
-              {paragraph}
-            </p>
-          ))}
-        </div>
-
-        <div className="mt-16 rounded-3xl border border-white/10 bg-white/[0.02] p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">Related service</p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight">{service.name}</h2>
-          <p className="mt-3 text-sm leading-relaxed text-white/50">{service.summary}</p>
-          <Link
-            href={`/services/${service.slug}`}
-            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-white/75 transition hover:text-white"
-          >
-            See what&apos;s included <ArrowRight size={15} />
+      <article className="band-ink site-section pt-[calc(var(--nav-h)+4rem)]">
+        <div className="mx-auto max-w-2xl">
+          <Link href="/blog" className="arrow-link" style={{ color: "var(--dim)" }}>
+            <span aria-hidden="true">←</span> Blog
           </Link>
-        </div>
 
-        <div className="mt-20 flex flex-col items-start gap-5">
-          <p className="text-lg text-white/60">Want this looked at for your business?</p>
-          <PeekButton side="left" className="bg-white text-[#0c0c18] hover:bg-white/90">Get a quote</PeekButton>
+          <p className="eyebrow mt-12">{service.name} · {post.readingTime}</p>
+          <h1 className="d2" style={{ fontSize: "clamp(2.4rem, 5.5vw, 4.25rem)" }}>{post.title}</h1>
+
+          {/* Long-form measure and a looser leading than the rest of the site —
+              this is the one place someone reads more than a paragraph. */}
+          <div className="mt-14 space-y-7">
+            {post.body.map((paragraph) => (
+              <p key={paragraph.slice(0, 40)} className="text-[1.06rem]" style={{ lineHeight: 1.78, color: "rgba(236,233,227,0.72)" }}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
+
+          <div className="mt-20 border p-8" style={{ borderColor: "var(--rule)" }}>
+            <p className="eyebrow">Related service</p>
+            <h2 className="d3">{service.name}</h2>
+            <p className="mt-4 text-sm" style={{ color: "var(--dim)", lineHeight: 1.7 }}>{service.summary}</p>
+            <Link href={`/services/${service.slug}`} className="arrow-link mt-7" style={{ color: "var(--violet-lift)" }}>
+              See what&apos;s included <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+
+          <div className="mt-20 border-t pt-12" style={{ borderColor: "var(--rule)" }}>
+            <p className="d3">Want this looked at for your business?</p>
+            <Link href="/#contact" className="btn btn-solid mt-8">Get a quote</Link>
+          </div>
         </div>
       </article>
 

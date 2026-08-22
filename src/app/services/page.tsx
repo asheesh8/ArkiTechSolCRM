@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { services } from "@/lib/services-content";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { ArkiCompanion } from "@/components/mascot/arki-companion";
+import { Reveal } from "@/components/landing/reveal";
 
 export const metadata: Metadata = {
   title: "Services — ArkiTech Solutions",
@@ -13,42 +12,44 @@ export const metadata: Metadata = {
 
 export default function ServicesIndex() {
   return (
-    <main className="min-h-screen bg-[#0c0c18] text-white">
+    <main className="site min-h-screen">
       <SiteNav />
 
-      <section className="mx-auto max-w-7xl px-6 pb-20 pt-40">
-        <div className="flex flex-wrap items-end justify-between gap-10">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">What we do</p>
-            <h1 className="mt-4 max-w-2xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
-              Five things, done properly.
-            </h1>
-            <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white/50">
-              We don&apos;t sell a package and retrofit your business into it. Pick the piece you actually need — most
-              people start with one and add the next when it earns its place.
+      <section className="band-ink site-section pt-[calc(var(--nav-h)+5rem)]">
+        <div className="site-shell">
+          <Reveal>
+            <p className="eyebrow">What we do</p>
+            <h1 className="d1 max-w-[12ch]">Five things, done properly.</h1>
+            <p className="lede mt-10 max-w-[52ch]">
+              We don&apos;t sell a package and retrofit your business into it. Pick the piece you
+              actually need — most people start with one and add the next when it earns its place.
             </p>
-          </div>
-          <ArkiCompanion mood="point" className="hidden h-40 w-40 lg:block" label="Arki, pointing at the service list" />
-        </div>
+          </Reveal>
 
-        <div className="mt-16 grid gap-5 md:grid-cols-2">
-          {services.map((service, i) => (
-            <Link
-              key={service.slug}
-              href={`/services/${service.slug}`}
-              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] p-8 transition hover:border-violet-400/40 hover:bg-white/[0.04]"
-            >
-              <span className="text-xs font-semibold tabular-nums text-violet-300/70">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h2 className="mt-4 text-2xl font-semibold tracking-tight">{service.name}</h2>
-              <p className="mt-1 text-sm text-violet-200/70">{service.tagline}</p>
-              <p className="mt-4 text-sm leading-relaxed text-white/45">{service.summary}</p>
-              <span className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition group-hover:text-white">
-                Read more <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
-              </span>
-            </Link>
-          ))}
+          {/* A ledger, not a grid of cards. Five rows read as a considered
+              practice; five rounded boxes read as a pricing table. */}
+          <div className="ledger mt-20">
+            {services.map((service, i) => (
+              <Reveal key={service.slug} delay={i * 70}>
+                <Link href={`/services/${service.slug}`} className="ledger-row">
+                  <span className="figure-index">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="min-w-0">
+                    <span className="d3 block">{service.name}</span>
+                    <span className="mono mt-2.5 block" style={{ color: "var(--violet-lift)" }}>
+                      {service.tagline}
+                    </span>
+                    <span
+                      className="mt-4 block max-w-[58ch] text-sm"
+                      style={{ color: "var(--dim)", lineHeight: 1.65 }}
+                    >
+                      {service.summary}
+                    </span>
+                  </span>
+                  <span className="ledger-row__arrow self-center text-lg" aria-hidden="true">↗</span>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 

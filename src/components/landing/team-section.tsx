@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { Reveal } from "./reveal";
+import { TeamFlag, type Country } from "./flags";
 
 const TEAM = [
   {
@@ -9,8 +9,7 @@ const TEAM = [
     role: "CEO & Fullstack Designer",
     bio: "The architect behind every build. Ashish handles product vision, engineering, and design — making sure every site is fast, beautiful, and built to convert.",
     initials: "AS",
-    gradient: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
-    glow: "#7c3aed",
+    country: "nepal" as Country,
     tags: ["Fullstack Dev", "UI/UX", "Product"],
   },
   {
@@ -18,106 +17,81 @@ const TEAM = [
     role: "Director of Client Relations",
     bio: "Tei is the voice of ArkiTech — building trust with every call, nurturing long-term client relationships, and making sure every business we work with feels like a priority.",
     initials: "TA",
-    gradient: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
-    glow: "#059669",
+    country: "kiribati" as Country,
     tags: ["Client Success", "Sales", "Relations", "Consultant"],
   },
 ] as const;
 
+/**
+ * The team, set as a masthead rather than a card grid.
+ *
+ * The initials were gradient-filled rounded squares with a coloured drop
+ * shadow; they are now just large condensed type on a rule, which is both
+ * quieter and considerably harder to mistake for a template.
+ */
 export function TeamSection() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-10%" });
-
   return (
-    <section ref={ref} className="relative overflow-hidden py-20 px-6 lg:py-32" style={{ background: "#0e0e1c" }}>
-      {/* Subtle grid */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.025]"
-        style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)", backgroundSize: "80px 80px" }} />
+    <section id="team" className="band-raised site-section">
+      <div className="site-shell">
+        <Reveal>
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="eyebrow">The team</p>
+              <h2 className="d2 max-w-[15ch]">Built by people who actually give a dang.</h2>
+            </div>
+            <p className="lede lg:max-w-[30ch] lg:text-right">
+              A focused leadership team with a network built to scale around each engagement.
+            </p>
+          </div>
+        </Reveal>
 
-      <div className="relative mx-auto max-w-6xl">
-        {/* Label + heading */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-16 text-center"
-        >
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(168,85,247,0.6)" }}>The team</p>
-          <h2 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Built by people who<br />
-            <span style={{ background: "linear-gradient(135deg,#c4b5fd,#93c5fd)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              actually give a dang.
-            </span>
-          </h2>
-          <p className="mt-4 text-sm sm:text-base" style={{ color: "rgba(255,255,255,0.35)" }}>
-            A focused leadership team with a network built to scale around each engagement.
-          </p>
-        </motion.div>
-
-        {/* Cards */}
-        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+        <div className="ledger mt-16">
           {TEAM.map((person, i) => (
-            <motion.div
-              key={person.name}
-              initial={{ opacity: 0, y: 32 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-              className="group relative overflow-hidden rounded-2xl p-6 flex flex-col gap-5"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                boxShadow: `0 0 0 0 ${person.glow}00`,
-                transition: "box-shadow 0.4s ease, border-color 0.4s ease",
-              }}
-              whileHover={{ boxShadow: `0 0 60px ${person.glow}22` }}
-            >
-              {/* Glow accent top-left */}
-              <div className="pointer-events-none absolute -left-12 -top-12 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                style={{ background: `radial-gradient(circle, ${person.glow}30, transparent 70%)` }} />
-
-              {/* Avatar */}
-              <div className="flex items-end justify-between">
-                <div
-                  className="flex h-16 w-16 items-center justify-center rounded-2xl text-xl font-black text-white"
-                  style={{
-                    background: person.gradient,
-                    boxShadow: `0 8px 30px ${person.glow}50`,
-                  }}
-                >
-                  {person.initials}
-                </div>
-                {/* Number */}
-                <span className="font-mono text-5xl font-black leading-none" style={{ color: "rgba(255,255,255,0.04)" }}>
-                  0{i + 1}
-                </span>
-              </div>
-
-              {/* Info */}
-              <div>
-                <p className="text-lg font-bold text-white">{person.name}</p>
-                <p className="mt-0.5 text-sm font-medium" style={{ color: person.glow === "#7c3aed" ? "#a78bfa" : "#6ee7b7" }}>
-                  {person.role}
-                </p>
-              </div>
-
-              <p className="flex-1 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
-                {person.bio}
-              </p>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2">
-                {person.tags.map((tag) => (
+            <Reveal key={person.name} delay={i * 110}>
+              <article
+                className="grid gap-x-10 gap-y-6 border-b py-10 sm:grid-cols-[auto_1fr] sm:py-14"
+                style={{ borderColor: "var(--rule)" }}
+              >
+                <div className="flex items-start gap-5 sm:w-52 sm:flex-col sm:gap-3">
+                  {/* Home flag behind the initials — the one place on the site
+                      that carries colour outside the palette, which is the
+                      point of it. */}
+                  {/* The display size lives on the wrapper, not the letters:
+                      the flag is sized in `em`, so it has to resolve against
+                      the same font-size the initials are set at. */}
                   <span
-                    key={tag}
-                    className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide"
-                    style={{ background: `${person.glow}18`, color: `${person.glow}cc`, border: `1px solid ${person.glow}28` }}
+                    className="relative inline-flex isolate"
+                    style={{ fontSize: "clamp(3.5rem, 6vw, 5.5rem)" }}
                   >
-                    {tag}
+                    <TeamFlag country={person.country} />
+                    <span
+                      className="relative leading-[0.8]"
+                      style={{ fontStretch: "76%", fontWeight: 680, letterSpacing: "-0.06em" }}
+                    >
+                      {person.initials}
+                    </span>
                   </span>
-                ))}
-              </div>
+                  <span className="figure-index relative sm:mt-1">{String(i + 1).padStart(2, "0")}</span>
+                </div>
 
-            </motion.div>
+                <div>
+                  <h3 className="d3">{person.name}</h3>
+                  <p className="mono mt-2.5" style={{ color: "var(--violet-lift)" }}>{person.role}</p>
+
+                  <p className="mt-6 max-w-[54ch]" style={{ color: "var(--dim)", lineHeight: 1.7 }}>
+                    {person.bio}
+                  </p>
+
+                  <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2">
+                    {person.tags.map((tag) => (
+                      <li key={tag} className="mono" style={{ color: "var(--dim)", fontSize: "0.62rem" }}>
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            </Reveal>
           ))}
         </div>
       </div>

@@ -1,50 +1,89 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const WORDS = ["Websites", "Automations", "Brands", "Portals", "Stores", "Platforms"];
+const WORDS = ["websites.", "platforms.", "automations.", "portals.", "stores.", "systems."];
+
+/** The spec strip along the bottom edge. Facts, set like a colophon. */
+const FACTS = [
+  { label: "Based", value: "Burlington, VT" },
+  { label: "Founded", value: "2024" },
+  { label: "Practice", value: "Design & engineering" },
+  { label: "Engagements", value: "Project & retained" },
+];
 
 export function Hero({ onStartProject }: { onStartProject?: () => void }) {
   const wordRef = useRef<HTMLSpanElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
 
-  /* Cycling word */
+  /* Cycling word. Slower than a ticker on purpose — it should read as a list
+     being considered, not a slot machine. */
   useEffect(() => {
-    let idx = 0;
     const el = wordRef.current;
     if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let idx = 0;
     const interval = setInterval(() => {
       idx = (idx + 1) % WORDS.length;
       gsap.to(el, {
-        opacity: 0, y: -18, duration: 0.22, ease: "power2.in",
+        opacity: 0,
+        y: -14,
+        duration: 0.26,
+        ease: "power2.in",
         onComplete: () => {
           el.textContent = WORDS[idx];
-          gsap.fromTo(el, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.32, ease: "power3.out" });
+          gsap.fromTo(el, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.38, ease: "power3.out" });
         },
       });
-    }, 2200);
+    }, 2800);
+
     return () => clearInterval(interval);
   }, []);
 
-  /* Force video to load eagerly */
+  /* The footage is 3 MB and purely atmospheric, so it is not part of the
+     initial load at all. The poster carries the first paint; the video is
+     attached once the browser is idle, and skipped outright for anyone on
+     Data Saver, a 2G-class connection, or reduced motion — none of whom are
+     served by a decorative background clip.
+
+     Phones never get it. Three megabytes of decoration on a cellular
+     connection is a real cost to a real person, and the poster is visually
+     near-identical once the scrim and the greyscale are over it. */
   useEffect(() => {
-    videoRef.current?.load();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
+
+    const conn = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string };
+    }).connection;
+    if (conn?.saveData) return;
+    if (conn?.effectiveType && /^(slow-)?2g$/.test(conn.effectiveType)) return;
+
+    const attach = () => setVideoSrc("/hero-bg.mp4");
+    const idle = window.requestIdleCallback;
+    if (idle) {
+      const handle = idle(attach, { timeout: 3000 });
+      return () => window.cancelIdleCallback?.(handle);
+    }
+    const timer = window.setTimeout(attach, 1200);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  /* Scroll-driven effects */
+  /* Scrub the footage with scroll, and lift the content out as the next band
+     arrives. No fade-to-black overlay — the section below is solid ink and
+     meets this one on a hard edge, which is the point. */
   useEffect(() => {
     if (!heroRef.current) return;
 
     const ctx = gsap.context(() => {
-      // Scrub video currentTime with scroll — plays forward scrolling down, reverses scrolling up
       ScrollTrigger.create({
         trigger: heroRef.current,
         start: "top top",
@@ -58,17 +97,12 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
         },
       });
 
-      // Overlay + content driven separately
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: 1,
-        },
+      gsap.to(".hero-lift", {
+        y: -60,
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 1 },
       });
-      if (overlayRef.current) tl.to(overlayRef.current, { opacity: 1, ease: "none" }, 0);
-      if (contentRef.current) tl.to(contentRef.current, { opacity: 0, y: -50, ease: "none" }, 0);
     }, heroRef);
 
     return () => ctx.revert();
@@ -77,143 +111,100 @@ export function Hero({ onStartProject }: { onStartProject?: () => void }) {
   return (
     <section
       ref={heroRef}
-      className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden"
+      className="band-ink relative flex min-h-[100svh] flex-col justify-end overflow-hidden"
     >
-      {/* ── Video background ── */}
-      <div className="absolute inset-0 overflow-hidden" style={{ background: "linear-gradient(135deg, #0c0c18 0%, #1a0a2e 50%, #0c0c18 100%)" }}>
-        <video
-          ref={videoRef}
-          src="/hero-bg.mp4"
-          muted
-          playsInline
-          preload="auto"
-          onLoadedData={(e) => { (e.currentTarget as HTMLVideoElement).style.opacity = "1"; }}
-          className="absolute inset-0 h-full w-full object-cover will-change-transform"
-          style={{ transformOrigin: "center center", opacity: 0, transition: "opacity 0.8s ease" }}
+      <div className="absolute inset-0 bg-[#0a0a0e]">
+        {/* The poster is a 140 KB still of the same frame, so the band looks
+            identical before the clip arrives — and identical forever for the
+            visitors who never get it. */}
+        <Image
+          src="/hero-poster.jpg"
+          alt=""
+          aria-hidden="true"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+          style={{ filter: "grayscale(0.55) contrast(1.05) brightness(0.72)" }}
         />
-
-        {/* Subtle dark tint so text pops */}
-        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.22)" }} />
-
-        {/* Bottom gradient bleed into showcase */}
+        {videoSrc ? (
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            muted
+            playsInline
+            preload="auto"
+            onLoadedData={(e) => { (e.currentTarget as HTMLVideoElement).style.opacity = "1"; }}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{
+              opacity: 0,
+              transition: "opacity 1.2s ease",
+              // Pulled towards monochrome so the footage sits under the type as
+              // texture rather than competing with it for attention.
+              filter: "grayscale(0.55) contrast(1.05) brightness(0.72)",
+            }}
+          />
+        ) : null}
+        {/* One flat scrim. No vignette, no radial anything. */}
+        <div className="absolute inset-0" style={{ background: "rgba(10,10,14,0.52)" }} />
         <div
-          className="absolute bottom-0 left-0 right-0"
-          style={{
-            height: "40%",
-            background: "linear-gradient(to bottom, transparent 0%, rgba(12,12,24,0.6) 60%, #0c0c18 100%)",
-          }}
-        />
-
-        {/* Side vignettes */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%)",
-          }}
+          className="absolute inset-x-0 bottom-0 h-1/2"
+          style={{ background: "linear-gradient(to bottom, transparent, rgba(10,10,14,0.88))" }}
         />
       </div>
 
-      {/* ── Scroll overlay (darkens fully on scroll) ── */}
-      <div
-        ref={overlayRef}
-        className="pointer-events-none absolute inset-0 opacity-0"
-        style={{ background: "linear-gradient(to bottom, rgba(12,12,24,0.85) 0%, #0c0c18 100%)" }}
-      />
+      <div className="hero-lift relative z-10 w-full px-[var(--page-pad)] pb-14 pt-[var(--nav-h)]">
+        <div className="site-shell">
+          <p className="eyebrow">ArkiTech Solutions — Burlington, Vermont</p>
 
-      {/* ── Content ── */}
-      <div ref={contentRef} className="relative z-10 flex flex-col items-center gap-6 px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest backdrop-blur-sm"
-          style={{
-            borderColor: "rgba(255,255,255,0.18)",
-            background: "rgba(255,255,255,0.07)",
-            color: "rgba(255,255,255,0.8)",
-          }}
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-          ArkiTech Solutions · Burlington, VT
-        </motion.div>
+          <h1 className="d1 max-w-[16ch]">
+            We build
+            <br />
+            <span ref={wordRef} style={{ color: "var(--violet-lift)" }}>
+              {WORDS[0]}
+            </span>
+          </h1>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[clamp(52px,9vw,116px)] font-black leading-[0.9] tracking-tighter text-white"
-          style={{ textShadow: "0 4px 40px rgba(0,0,0,0.5)" }}
-        >
-          We Build<br />
-          <span
-            ref={wordRef}
-            style={{
-              background: "linear-gradient(135deg, #ffffff 0%, #c4b5fd 50%, #93c5fd 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            {WORDS[0]}
-          </span>
-        </motion.h1>
+          <div className="mt-10 flex flex-col gap-9 lg:flex-row lg:items-end lg:justify-between">
+            <p className="lede max-w-[42ch]">
+              A Vermont studio designing and engineering the websites, platforms, and internal
+              systems that growing teams actually run on.
+            </p>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.55 }}
-          className="max-w-md text-base leading-relaxed"
-          style={{ color: "rgba(255,255,255,0.6)", textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
-        >
-          We design and engineer websites, platforms, and digital systems for growing teams and established organizations.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="flex flex-wrap items-center justify-center gap-3"
-        >
-          <button
-            type="button"
-            onClick={onStartProject}
-            className="rounded-full px-8 py-3.5 text-sm font-bold text-white transition-all hover:scale-105"
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              backdropFilter: "blur(12px)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-            }}
-          >
-            Start a project
-          </button>
-          <a
-            href="#showcase"
-            className="rounded-full px-8 py-3.5 text-sm font-semibold transition-all hover:text-white"
-            style={{ color: "rgba(255,255,255,0.55)" }}
-          >
-            See our work ↓
-          </a>
-        </motion.div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="button" onClick={onStartProject} className="btn btn-solid">
+                Start a project
+              </button>
+              <a href="#showcase" className="btn btn-outline">
+                See the work
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ── Scroll indicator ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.4 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-          className="h-10 w-6 rounded-full border-2 flex items-start justify-center pt-2"
-          style={{ borderColor: "rgba(255,255,255,0.25)" }}
-        >
-          <div className="h-2 w-1 rounded-full" style={{ background: "rgba(255,255,255,0.6)" }} />
-        </motion.div>
-        <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.35)" }}>scroll</span>
-      </motion.div>
+      {/* Colophon strip. Hairline-separated facts, the way a masthead sets them.
+
+          The callback launcher is pinned to the bottom-right of the viewport and
+          lands straight on this strip: padded clear of it to the right on
+          desktop, and lifted above it on phones where the launcher spans most
+          of the width. */}
+      <div className="relative z-10 border-t px-[var(--page-pad)] pb-[4.75rem] lg:pb-0" style={{ borderColor: "var(--rule)" }}>
+        <dl className="site-shell grid grid-cols-2 md:grid-cols-4 lg:pr-[19rem]">
+          {FACTS.map((fact, i) => (
+            <div
+              key={fact.label}
+              className="py-5 md:border-l md:first:border-l-0 md:pl-6"
+              style={{ borderColor: "var(--rule)", paddingLeft: i === 0 ? undefined : undefined }}
+            >
+              <dt className="mono" style={{ color: "rgba(236,233,227,0.56)" }}>{fact.label}</dt>
+              <dd className="mono mt-1.5 ml-0" style={{ letterSpacing: "0.06em", textTransform: "none", fontSize: "0.82rem" }}>
+                {fact.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </section>
   );
 }

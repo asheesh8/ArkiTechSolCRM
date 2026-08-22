@@ -18,7 +18,7 @@ import { checkPhone } from "@/lib/phone";
 type Status = "idle" | "sending" | "sent" | "error";
 
 const FIELD_CLASS =
-  "w-full rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3.5 text-[15px] text-white outline-none transition placeholder:text-white/25 focus:border-violet-400/60 focus:bg-white/[0.07]";
+  "w-full border border-[rgba(236,233,227,0.16)] bg-transparent px-4 py-3.5 text-[15px] text-[#ece9e3] outline-none transition placeholder:text-[rgba(236,233,227,0.28)] focus:border-[#6c5cf7]";
 
 export function CallbackWidget({ suppressed = false }: { suppressed?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -96,24 +96,24 @@ export function CallbackWidget({ suppressed = false }: { suppressed?: boolean })
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 12, scale: reduceMotion ? 1 : 0.97 }}
                 transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.16, 1, 0.3, 1] }}
-                className="flex max-h-[calc(100dvh-1.5rem-env(safe-area-inset-bottom))] w-full flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[#11111d]/95 shadow-[0_28px_100px_rgba(0,0,0,0.62),0_0_60px_rgba(124,58,237,0.13)] backdrop-blur-2xl sm:w-[398px]"
+                className="flex max-h-[calc(100dvh-1.5rem-env(safe-area-inset-bottom))] w-full flex-col overflow-hidden border border-[rgba(236,233,227,0.16)] bg-[#0a0a0e] sm:w-[398px]"
               >
-                <header className="relative flex shrink-0 items-center gap-3 overflow-hidden border-b border-white/[0.07] px-4 py-4">
-                  <div className="pointer-events-none absolute -left-8 -top-12 h-28 w-40 rounded-full bg-violet-500/15 blur-3xl" />
-                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-violet-300/20 bg-gradient-to-br from-violet-500/25 to-sky-400/15">
-                    <Phone className="h-5 w-5 text-violet-200" aria-hidden="true" />
+                <header className="flex shrink-0 items-center gap-3.5 border-b border-[rgba(236,233,227,0.16)] px-4 py-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#6c5cf7]">
+                    <Phone className="h-4 w-4 text-white" aria-hidden="true" />
                   </div>
-                  <div className="relative min-w-0 flex-1">
-                    <h2 className="truncate text-sm font-bold text-white">Get a callback</h2>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/40">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.8)]" />
+                  <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-[0.95rem] text-[#ece9e3]" style={{ fontStretch: "86%", fontWeight: 600 }}>
+                      Get a callback
+                    </h2>
+                    <p className="mono mt-1" style={{ color: "rgba(236,233,227,0.56)", fontSize: "0.56rem" }}>
                       Usually same day
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={close}
-                    className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.07] bg-white/[0.035] text-white/45 transition hover:border-white/15 hover:bg-white/[0.08] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+                    className="flex h-9 w-9 items-center justify-center border border-[rgba(236,233,227,0.16)] text-[rgba(236,233,227,0.5)] transition hover:text-[#ece9e3]"
                     aria-label="Close"
                   >
                     <X className="h-4 w-4" />
@@ -152,7 +152,7 @@ export function CallbackWidget({ suppressed = false }: { suppressed?: boolean })
                         Phone number
                       </label>
                       <div className="flex items-stretch gap-2">
-                        <span className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.04] px-3 text-[15px] text-white/55">
+                        <span className="flex shrink-0 items-center gap-1.5 border border-[rgba(236,233,227,0.16)] px-3 text-[15px] text-[rgba(236,233,227,0.55)]">
                           <span aria-hidden="true">🇺🇸</span> +1
                         </span>
                         <input
@@ -185,13 +185,13 @@ export function CallbackWidget({ suppressed = false }: { suppressed?: boolean })
                       />
                     </div>
 
-                    <label className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 text-left text-[11px] leading-4 text-white/48">
+                    <label className="flex gap-3 border border-[rgba(236,233,227,0.14)] p-3.5 text-left text-[11px] leading-4 text-[rgba(236,233,227,0.5)]">
                       <input
                         required
                         type="checkbox"
                         checked={consent}
                         onChange={(event) => setConsent(event.target.checked)}
-                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 bg-white/10 accent-violet-400"
+                        className="mt-0.5 h-4 w-4 shrink-0 border-[rgba(236,233,227,0.24)] bg-transparent accent-[#6c5cf7]"
                       />
                       <span>
                         {CALLBACK_CONSENT_TEXT}{" "}
@@ -235,7 +235,7 @@ export function CallbackWidget({ suppressed = false }: { suppressed?: boolean })
                     <button
                       type="submit"
                       disabled={!ready || status === "sending"}
-                      className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-sm font-bold text-white shadow-lg shadow-violet-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+                      className="btn btn-violet min-h-12 w-full disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {status === "sending" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                       {status === "sending" ? "Sending…" : "Request a callback"}
@@ -255,16 +255,16 @@ export function CallbackWidget({ suppressed = false }: { suppressed?: boolean })
                 onClick={() => setOpen(true)}
                 aria-expanded="false"
                 aria-controls="arkitech-callback-panel"
-                className="group relative flex min-h-14 items-center gap-3 overflow-hidden rounded-full border border-white/15 bg-[#151523]/92 py-2 pl-2 pr-5 text-left shadow-[0_18px_55px_rgba(0,0,0,.5),0_0_38px_rgba(124,58,237,.2)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-violet-300/30 hover:bg-[#1a1a2b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+                className="group flex min-h-[3.4rem] items-center gap-3.5 border border-[rgba(236,233,227,0.2)] bg-[#0a0a0e] py-2 pl-2 pr-5 text-left transition-colors duration-200 hover:border-[rgba(236,233,227,0.42)]"
               >
-                <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-violet-500/10 via-transparent to-sky-400/[0.06] opacity-0 transition group-hover:opacity-100" />
-                <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-950/50">
-                  <Phone className="h-5 w-5 text-white" aria-hidden="true" />
-                  <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-[#151523] bg-emerald-400" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#6c5cf7]">
+                  <Phone className="h-4 w-4 text-white" aria-hidden="true" />
                 </span>
-                <span className="relative">
-                  <span className="block text-xs font-bold text-white">Get a callback</span>
-                  <span className="mt-0.5 block text-[10px] text-white/40">Name and number, that&rsquo;s it</span>
+                <span>
+                  <span className="mono block text-[#ece9e3]" style={{ fontSize: "0.62rem" }}>Get a callback</span>
+                  <span className="mono mt-1 block" style={{ color: "rgba(236,233,227,0.56)", fontSize: "0.54rem", letterSpacing: "0.1em" }}>
+                    Name and number, that&rsquo;s it
+                  </span>
                 </span>
               </motion.button>
             )}

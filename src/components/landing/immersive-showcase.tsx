@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ExternalLink, ArrowUpRight, Pause, Play } from "lucide-react";
 
 type Project = {
   id: string;
@@ -17,10 +16,17 @@ type Project = {
 };
 
 const PROJECTS: Project[] = [
-  { id: "bible",    name: "Village Server Initiative", desc: "Community & event platform", url: "https://villageservers.org",            color: "#c084fc", accent: "#9333ea" },
-  { id: "bb",       name: "BB Open Box",          desc: "E-commerce & product showcase", url: "https://bb-openbox.vercel.app",  iframeSrc: "https://bb-openbox.vercel.app/inventory",  color: "#3b82f6", accent: "#1d4ed8" },
-  { id: "ashish",   name: "Ashish Portfolio",       desc: "Personal brand & resume", url: "https://ashish.network",                         color: "#e2e8f0", accent: "#94a3b8" },
-  { id: "blacksheep", name: "Black Sheep Property Management", desc: "Property management site", url: "https://black-sheep-property-mgmt.vercel.app", color: "#f59e0b", accent: "#b45309" },
+  // Order is deliberate — the strongest build leads. The `color`/`accent` fields
+  // are vestigial: the showcase used to tint its glows per project, and the
+  // redesign dropped that in favour of one accent.
+  //
+  // The deploy still lives on the old black-sheep-property-mgmt subdomain, but
+  // the client brands itself Black Sheep Landscaping on every page of the site,
+  // so that is the name shown here.
+  { id: "blacksheep", name: "Black Sheep Landscaping", desc: "Landscaping & seasonal property care", url: "https://black-sheep-property-mgmt.vercel.app", color: "#f59e0b", accent: "#b45309" },
+  { id: "bible",      name: "Village Server Initiative", desc: "Community & nonprofit outreach", url: "https://villageservers.org", color: "#c084fc", accent: "#9333ea" },
+  { id: "bb",         name: "BB Open Box", desc: "E-commerce & product showcase", url: "https://bb-openbox.vercel.app", iframeSrc: "https://bb-openbox.vercel.app/inventory", color: "#3b82f6", accent: "#1d4ed8" },
+  { id: "ashish",     name: "Ashish Portfolio", desc: "Personal brand & resume", url: "https://ashish.network", color: "#e2e8f0", accent: "#94a3b8" },
 ];
 
 const AUTOPLAY_MS = 4500;
@@ -29,36 +35,31 @@ const AUTOPLAY_MS = 4500;
 function FallbackCard({ project }: { project: Project }) {
   return (
     <div
-      className="flex h-full flex-col items-center justify-center gap-5 p-6 text-center"
-      style={{ background: `linear-gradient(135deg, #0a0a14 0%, ${project.color}0d 100%)` }}
+      className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center"
+      style={{ background: "#0a0a0e" }}
     >
-      <div
-        className="flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-black text-white"
-        style={{ background: `${project.color}22`, border: `1px solid ${project.color}33` }}
+      <span
+        className="leading-none"
+        style={{ fontStretch: "76%", fontWeight: 680, fontSize: "2.75rem", letterSpacing: "-0.05em", color: "#ece9e3" }}
       >
         {project.name[0]}
-      </div>
+      </span>
       <div>
-        <p className="font-bold text-white">{project.name}</p>
-        <p className="mt-1 text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{project.desc}</p>
+        <p style={{ color: "#ece9e3", fontStretch: "86%", fontWeight: 600 }}>{project.name}</p>
+        <p className="mt-1 text-xs" style={{ color: "rgba(236,233,227,0.56)" }}>{project.desc}</p>
       </div>
       {project.url ? (
         <a
           href={project.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-80"
-          style={{ background: project.color }}
+          className="mono border px-4 py-2 transition-colors duration-150"
+          style={{ borderColor: "rgba(236,233,227,0.28)", color: "#ece9e3" }}
         >
-          Open demo <ArrowUpRight className="h-4 w-4" />
+          Open demo ↗
         </a>
       ) : (
-        <p
-          className="rounded-xl border px-5 py-2.5 text-xs font-bold uppercase tracking-widest"
-          style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
-        >
-          No live preview yet
-        </p>
+        <p className="mono" style={{ color: "rgba(236,233,227,0.56)" }}>No live preview yet</p>
       )}
     </div>
   );
@@ -85,7 +86,7 @@ function MacBook({ project }: { project: Project }) {
           height: 362,
           borderRadius: "14px 14px 0 0",
           background: "linear-gradient(170deg, #252535 0%, #14141f 100%)",
-          boxShadow: `0 -1px 0 rgba(255,255,255,0.08) inset, 0 1px 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(255,255,255,0.06), 0 0 60px ${project.color}1a`,
+          boxShadow: "0 -1px 0 rgba(255,255,255,0.08) inset, 0 1px 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(255,255,255,0.06)",
           border: "1px solid rgba(255,255,255,0.07)",
         }}
       >
@@ -178,7 +179,7 @@ function IPhone({ project }: { project: Project }) {
         height: 310,
         borderRadius: 36,
         background: "linear-gradient(160deg, #2a2a3e 0%, #131320 100%)",
-        boxShadow: `0 0 0 1px rgba(255,255,255,0.1), 0 30px 70px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.07), 0 0 40px ${project.color}22`,
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.1), 0 30px 70px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.07)",
         border: "1px solid rgba(255,255,255,0.08)",
       }}
     >
@@ -234,40 +235,33 @@ function ProjectInfo({ project, idx, total }: { project: Project; idx: number; t
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col gap-3"
+        className="flex flex-col"
       >
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: project.color }} />
-          <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: project.color }}>
+        <div className="flex items-center gap-3">
+          <span className="figure-index" style={{ color: "var(--violet-lift)" }}>
             {String(idx + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
           </span>
-          <span
-            className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
-            style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.6)" }}
-          >
+          <span className="mono border px-2 py-1" style={{ borderColor: "var(--rule)", color: "var(--dim)", fontSize: "0.55rem" }}>
             Demo build
           </span>
         </div>
-        <h3 className="text-3xl font-black tracking-tight text-white leading-none">{project.name}</h3>
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{project.desc}</p>
+
+        <h3 className="d3 mt-5">{project.name}</h3>
+        <p className="mt-2.5 text-sm" style={{ color: "var(--dim)" }}>{project.desc}</p>
+
         {project.url ? (
           <a
             href={project.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
-            style={{ borderColor: `${project.color}44`, color: project.color, background: `${project.color}0d` }}
+            className="arrow-link mt-6"
+            style={{ color: "var(--violet-lift)" }}
           >
-            Open demo <ExternalLink className="h-3 w-3" />
+            Open demo <span aria-hidden="true">↗</span>
           </a>
         ) : (
           // Nothing to link to, so nothing that looks like a link.
-          <p
-            className="flex w-fit items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold"
-            style={{ borderColor: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.4)" }}
-          >
-            No live preview yet
-          </p>
+          <p className="mono mt-6" style={{ color: "rgba(236,233,227,0.56)" }}>No live preview yet</p>
         )}
       </motion.div>
     </AnimatePresence>
@@ -305,38 +299,22 @@ export function ImmersiveShowcase() {
   const project = PROJECTS[idx];
 
   return (
-    <section
-      id="showcase"
-      className="relative overflow-hidden py-24"
-      style={{ background: "#0c0c18" }}
-    >
-      {/* Ambient glow that follows active project color */}
-      <AnimatePresence>
-        <motion.div
-          key={project.color}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.5 }}
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `radial-gradient(ellipse 60% 50% at 60% 60%, ${project.color}14 0%, transparent 70%)`,
-          }}
-        />
-      </AnimatePresence>
-
-      <div className="relative mx-auto max-w-7xl px-6">
-
+    <section id="showcase" className="band-ink site-section relative overflow-hidden">
+      <div className="site-shell relative">
         {/* ── Section label ── */}
-        <div className="mb-10 text-center lg:mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.25)" }}>All demo builds</p>
-          <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Every pixel.<br />
-            <span style={{ color: "rgba(255,255,255,0.2)" }}>Every one a demo.</span>
-          </h2>
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="eyebrow">All demo builds</p>
+            <h2 className="d2 max-w-[12ch]">
+              Every pixel.{" "}
+              <span style={{ color: "rgba(236,233,227,0.56)" }}>Every one a demo.</span>
+            </h2>
+          </div>
+          {/* The disclaimer is load-bearing, so it is set as a note on a rule
+              rather than hidden inside a pill. */}
           <p
-            className="mx-auto mt-6 w-fit rounded-full border px-5 py-2.5 text-sm font-semibold"
-            style={{ borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.72)", background: "rgba(255,255,255,0.04)" }}
+            className="max-w-[38ch] border-l pl-5 text-sm lg:max-w-[32ch]"
+            style={{ borderColor: "var(--rule)", color: "var(--dim)", lineHeight: 1.6 }}
           >
             Every project here is a demo we designed and built ourselves — none are live client sites.
           </p>
@@ -344,7 +322,7 @@ export function ImmersiveShowcase() {
 
         {/* ── Main layout: info left + devices right ── */}
         <div
-          className="flex flex-col items-center gap-12 lg:flex-row lg:items-end lg:gap-16"
+          className="mt-16 flex flex-col items-center gap-12 lg:flex-row lg:items-end lg:gap-16"
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}
         >
@@ -352,52 +330,39 @@ export function ImmersiveShowcase() {
           <div className="flex w-full flex-col gap-8 lg:w-72 lg:shrink-0 lg:pb-8">
             <ProjectInfo project={project} idx={idx} total={PROJECTS.length} />
 
-            {/* Dot nav */}
-            <div className="flex flex-wrap gap-2">
+            {/* Tick nav — rules, not dots */}
+            <div className="flex gap-2">
               {PROJECTS.map((p, i) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => { setIdx(i); setPlaying(false); }}
-                  className="transition-all duration-300"
+                  className="h-6 flex-1 cursor-pointer pt-3 transition-opacity duration-200"
                   title={p.name}
-                  style={{
-                    width: i === idx ? 28 : 8,
-                    height: 8,
-                    borderRadius: 4,
-                    background: i === idx ? project.color : "rgba(255,255,255,0.12)",
-                    boxShadow: i === idx ? `0 0 10px ${project.color}80` : "none",
-                  }}
-                />
+                  aria-label={p.name}
+                  style={{ opacity: i === idx ? 1 : 0.32 }}
+                >
+                  <span
+                    className="block h-px w-full transition-colors duration-300"
+                    style={{ background: i === idx ? "var(--violet-lift)" : "var(--bone)" }}
+                  />
+                </button>
               ))}
             </div>
 
-            {/* Play/pause + prev/next */}
+            {/* Transport */}
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPlaying((v) => !v)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border transition hover:border-white/20"
-                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
-              >
-                {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-              </button>
-              <button
-                type="button"
+              <TransportButton onClick={() => setPlaying((v) => !v)} label={playing ? "Pause" : "Play"}>
+                {playing ? "❙❙" : "▶"}
+              </TransportButton>
+              <TransportButton
                 onClick={() => { setIdx((i) => (i - 1 + PROJECTS.length) % PROJECTS.length); setPlaying(false); }}
-                className="flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold transition hover:border-white/20"
-                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)" }}
-              >←</button>
-              <button
-                type="button"
+                label="Previous project"
+              >←</TransportButton>
+              <TransportButton
                 onClick={() => { setIdx((i) => (i + 1) % PROJECTS.length); setPlaying(false); }}
-                className="flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold transition hover:border-white/20"
-                style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)" }}
-              >→</button>
-              {/* Progress ring */}
-              <div className="ml-auto text-xs font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
-                {String(idx + 1).padStart(2, "0")}&thinsp;/&thinsp;{String(PROJECTS.length).padStart(2, "0")}
-              </div>
+                label="Next project"
+              >→</TransportButton>
             </div>
           </div>
 
@@ -406,15 +371,6 @@ export function ImmersiveShowcase() {
             className="relative flex items-end justify-center"
             style={{ perspective: 1000, rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}
           >
-            {/* Glow under devices */}
-            <motion.div
-              key={project.color + "glow"}
-              animate={{ background: `radial-gradient(ellipse 80% 40% at 50% 100%, ${project.color}30 0%, transparent 70%)` }}
-              transition={{ duration: 1 }}
-              className="pointer-events-none absolute -bottom-8 left-0 right-0 h-32"
-              style={{ filter: "blur(20px)" }}
-            />
-
             {/* MacBook — scaled down on mobile */}
             <AnimatePresence mode="wait">
               <motion.div
@@ -450,28 +406,47 @@ export function ImmersiveShowcase() {
           </motion.div>
         </div>
 
-        {/* ── Project name ticker ── */}
-        <div className="mt-16 overflow-hidden border-t pt-8" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-          <motion.div
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
-            className="flex gap-10 whitespace-nowrap"
-          >
-            {[...PROJECTS, ...PROJECTS].map((p, i) => (
+        {/* ── Index rail. The marquee is gone: an infinite scroller of your own
+               client names reads as filler, and there are only four. ── */}
+        <div className="ledger mt-20">
+          {PROJECTS.map((p, i) => {
+            const active = p.id === project.id;
+            return (
               <button
-                key={i}
+                key={p.id}
                 type="button"
-                onClick={() => { setIdx(PROJECTS.findIndex(x => x.id === p.id)); setPlaying(false); }}
-                className="flex items-center gap-2.5 text-sm font-semibold transition hover:opacity-100"
-                style={{ color: p.id === project.id ? p.color : "rgba(255,255,255,0.2)" }}
+                onClick={() => { setIdx(i); setPlaying(false); }}
+                className="ledger-row w-full cursor-pointer text-left"
+                style={{ opacity: active ? 1 : 0.68 }}
               >
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: p.id === project.id ? p.color : "rgba(255,255,255,0.15)" }} />
-                {p.name}
+                <span className="figure-index" style={{ color: active ? "var(--violet-lift)" : "var(--dim)" }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="d3" style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.6rem)" }}>{p.name}</span>
+                <span className="mono hidden sm:block" style={{ color: "var(--dim)" }}>{p.desc}</span>
               </button>
-            ))}
-          </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
+  );
+}
+
+function TransportButton({
+  onClick, label, children,
+}: {
+  onClick: () => void; label: string; children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-10 w-10 cursor-pointer items-center justify-center border text-[0.7rem] transition-colors duration-150"
+      style={{ borderColor: "var(--rule)", color: "var(--dim)" }}
+    >
+      {children}
+    </button>
   );
 }

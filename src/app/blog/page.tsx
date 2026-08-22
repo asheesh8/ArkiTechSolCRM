@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { services } from "@/lib/services-content";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
+import { Reveal } from "@/components/landing/reveal";
 
 export const metadata: Metadata = {
   title: "Blog — ArkiTech Solutions",
@@ -12,33 +12,45 @@ export const metadata: Metadata = {
 
 export default function BlogIndex() {
   return (
-    <main className="min-h-screen bg-[#0c0c18] text-white">
+    <main className="site min-h-screen">
       <SiteNav />
 
-      <section className="mx-auto max-w-5xl px-6 pb-20 pt-40">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">Writing</p>
-        <h1 className="mt-4 max-w-2xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
-          Things we keep having to explain.
-        </h1>
+      <section className="band-ink site-section pt-[calc(var(--nav-h)+5rem)]">
+        <div className="site-shell">
+          <Reveal>
+            <p className="eyebrow">Writing</p>
+            <h1 className="d1 max-w-[13ch]">Things we keep having to explain.</h1>
+          </Reveal>
 
-        <div className="mt-16 divide-y divide-white/[0.07] border-y border-white/[0.07]">
-          {services.map((service) => (
-            <Link key={service.post.slug} href={`/blog/${service.post.slug}`} className="group flex flex-col gap-3 py-9 transition sm:flex-row sm:items-baseline sm:gap-10">
-              <span className="w-40 shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-violet-300/70">
-                {service.name}
-              </span>
-              <span className="flex-1">
-                <span className="block text-2xl font-semibold leading-snug tracking-tight transition group-hover:text-violet-200">
-                  {service.post.title}
-                </span>
-                <span className="mt-2 block text-sm leading-relaxed text-white/45">{service.post.excerpt}</span>
-                <span className="mt-4 inline-flex items-center gap-2 text-xs text-white/35">
-                  {service.post.readingTime}
-                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-                </span>
-              </span>
-            </Link>
-          ))}
+          <div className="ledger mt-20">
+            {services.map((service, i) => (
+              <Reveal key={service.post.slug} delay={i * 70}>
+                <Link
+                  href={`/blog/${service.post.slug}`}
+                  className="ledger-row"
+                  style={{ gridTemplateColumns: "3.5rem 1fr auto" }}
+                >
+                  <span className="figure-index">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="min-w-0">
+                    <span className="mono block" style={{ color: "var(--violet-lift)" }}>{service.name}</span>
+                    <span className="d3 mt-3 block" style={{ fontSize: "clamp(1.4rem, 2.2vw, 2rem)" }}>
+                      {service.post.title}
+                    </span>
+                    <span
+                      className="mt-3 block max-w-[62ch] text-sm"
+                      style={{ color: "var(--dim)", lineHeight: 1.65 }}
+                    >
+                      {service.post.excerpt}
+                    </span>
+                    <span className="mono mt-5 block" style={{ color: "rgba(236,233,227,0.56)", fontSize: "0.6rem" }}>
+                      {service.post.readingTime}
+                    </span>
+                  </span>
+                  <span className="ledger-row__arrow self-center text-lg" aria-hidden="true">↗</span>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 

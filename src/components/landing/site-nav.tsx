@@ -1,10 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
-import { ChevronDown, Menu, X } from "lucide-react";
 import { services } from "@/lib/services-content";
 
 const ABOUT_LINKS = [
@@ -19,9 +17,14 @@ const ABOUT_LINKS = [
  * Hides on scroll-down and returns on scroll-up, but never while a menu is open or
  * something inside it holds focus — a nav that slides away under a keyboard user is
  * how you lose them.
+ *
+ * Transparent over the hero, solid ink once the page has moved. The bar never
+ * blurs what is behind it: frosted glass is the house style of every SaaS
+ * template, and one flat edge reads far more expensive.
  */
 export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
   const [visible, setVisible] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const lastY = useRef(0);
@@ -32,6 +35,7 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
   const pinned = openMenu !== null || mobileOpen;
 
   useMotionValueEvent(scrollY, "change", (latest) => {
+    setScrolled(latest > 24);
     const delta = latest - lastY.current;
     if (pinned || latest < 72) {
       setVisible(true);
@@ -68,6 +72,8 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
+  const solid = scrolled || pinned;
+
   return (
     <motion.nav
       ref={navRef}
@@ -75,34 +81,36 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
       animate={{ y: visible ? 0 : "-110%" }}
       transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
       onFocusCapture={() => setVisible(true)}
-      className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.055] bg-[#0c0c18]/70 backdrop-blur-xl"
+      className="fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300"
+      style={{
+        borderColor: solid ? "var(--rule)" : "rgba(236,233,227,0.12)",
+        background: solid ? "#0a0a0e" : "transparent",
+        ["--rule" as string]: "rgba(236,233,227,0.56)",
+      }}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 sm:px-8">
-        <Link
-          href="/"
-          aria-label="ArkiTech Solutions home"
-          className="relative h-9 w-40 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white shadow-[0_6px_24px_rgba(0,0,0,0.24)] sm:w-48"
-        >
-          <Image src="/arkitech-banner.png" alt="" fill priority sizes="(min-width: 640px) 192px, 160px" className="object-cover object-center" />
-        </Link>
+      <div className="mx-auto flex h-[var(--nav-h,5.25rem)] max-w-[84rem] items-center justify-between gap-6 px-[var(--page-pad,1.5rem)]">
+        <Wordmark />
 
         {/* desktop */}
-        <div className="hidden items-center gap-1 text-sm font-medium text-white/60 lg:flex">
+        <div className="hidden items-center gap-9 lg:flex">
           <Dropdown
             label="Services"
             open={openMenu === "services"}
             onToggle={() => setOpenMenu((c) => (c === "services" ? null : "services"))}
             onClose={() => setOpenMenu(null)}
           >
-            {services.map((service) => (
+            {services.map((service, i) => (
               <MenuLink key={service.slug} href={`/services/${service.slug}`} onSelect={() => setOpenMenu(null)}>
-                <span className="block font-medium text-white">{service.name}</span>
-                <span className="mt-0.5 block text-xs text-white/45">{service.tagline}</span>
+                <span className="figure-index shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                <span className="min-w-0">
+                  <span className="block text-[0.95rem] font-medium" style={{ color: "var(--bone)" }}>{service.name}</span>
+                  <span className="mt-0.5 block text-xs" style={{ color: "var(--dim)" }}>{service.tagline}</span>
+                </span>
               </MenuLink>
             ))}
-            <div className="my-1.5 h-px bg-white/10" />
             <MenuLink href="/services" onSelect={() => setOpenMenu(null)}>
-              <span className="font-medium text-violet-200">All service offerings</span>
+              <span className="figure-index shrink-0">↗</span>
+              <span className="mono" style={{ color: "var(--violet-lift)" }}>All service offerings</span>
             </MenuLink>
           </Dropdown>
 
@@ -112,82 +120,135 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
             onToggle={() => setOpenMenu((c) => (c === "about" ? null : "about"))}
             onClose={() => setOpenMenu(null)}
           >
-            {ABOUT_LINKS.map((link) => (
+            {ABOUT_LINKS.map((link, i) => (
               <MenuLink key={link.href} href={link.href} onSelect={() => setOpenMenu(null)}>
-                <span className="font-medium text-white">{link.label}</span>
+                <span className="figure-index shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-[0.95rem] font-medium" style={{ color: "var(--bone)" }}>{link.label}</span>
               </MenuLink>
             ))}
           </Dropdown>
 
-          <Link href="/blog" className="rounded-lg px-3 py-2 transition hover:text-white">Blog</Link>
-          <a href="tel:+18023103749" className="rounded-lg px-3 py-2 transition hover:text-white">Call us</a>
+          <Link href="/blog" className="nav-link">Blog</Link>
+          <a href="tel:+18023103749" className="nav-link">Call us</a>
         </div>
 
-        {/* Deliberately not a PeekButton. The nav is pinned to the top of the viewport, so
-            there is no headroom above it for Arki to rise into — he'd be clipped off-screen.
-            He lives on in-page CTAs, which have space above them. */}
         <button
           type="button"
           onClick={onStartProject}
-          className="hidden rounded-full bg-white px-6 py-2.5 text-sm font-semibold tracking-tight text-[#0c0c18] transition hover:bg-white/90 active:scale-[0.98] lg:block"
+          className="btn btn-outline hidden lg:inline-flex"
+          style={{ minHeight: "2.85rem", padding: "0.55rem 1.15rem", borderColor: "rgba(236,233,227,0.4)" }}
         >
           Get a quote
         </button>
 
-        {/* mobile trigger */}
+        {/* mobile trigger — a hamburger drawn in rules, not an icon font */}
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav"
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          className="rounded-xl border border-white/15 bg-white/10 p-2.5 text-white transition hover:bg-white/20 lg:hidden"
+          className="flex h-11 w-11 flex-col items-center justify-center gap-[5px] border lg:hidden"
+          style={{ borderColor: "var(--rule)" }}
         >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          <span
+            className="block h-px w-5 transition-transform duration-200"
+            style={{ background: "var(--bone)", transform: mobileOpen ? "translateY(3px) rotate(45deg)" : "none" }}
+          />
+          <span
+            className="block h-px w-5 transition-transform duration-200"
+            style={{ background: "var(--bone)", transform: mobileOpen ? "translateY(-3px) rotate(-45deg)" : "none" }}
+          />
         </button>
       </div>
 
       {/* mobile panel */}
       {mobileOpen ? (
-        <div id="mobile-nav" className="max-h-[calc(100svh-72px)] overflow-y-auto border-t border-white/10 px-5 pb-8 pt-4 lg:hidden">
-          <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">Services</p>
-          {services.map((service) => (
+        <div
+          id="mobile-nav"
+          className="max-h-[calc(100svh-var(--nav-h,5.25rem))] overflow-y-auto border-t px-[var(--page-pad,1.5rem)] pb-10 pt-6 lg:hidden"
+          style={{ borderColor: "var(--rule)", background: "#0a0a0e" }}
+        >
+          <p className="eyebrow">Services</p>
+          <div className="ledger" style={{ borderTopColor: "var(--rule)" }}>
+            {services.map((service, i) => (
+              <Link
+                key={service.slug}
+                href={`/services/${service.slug}`}
+                onClick={() => setMobileOpen(false)}
+                className="ledger-row"
+                style={{ gridTemplateColumns: "2.5rem 1fr auto", padding: "1rem 0" }}
+              >
+                <span className="figure-index">{String(i + 1).padStart(2, "0")}</span>
+                <span>
+                  <span className="block text-[1.05rem]" style={{ fontStretch: "86%", fontWeight: 560 }}>{service.name}</span>
+                  <span className="mt-0.5 block text-xs" style={{ color: "var(--dim)" }}>{service.tagline}</span>
+                </span>
+                <span className="ledger-row__arrow" aria-hidden="true">↗</span>
+              </Link>
+            ))}
             <Link
-              key={service.slug}
-              href={`/services/${service.slug}`}
+              href="/services"
               onClick={() => setMobileOpen(false)}
-              className="block rounded-xl px-3 py-3 text-[15px] text-white/80 transition hover:bg-white/5 hover:text-white"
+              className="ledger-row mono"
+              style={{ gridTemplateColumns: "2.5rem 1fr auto", padding: "1rem 0", color: "var(--violet-lift)" }}
             >
-              {service.name}
-              <span className="mt-0.5 block text-xs text-white/40">{service.tagline}</span>
+              <span aria-hidden="true" />
+              <span>All service offerings</span>
+              <span className="ledger-row__arrow" aria-hidden="true">↗</span>
             </Link>
-          ))}
-          <Link href="/services" onClick={() => setMobileOpen(false)} className="block rounded-xl px-3 py-3 text-[15px] font-medium text-violet-200">
-            All service offerings
-          </Link>
+          </div>
 
-          <div className="my-3 h-px bg-white/10" />
-          {[...ABOUT_LINKS, { href: "/blog", label: "Blog" }].map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className="block rounded-xl px-3 py-3 text-[15px] text-white/80 transition hover:bg-white/5 hover:text-white"
-            >
-              {link.label}
-            </Link>
-          ))}
+          <p className="eyebrow mt-9">Studio</p>
+          <div className="ledger" style={{ borderTopColor: "var(--rule)" }}>
+            {[...ABOUT_LINKS, { href: "/blog", label: "Blog" }].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="ledger-row"
+                style={{ gridTemplateColumns: "1fr auto", padding: "0.95rem 0" }}
+              >
+                <span className="text-[1.05rem]" style={{ fontStretch: "86%", fontWeight: 560 }}>{link.label}</span>
+                <span className="ledger-row__arrow" aria-hidden="true">↗</span>
+              </Link>
+            ))}
+          </div>
 
           <button
             type="button"
             onClick={() => { setMobileOpen(false); onStartProject?.(); }}
-            className="mt-4 w-full rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-[#0c0c18]"
+            className="btn btn-solid mt-8 w-full"
           >
             Get a quote
           </button>
         </div>
       ) : null}
     </motion.nav>
+  );
+}
+
+/**
+ * Typographic wordmark.
+ *
+ * Replaces the banner PNG, which could only sit on the dark bar inside a white
+ * rounded chip with a drop shadow — the one element on the page that gave the
+ * template away. Set as live text it matches the logo's own two-tone structure,
+ * stays crisp at any size, and costs no image request.
+ */
+function Wordmark() {
+  return (
+    <Link href="/" aria-label="ArkiTech Solutions home" className="group shrink-0">
+      <span
+        className="block leading-none"
+        style={{ fontStretch: "78%", fontWeight: 700, fontSize: "1.32rem", letterSpacing: "-0.035em" }}
+      >
+        ArkiTech<span style={{ color: "var(--violet-lift)" }}> Solutions</span>
+      </span>
+      <span className="mono mt-1 block" style={{ fontSize: "0.56rem", letterSpacing: "0.24em", color: "rgba(236,233,227,0.56)" }}>
+        Digital Product Studio
+      </span>
+    </Link>
   );
 }
 
@@ -203,15 +264,16 @@ function Dropdown({
         onClick={onToggle}
         aria-expanded={open}
         aria-haspopup="true"
-        className={`flex items-center gap-1.5 rounded-lg px-3 py-2 transition ${open ? "text-white" : "hover:text-white"}`}
+        className="nav-link"
+        data-open={open || undefined}
       >
         {label}
-        <ChevronDown size={15} className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
         <div
           onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
-          className="absolute left-0 top-[calc(100%+10px)] w-72 rounded-2xl border border-white/10 bg-[#121220f5] p-2 shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+          className="absolute left-0 top-[calc(100%+1.15rem)] w-[21rem] border p-1"
+          style={{ borderColor: "var(--rule)", background: "#0a0a0e" }}
         >
           {children}
         </div>
@@ -222,7 +284,11 @@ function Dropdown({
 
 function MenuLink({ href, onSelect, children }: { href: string; onSelect: () => void; children: React.ReactNode }) {
   return (
-    <Link href={href} onClick={onSelect} className="block rounded-xl px-3 py-2.5 transition hover:bg-white/[0.07]">
+    <Link
+      href={href}
+      onClick={onSelect}
+      className="flex items-start gap-3.5 px-4 py-3 transition-colors duration-150 hover:bg-[rgba(236,233,227,0.56)]"
+    >
       {children}
     </Link>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, type MouseEvent } from "react";
 
 /**
@@ -39,9 +38,14 @@ export function FooterLogo() {
       type="button"
       onClick={handleClick}
       aria-label="ArkiTech Solutions"
-      className="relative block h-10 w-44 cursor-default select-none overflow-hidden rounded-xl border border-white/15 bg-white shadow-[0_8px_28px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none"
+      className="block cursor-default select-none text-left focus-visible:outline-none"
     >
-      <Image src="/arkitech-banner.png" alt="ArkiTech Solutions" fill sizes="176px" className="pointer-events-none object-cover object-center" draggable={false} />
+      <span
+        className="block leading-none"
+        style={{ fontStretch: "78%", fontWeight: 700, fontSize: "1.6rem", letterSpacing: "-0.038em" }}
+      >
+        ArkiTech<span style={{ color: "var(--violet-lift)" }}> Solutions</span>
+      </span>
     </button>
   );
 }

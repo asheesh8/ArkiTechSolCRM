@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { getService, services } from "@/lib/services-content";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { ArkiCompanion } from "@/components/mascot/arki-companion";
+import { Reveal } from "@/components/landing/reveal";
+import { PageSpeedScores } from "@/components/landing/pagespeed-scores";
 
 export function generateStaticParams() {
   return services.map((service) => ({ slug: service.slug }));
@@ -26,62 +26,82 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
   const others = services.filter((s) => s.slug !== service.slug);
 
   return (
-    <main className="min-h-screen bg-[#0c0c18] text-white">
+    <main className="site min-h-screen">
       <SiteNav />
 
-      <section className="mx-auto max-w-5xl px-6 pb-16 pt-40">
-        <Link href="/services" className="inline-flex items-center gap-2 text-sm text-white/40 transition hover:text-white">
-          <ArrowLeft size={15} /> All services
-        </Link>
+      <section className="band-ink site-section pt-[calc(var(--nav-h)+4rem)]">
+        <div className="site-shell max-w-5xl">
+          <Link href="/services" className="arrow-link" style={{ color: "var(--dim)" }}>
+            <span aria-hidden="true">←</span> All services
+          </Link>
 
-        <div className="mt-8 flex flex-wrap items-start justify-between gap-8">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">{service.tagline}</p>
-            <h1 className="mt-4 text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">{service.name}</h1>
-            <p className="mt-6 text-lg leading-relaxed text-white/55">{service.summary}</p>
-          </div>
-          <ArkiCompanion mood="wave" className="hidden h-36 w-36 shrink-0 sm:block" label={`Arki waving beside ${service.name}`} />
+          <Reveal>
+            <div className="mt-12">
+              <p className="eyebrow">{service.tagline}</p>
+              <h1 className="d1">{service.name}</h1>
+              <p className="lede mt-9 max-w-[52ch]">{service.summary}</p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={100}>
+            <div className="mt-16">
+              <p className="mono pb-4" style={{ color: "var(--dim)" }}>What&apos;s included</p>
+              <ul className="border-t" style={{ borderColor: "var(--rule)" }}>
+                {service.includes.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-baseline gap-5 border-b py-4"
+                    style={{ borderColor: "var(--rule)" }}
+                  >
+                    <span aria-hidden="true" style={{ color: "var(--violet-lift)", fontSize: "0.7rem" }}>—</span>
+                    <span className="text-[0.95rem]">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
         </div>
-
-        <ul className="mt-14 grid gap-3 sm:grid-cols-2">
-          {service.includes.map((item) => (
-            <li key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4">
-              <Check size={16} className="mt-0.5 shrink-0 text-violet-300" />
-              <span className="text-sm leading-relaxed text-white/70">{item}</span>
-            </li>
-          ))}
-        </ul>
       </section>
+
+      {/* Brand & Local SEO argues its case with a measurement, so it shows the
+          measurement — our own scores, on the page that sells the audit. */}
+      {service.slug === "brand-seo" ? <PageSpeedScores /> : null}
 
       {/* the blog demo that hangs off this service */}
-      <section className="border-y border-white/[0.06] bg-white/[0.015] py-20">
-        <div className="mx-auto max-w-5xl px-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300">From the blog</p>
-          <Link href={`/blog/${service.post.slug}`} className="group mt-6 block max-w-3xl">
-            <h2 className="text-3xl font-semibold leading-tight tracking-tight transition group-hover:text-violet-200 sm:text-4xl">
-              {service.post.title}
-            </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-white/50">{service.post.excerpt}</p>
-            <span className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-white/70 transition group-hover:text-white">
-              {service.post.readingTime}
-              <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
-            </span>
-          </Link>
+      <section className="band-paper site-section">
+        <div className="site-shell max-w-5xl">
+          <Reveal>
+            <p className="eyebrow">From the blog</p>
+            <Link href={`/blog/${service.post.slug}`} className="group block max-w-3xl">
+              <h2 className="d2" style={{ fontSize: "clamp(2rem, 4vw, 3.25rem)" }}>{service.post.title}</h2>
+              <p className="mt-6 max-w-[58ch]" style={{ color: "var(--dim)", lineHeight: 1.7 }}>
+                {service.post.excerpt}
+              </p>
+              <span className="arrow-link mt-8">
+                {service.post.readingTime} <span aria-hidden="true">↗</span>
+              </span>
+            </Link>
+          </Reveal>
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/35">Other services</p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          {others.map((other) => (
-            <Link
-              key={other.slug}
-              href={`/services/${other.slug}`}
-              className="rounded-full border border-white/12 px-5 py-2.5 text-sm text-white/60 transition hover:border-violet-400/40 hover:text-white"
-            >
-              {other.name}
-            </Link>
-          ))}
+      <section className="band-ink site-section">
+        <div className="site-shell max-w-5xl">
+          <p className="eyebrow">Other services</p>
+          <div className="ledger">
+            {others.map((other, i) => (
+              <Link
+                key={other.slug}
+                href={`/services/${other.slug}`}
+                className="ledger-row"
+                style={{ gridTemplateColumns: "3.5rem 1fr auto" }}
+              >
+                <span className="figure-index">{String(i + 1).padStart(2, "0")}</span>
+                <span className="d3" style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.6rem)" }}>{other.name}</span>
+                <span className="ledger-row__arrow" aria-hidden="true">↗</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 

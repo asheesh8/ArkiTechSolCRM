@@ -12,13 +12,11 @@ import { CallbackWidget } from "@/components/landing/callback-widget";
 import { CookieNotice } from "@/components/landing/cookie-notice";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { currentSeason } from "@/lib/season";
 
 export default function Home() {
   const [contactOpen, setContactOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.25 });
-  const season = currentSeason();
 
   useEffect(() => {
     fetch("/api/track", {
@@ -29,13 +27,15 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="overflow-x-hidden" style={{ background: "#0c0c18", color: "white" }}>
+    <main className="site overflow-x-hidden">
       <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
       <CallbackWidget suppressed={contactOpen} />
       <CookieNotice />
+      {/* Reading progress. One flat hairline of violet — the three-stop
+          gradient it replaces was the first thing you saw on the page. */}
       <motion.div
-        className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left bg-gradient-to-r from-violet-500 via-sky-400 to-cyan-300"
-        style={{ scaleX: progress }}
+        className="fixed inset-x-0 top-0 z-[60] h-px origin-left"
+        style={{ scaleX: progress, background: "var(--violet)" }}
       />
 
       <SiteNav onStartProject={() => setContactOpen(true)} />
@@ -50,7 +50,7 @@ export default function Home() {
 
       <ClosingSections onStartProject={() => setContactOpen(true)} />
 
-      <SiteFooter season={season} />
+      <SiteFooter />
     </main>
   );
 }

@@ -474,3 +474,391 @@ textarea {
   color: #a1a1aa;
   text-decoration: line-through;
 }
+
+/* Wrapped in `@layer components` on purpose.
+
+   Tailwind v4 emits its utilities into the `utilities` layer, and unlayered
+   CSS beats every layered rule regardless of specificity. Left unlayered, the
+   `.site p { margin-top: 0 }` below silently killed every `mt-*` utility on a
+   paragraph, and `.btn { display: inline-flex }` overrode `hidden`. Inside a
+   layer that Tailwind orders before `utilities`, a utility can still win —
+   which is the whole reason to reach for one. */
+@layer components {
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     MARKETING SITE — EDITORIAL LAYER
+
+     Everything below is scoped to `.site` and never reaches the logged-in CRM,
+     which keeps its own translucent-card system above.
+
+     The rules of this system, in order of how much they matter:
+       1. Flat colour. No gradients, no glows, no backdrop blur.
+       2. Hairlines instead of shadows. One pixel, low alpha, always `--rule`.
+       3. Square corners. A radius is an exception that has to earn itself.
+       4. Condensed display type doing the shouting, mono micro-type doing the
+          labelling. Nothing in between raises its voice.
+       5. Bands of solid colour, alternating, full bleed.
+
+     Bands publish `--rule`, `--dim`, `--pop` and the `--solid-*` button pair, so
+     any child works on any band without knowing which one it sits on.
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  .site {
+    --ink: #0a0a0e;
+    --ink-raised: #101017;
+    --bone: #ece9e3;
+    --paper: #f4f2ed;
+    --violet: #6c5cf7;
+    --violet-lift: #b3a7ff;
+    --violet-deep: #140d38;
+
+    --page-pad: clamp(1.25rem, 4.5vw, 5.5rem);
+    --nav-h: 5.25rem;
+
+    position: relative;
+    color: var(--bone);
+    background: var(--ink);
+    font-family: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Overscroll on iOS rubber-bands past the page and would otherwise expose the
+     CRM's pastel body gradient behind the marketing site. */
+  body:has(.site) {
+    background: #0a0a0e;
+  }
+
+  /* Film grain. The single cheapest thing that stops flat colour reading as
+     unfinished — it puts a surface on the page. */
+  .site::before {
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+    content: "";
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  }
+
+  .site ::selection {
+    color: #fff;
+    background: var(--violet);
+  }
+
+  .site :focus-visible {
+    outline: 2px solid var(--violet-lift);
+    outline-offset: 4px;
+  }
+
+  /* ─── Bands ──────────────────────────────────────────────────────────────── */
+
+  .band-ink,
+  .band-raised,
+  .band-paper,
+  .band-violet {
+    --rule: rgba(236, 233, 227, 0.13);
+    --dim: rgba(236, 233, 227, 0.52);
+    --pop: var(--violet-lift);
+    --solid-bg: var(--bone);
+    --solid-fg: var(--ink);
+  }
+
+  .band-ink {
+    color: var(--bone);
+    background: var(--ink);
+  }
+
+  .band-raised {
+    color: var(--bone);
+    background: var(--ink-raised);
+  }
+
+  .band-paper {
+    --rule: rgba(10, 10, 14, 0.16);
+    --dim: rgba(10, 10, 14, 0.62);
+    --pop: var(--violet);
+    --solid-bg: var(--ink);
+    --solid-fg: var(--paper);
+
+    color: var(--ink);
+    background: var(--paper);
+  }
+
+  .band-violet {
+    --rule: rgba(236, 233, 227, 0.16);
+    --pop: var(--violet-lift);
+
+    color: var(--bone);
+    background: var(--violet-deep);
+  }
+
+  .site-section {
+    padding: clamp(5rem, 8vw, 8.5rem) var(--page-pad);
+  }
+
+  .site-shell {
+    margin: 0 auto;
+    max-width: 84rem;
+  }
+
+  /* ─── Display type ───────────────────────────────────────────────────────── */
+
+  /* 82% width is the whole trick. Archivo at normal width is a perfectly nice
+     grotesk; condensed, it turns into a headline face. */
+  .site h1,
+  .site h2,
+  .site h3,
+  .display {
+    margin-top: 0;
+    font-weight: 640;
+    font-stretch: 82%;
+    letter-spacing: -0.045em;
+    line-height: 0.9;
+    text-wrap: balance;
+  }
+
+  .d1 {
+    font-size: clamp(3.4rem, 9.5vw, 9rem);
+  }
+
+  .d2 {
+    font-size: clamp(2.6rem, 6.2vw, 5.75rem);
+  }
+
+  .d3 {
+    font-size: clamp(1.75rem, 3vw, 2.75rem);
+  }
+
+  .site p {
+    margin-top: 0;
+    line-height: 1.6;
+  }
+
+  .lede {
+    max-width: 34rem;
+    font-size: clamp(1rem, 1.35vw, 1.1rem);
+    color: var(--dim);
+  }
+
+  /* ─── Mono micro-type ────────────────────────────────────────────────────── */
+
+  .mono {
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .eyebrow {
+    display: block;
+    margin-bottom: 1.4rem;
+    color: var(--pop);
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.17em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  /* The rule before the label. Borrowed wholesale from the best part of the
+     Black Sheep build — it reads as a printed caption rather than a web tag. */
+  .eyebrow::before {
+    display: inline-block;
+    width: 1.75rem;
+    height: 1px;
+    margin: 0 0.75rem 0.25rem 0;
+    background: currentColor;
+    content: "";
+  }
+
+  .figure-index {
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+  }
+
+  /* ─── Controls ───────────────────────────────────────────────────────────── */
+
+  .btn {
+    display: inline-flex;
+    min-height: 3.4rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1.6rem;
+    border: 1px solid transparent;
+    border-radius: 0;
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 180ms ease, background 180ms ease, border-color 180ms ease;
+  }
+
+  .btn-solid {
+    color: var(--solid-fg);
+    background: var(--solid-bg);
+  }
+
+  .btn-solid:hover {
+    color: var(--solid-bg);
+    border-color: var(--solid-bg);
+    background: transparent;
+  }
+
+  .btn-outline {
+    color: inherit;
+    border-color: var(--rule);
+    background: transparent;
+  }
+
+  .btn-outline:hover {
+    border-color: currentColor;
+  }
+
+  .btn-violet {
+    color: #fff;
+    background: var(--violet);
+  }
+
+  .btn-violet:hover {
+    color: var(--violet-lift);
+    border-color: var(--violet);
+    background: transparent;
+  }
+
+  .arrow-link {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid currentColor;
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .arrow-link span:last-child {
+    transition: transform 180ms ease;
+  }
+
+  .arrow-link:hover span:last-child {
+    transform: translate(0.2rem, -0.2rem);
+  }
+
+  /* ─── Ledger: numbered rows, the house alternative to a grid of cards ────── */
+
+  .ledger {
+    border-top: 1px solid var(--rule);
+  }
+
+  .ledger-row {
+    display: grid;
+    align-items: baseline;
+    gap: 0.4rem 1.75rem;
+    padding: clamp(1.5rem, 3vw, 2.4rem) 0;
+    border-bottom: 1px solid var(--rule);
+    grid-template-columns: 3.5rem 1fr auto;
+    transition: padding-left 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+  }
+
+  .ledger-row:hover {
+    padding-left: 0.9rem;
+  }
+
+  .ledger-row__arrow {
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ledger-row:hover .ledger-row__arrow {
+    transform: translate(0.25rem, -0.25rem);
+  }
+
+  /* ─── Scroll reveal ──────────────────────────────────────────────────────── */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(2.4rem);
+    transition:
+      opacity 780ms cubic-bezier(0.2, 0.65, 0.2, 1),
+      transform 780ms cubic-bezier(0.2, 0.65, 0.2, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  /* ─── Hairline grid, used sparingly as a background texture ──────────────── */
+
+  .rule-grid {
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 5.5rem 5.5rem;
+    opacity: 0.5;
+  }
+
+  /* ─── Nav links ──────────────────────────────────────────────────────────── */
+
+  .nav-link {
+    position: relative;
+    padding: 0.5rem 0;
+    color: rgba(236, 233, 227, 0.62);
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 180ms ease;
+  }
+
+  .nav-link:hover,
+  .nav-link[data-open] {
+    color: #ece9e3;
+  }
+
+  /* Underline wipes in from the left and out to the right, rather than fading.
+     Directional motion is what makes it feel drawn instead of toggled. */
+  .nav-link::after {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    transform: scaleX(0);
+    transform-origin: right;
+    background: currentColor;
+    content: "";
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-link:hover::after,
+  .nav-link[data-open]::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+}
