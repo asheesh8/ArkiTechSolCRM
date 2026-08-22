@@ -13,7 +13,19 @@ import { PRICING_GROUPS, type PricingPlan } from "@/lib/pricing";
  * field can't quietly become a hundredfold price change.
  */
 
-type Draft = PricingPlan & { featuresText: string };
+type Draft = PricingPlan & {
+  featuresText: string;
+  /**
+   * The dollar text exactly as typed, kept verbatim.
+   *
+   * These are the source of truth for the money fields; the cents alongside
+   * them are derived. Deriving the other way is what broke: regenerating the
+   * box from cents on every keystroke ate the decimal point, because
+   * Number("12.") is 12, and every digit after it landed as whole dollars.
+   */
+  monthlyText: string;
+  onceText: string;
+};
 
 const BLANK: Draft = {
   slug: "",
@@ -28,6 +40,8 @@ const BLANK: Draft = {
   active: true,
   sortOrder: 0,
   featuresText: "",
+  monthlyText: "",
+  onceText: "",
 };
 
 /** Cents -> a dollar string for the input. Empty when the price isn't set. */
@@ -36,13 +50,26 @@ function toDollars(cents: number | null) {
   return String(cents / 100);
 }
 
-/** A dollar string -> cents. Empty or unparseable means "no price". */
-function toCents(value: string): number | null {
+/**
+ * A dollar string -> cents, plus what is wrong with it if anything.
+ *
+ * Blank means "no price", which is a real answer. Anything that is not an
+ * amount is reported instead of quietly becoming null, because silently
+ * clearing a live price is the same class of accident as silently multiplying
+ * one. A trailing "." is accepted so a half-typed "12." survives while the
+ * owner is still typing "12.50".
+ */
+function parseDollars(value: string): { cents: number | null; error: string | null } {
   const trimmed = value.trim();
-  if (!trimmed) return null;
-  const n = Number(trimmed);
-  if (!Number.isFinite(n) || n < 0) return null;
-  return Math.round(n * 100);
+  if (!trimmed) return { cents: null, error: null };
+
+  const cleaned = trimmed.replace(/[$,\s]/g, "");
+  const shaped = /^\d*(\.\d{0,2})?$/.test(cleaned) && cleaned !== "" && cleaned !== ".";
+  if (!shaped) return { cents: null, error: "Amounts look like 1500 or 12.50." };
+
+  const n = Number(cleaned);
+  if (!Number.isFinite(n) || n < 0) return { cents: null, error: "Amounts look like 1500 or 12.50." };
+  return { cents: Math.round(n * 100), error: null };
 }
 
 /**
@@ -81,7 +108,14 @@ export function PricingManager() {
         if (cancelled) return;
         const { plans, seeded: isSeeded } = data as unknown as { plans: PricingPlan[]; seeded: boolean };
         setSeeded(isSeeded);
-        setDrafts(plans.map((p) => ({ ...p, featuresText: p.features.join("\n") })));
+        setDrafts(
+          plans.map((p) => ({
+            ...p,
+            featuresText: p.features.join("\n"),
+            monthlyText: toDollars(p.monthlyCents),
+            onceText: toDollars(p.onceCents),
+          })),
+        );
       } catch (err) {
         if (!cancelled) {
           setStatus("error");
@@ -97,14 +131,37 @@ export function PricingManager() {
     setStatus("idle");
   }
 
+  /** Keeps the typed text and the derived cents in step, text leading. */
+  function updateMoney(index: number, field: "monthly" | "once", raw: string) {
+    const { cents } = parseDollars(raw);
+    update(
+      index,
+      field === "monthly" ? { monthlyText: raw, monthlyCents: cents } : { onceText: raw, onceCents: cents },
+    );
+  }
+
   async function save() {
     if (!drafts) return;
     setStatus("saving");
     setMessage(null);
 
+    // Refuse rather than send a coerced number. These are the prices on the
+    // public site, so a field we cannot read has to stop the save.
+    const bad = drafts.findIndex(
+      (d) => parseDollars(d.monthlyText).error || parseDollars(d.onceText).error,
+    );
+    if (bad !== -1) {
+      setStatus("error");
+      setMessage(`Check the price on "${drafts[bad].name || "the untitled plan"}" — amounts look like 1500 or 12.50.`);
+      return;
+    }
+
     const payload = {
-      plans: drafts.map(({ featuresText, ...plan }) => ({
+      plans: drafts.map(({ featuresText, monthlyText, onceText, ...plan }) => ({
         ...plan,
+        // Re-read from the text so what was typed is what gets stored.
+        monthlyCents: parseDollars(monthlyText).cents,
+        onceCents: parseDollars(onceText).cents,
         priceNote: plan.priceNote?.trim() ? plan.priceNote.trim() : null,
         features: featuresText.split("\n").map((f) => f.trim()).filter(Boolean),
       })),
@@ -175,9 +232,16 @@ export function PricingManager() {
                   className="mt-1.5"
                   inputMode="decimal"
                   placeholder="leave blank if none"
-                  value={toDollars(plan.monthlyCents)}
-                  onChange={(e) => update(i, { monthlyCents: toCents(e.target.value) })}
+                  aria-invalid={parseDollars(plan.monthlyText).error ? true : undefined}
+                  aria-describedby={parseDollars(plan.monthlyText).error ? `monthly-${i}-error` : undefined}
+                  value={plan.monthlyText}
+                  onChange={(e) => updateMoney(i, "monthly", e.target.value)}
                 />
+                {parseDollars(plan.monthlyText).error ? (
+                  <p id={`monthly-${i}-error`} className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {parseDollars(plan.monthlyText).error}
+                  </p>
+                ) : null}
               </div>
               <div>
                 <Label htmlFor={`once-${i}`}>One time ($)</Label>
@@ -186,9 +250,16 @@ export function PricingManager() {
                   className="mt-1.5"
                   inputMode="decimal"
                   placeholder="leave blank if none"
-                  value={toDollars(plan.onceCents)}
-                  onChange={(e) => update(i, { onceCents: toCents(e.target.value) })}
+                  aria-invalid={parseDollars(plan.onceText).error ? true : undefined}
+                  aria-describedby={parseDollars(plan.onceText).error ? `once-${i}-error` : undefined}
+                  value={plan.onceText}
+                  onChange={(e) => updateMoney(i, "once", e.target.value)}
                 />
+                {parseDollars(plan.onceText).error ? (
+                  <p id={`once-${i}-error`} className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {parseDollars(plan.onceText).error}
+                  </p>
+                ) : null}
               </div>
 
               <div>
