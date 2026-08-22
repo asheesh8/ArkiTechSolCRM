@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { SERVICE_AREAS } from "@/lib/service-areas";
@@ -24,6 +25,24 @@ import { Reveal } from "./reveal";
  */
 
 // Catmull-Rom smoothed, so the shoreline reads as water and not a polygon.
+/**
+ * Optional generated backdrop behind the map — mountains, foliage, Vermont
+ * atmosphere. Set to a path under /public to switch it on; null renders the map
+ * exactly as it is now.
+ *
+ * It sits BEHIND the SVG on purpose. The map itself stays vector: that is what
+ * keeps the towns clickable, the hover highlighting working, the colours tied
+ * to the palette tokens, and the weight off a page whose PageSpeed score we
+ * publicly guarantee. A raster backdrop buys atmosphere without giving any of
+ * that up.
+ *
+ * Whatever goes here gets pushed right back — heavily desaturated and dimmed —
+ * because the map has to stay the thing you read. Landscape, wide (roughly
+ * 3:2 or wider), and keep the detail away from the centre-left where the towns
+ * cluster. Optimise it before it ships; 250 KB is the ceiling.
+ */
+const BACKDROP: string | null = null;
+
 const LAKE =
   "M98.8,0 C102.3,9.9 107,42.9 120,59.4 C132.9,75.9 173,88.3 176.5,99 " +
   "C180,109.7 142.4,114.6 141.2,123.7 C140,132.8 171.8,144.3 169.4,153.4 " +
@@ -80,9 +99,21 @@ export function ServiceMap() {
 
         <Reveal delay={80}>
           <div className="mt-14 border p-4 sm:p-7" style={{ borderColor: "var(--rule)" }}>
+            <div className="relative">
+              {BACKDROP ? (
+                <Image
+                  src={BACKDROP}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  sizes="(min-width: 1024px) 72rem, 100vw"
+                  className="pointer-events-none object-cover"
+                  style={{ filter: "grayscale(0.85) contrast(0.9) brightness(1.06)", opacity: 0.16 }}
+                />
+              ) : null}
             <svg
               viewBox="0 0 600 396"
-              className="block h-auto w-full"
+              className="relative block h-auto w-full"
               role="img"
               aria-label="Map of northern Vermont from Lake Champlain to Stowe, marking the towns we serve."
             >
@@ -160,6 +191,7 @@ export function ServiceMap() {
                 NORTHERN VERMONT
               </text>
             </svg>
+            </div>
           </div>
         </Reveal>
 
