@@ -24,7 +24,6 @@ import { Reveal } from "./reveal";
  * is the tall one, sitting just west of Stowe exactly as it does in life.
  */
 
-// Catmull-Rom smoothed, so the shoreline reads as water and not a polygon.
 /**
  * Optional generated backdrop behind the map — mountains, foliage, Vermont
  * atmosphere. Set to a path under /public to switch it on; null renders the map
@@ -41,8 +40,15 @@ import { Reveal } from "./reveal";
  * 3:2 or wider), and keep the detail away from the centre-left where the towns
  * cluster. Optimise it before it ships; 250 KB is the ceiling.
  */
-const BACKDROP: string | null = null;
+// Generated (Higgsfield soul_location), not a photograph of anywhere in
+// particular — which is exactly why it is safe here: it is decoration behind a
+// diagram, aria-hidden, and makes no claim to be a real place. Chosen from
+// three candidates because its geography happens to match the map's — water
+// falling away west, ridgelines stacking east — so the dimmed shape underneath
+// agrees with the vector on top instead of fighting it.
+const BACKDROP: string | null = "/service-map-backdrop.jpg";
 
+// Catmull-Rom smoothed, so the shoreline reads as water and not a polygon.
 const LAKE =
   "M98.8,0 C102.3,9.9 107,42.9 120,59.4 C132.9,75.9 173,88.3 176.5,99 " +
   "C180,109.7 142.4,114.6 141.2,123.7 C140,132.8 171.8,144.3 169.4,153.4 " +
