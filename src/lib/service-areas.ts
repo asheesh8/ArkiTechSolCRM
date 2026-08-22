@@ -101,6 +101,11 @@ export const SERVICE_AREAS: ServiceArea[] = [
       text: "We built and run the site for Black Sheep Landscaping, whose home base is Essex.",
       href: "https://black-sheep-property-mgmt.vercel.app",
     },
+    // Wikimedia Commons, "Essex Junction, Vermont Amtrak.jpg" — public domain.
+    photo: {
+      src: "/service-areas-essex.jpg",
+      alt: "The Amtrak platform at Essex Junction station, Vermont.",
+    },
   },
   {
     slug: "stowe",
@@ -128,6 +133,11 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "Search volume here swings hard between ski season, mud season, and foliage. Content and Business Profile updates should move with it rather than sitting static all year.",
       },
     ],
+    // Wikimedia Commons, "The Chin of Mount Mansfield, 2007.jpg" — public domain.
+    photo: {
+      src: "/service-areas-stowe.jpg",
+      alt: "The Chin of Mount Mansfield rising above the treeline near Stowe, Vermont.",
+    },
   },
   {
     slug: "winooski",
@@ -209,6 +219,11 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "Referrals here are strong, but the referred person still Googles you first. What they find decides whether the referral converts.",
       },
     ],
+    // Wikimedia Commons, "Malletsbaycauseway.JPG" — public domain.
+    photo: {
+      src: "/service-areas-colchester.jpg",
+      alt: "The Colchester Causeway path running out between the waters of Lake Champlain.",
+    },
   },
   {
     slug: "south-burlington",
@@ -236,6 +251,11 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "Booking, forms, and reminders are where practices lose hours a week. That is automation work, not design work.",
       },
     ],
+    // Wikimedia Commons, "South Burlington City Hall, 180 Market Street.jpg" — CC0.
+    photo: {
+      src: "/service-areas-south-burlington.jpg",
+      alt: "South Burlington Public Library and City Hall on Market Street.",
+    },
   },
 ];
 
