@@ -6,6 +6,7 @@ import { Hero } from "@/components/landing/hero";
 import { ImmersiveShowcase } from "@/components/landing/immersive-showcase";
 import { CompanySections } from "@/components/landing/company-sections";
 import { TeamSection } from "@/components/landing/team-section";
+import { ServiceMap } from "@/components/landing/service-map";
 import { ClosingSections } from "@/components/landing/closing-sections";
 import { ContactModal } from "@/components/landing/contact-modal";
 import { CallbackWidget } from "@/components/landing/callback-widget";
@@ -47,6 +48,8 @@ export default function Home() {
       <ImmersiveShowcase />
 
       <TeamSection />
+
+      <ServiceMap />
 
       <ClosingSections onStartProject={() => setContactOpen(true)} />
 

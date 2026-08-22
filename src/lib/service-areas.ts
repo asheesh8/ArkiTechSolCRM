@@ -165,6 +165,14 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "For most businesses on the Circle, the two things a visitor wants are hours and what you serve. Everything else is decoration.",
       },
     ],
+    // Wikimedia Commons, "Textile mill. Winooski, Vermont.jpg" — public domain.
+    // A period photograph rather than a modern one, because no freely licensed
+    // modern shot of Winooski exists. The mill is still standing.
+    photo: {
+      src: "/service-areas-winooski.jpg",
+      alt: "The Champlain Mill beside the falls on the Winooski River, photographed in the mid-twentieth century.",
+      credit: "The Winooski mill on the falls — still standing, now offices and shops.",
+    },
   },
   {
     slug: "williston",
