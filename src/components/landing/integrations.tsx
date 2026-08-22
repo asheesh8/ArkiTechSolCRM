@@ -95,6 +95,32 @@ export function Integrations() {
                 </div>
               </li>
             ))}
+
+            {/* Spans the full row at every breakpoint. The grid is 2/3/4
+                columns depending on width, so a normal-sized tile here would
+                leave a ragged gap at two of those three sizes. */}
+            <li
+              className="col-span-full flex flex-col gap-3 border-b border-r p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6"
+              style={{ borderColor: "var(--rule)" }}
+            >
+              <span
+                className="leading-none"
+                style={{
+                  fontStretch: "76%",
+                  fontWeight: 700,
+                  fontSize: "1.5rem",
+                  letterSpacing: "-0.04em",
+                  color: "var(--violet-lift)",
+                }}
+              >
+                + More
+              </span>
+              <p className="mono" style={{ color: "var(--dim)", fontSize: "0.58rem", lineHeight: 1.7 }}>
+                This list is not the limit — we&apos;re always adding new tools.
+                <br className="hidden sm:block" />
+                If it has an API or a webhook, it can join the system.
+              </p>
+            </li>
           </ul>
         </Reveal>
       </div>
