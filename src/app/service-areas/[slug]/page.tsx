@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteNav } from "@/components/landing/site-nav";
@@ -79,6 +80,31 @@ export default async function ServiceAreaPage({ params }: { params: Promise<{ sl
           ) : null}
         </div>
       </section>
+
+      {/* Optional. Greyscaled and scrimmed to the same recipe as the hero, so a
+          photograph reads as texture and local proof without dragging a second
+          palette into a deliberately flat page. */}
+      {area.photo ? (
+        <section className="band-ink px-[var(--page-pad)] pb-[clamp(3rem,5vw,5rem)]">
+          <figure className="site-shell max-w-5xl">
+            <div className="relative aspect-[21/9] overflow-hidden border" style={{ borderColor: "var(--rule)" }}>
+              <Image
+                src={area.photo.src}
+                alt={area.photo.alt}
+                fill
+                sizes="(min-width: 1024px) 64rem, 100vw"
+                className="object-cover"
+                style={{ filter: "grayscale(0.6) contrast(1.05) brightness(0.78)" }}
+              />
+            </div>
+            {area.photo.credit ? (
+              <figcaption className="mono mt-3" style={{ color: "var(--dim)", fontSize: "0.52rem" }}>
+                {area.photo.credit}
+              </figcaption>
+            ) : null}
+          </figure>
+        </section>
+      ) : null}
 
       <section className="band-raised site-section">
         <div className="site-shell max-w-5xl">

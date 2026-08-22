@@ -24,6 +24,22 @@ export type ServiceArea = {
   local: { term: string; detail: string }[];
   /** A real client or connection here. Omitted where we don't have one. */
   proof?: { text: string; href?: string };
+  /**
+   * A photograph of somewhere in this town that a local would recognise.
+   *
+   * Shoot these yourselves. A phone photo of Maple Tree Place that you took is
+   * worth more here than a stock image — you own it outright, it is definitely
+   * the right place, and "we know this town" is the entire argument the page is
+   * making. A borrowed photo of Church Street is the same one every other
+   * Burlington business is using.
+   *
+   * If you do use someone else's, it must be licensed for commercial use and
+   * `credit` must be filled in. Never CC BY-SA on a commercial page — the
+   * ShareAlike clause is more trouble than the picture is worth.
+   *
+   * Pages render fine without this. Add them as you take them.
+   */
+  photo?: { src: string; alt: string; credit?: string };
 };
 
 export const SERVICE_AREAS: ServiceArea[] = [
