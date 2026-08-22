@@ -1826,7 +1826,7 @@ export function ColdCallWorkspace({
                   <>
                     <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
                       <Label htmlFor="cold-call-referrer">Referrer name</Label>
-                      <Input id="cold-call-referrer" value={profile.referralName} onChange={(event) => updateProfile("referralName", event.target.value)} placeholder="Julie Becker" />
+                      <Input id="cold-call-referrer" value={profile.referralName} onChange={(event) => updateProfile("referralName", event.target.value)} placeholder="Jane Doe" />
                     </div>
                     <div className="space-y-1.5 sm:col-span-1 xl:col-span-2">
                       <Label htmlFor="cold-call-relationship">Relationship</Label>

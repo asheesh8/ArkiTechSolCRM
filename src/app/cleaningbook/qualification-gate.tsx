@@ -385,7 +385,7 @@ export function QualificationGate({
                     label="Full name"
                     value={form.name}
                     onChange={(event) => update("name", event.target.value)}
-                    placeholder="Tina West"
+                    placeholder="Jane Doe"
                     autoComplete="name"
                   />
                   <TextInput
@@ -395,7 +395,7 @@ export function QualificationGate({
                     inputMode="tel"
                     value={form.phone}
                     onChange={(event) => update("phone", event.target.value)}
-                    placeholder="+1 240 209 1002"
+                    placeholder="+1 240 555 0100"
                     autoComplete="tel"
                   />
                   <TextInput
