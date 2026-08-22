@@ -810,6 +810,54 @@ textarea {
     }
   }
 
+  /* ─── Range slider ───────────────────────────────────────────────────────────
+   A square thumb riding a one-pixel track. Range inputs can only be restyled
+   through vendor pseudo-elements, which is why this can't live inline on the
+   component like most of the site's one-off styling does. */
+
+  .range {
+    width: 100%;
+    height: 1.75rem;
+    background: transparent;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .range::-webkit-slider-runnable-track {
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .range::-webkit-slider-thumb {
+    width: 0.8rem;
+    height: 1.6rem;
+    margin-top: -0.8rem;
+    border: 0;
+    border-radius: 0;
+    background: var(--violet-lift);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .range::-moz-range-track {
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .range::-moz-range-thumb {
+    width: 0.8rem;
+    height: 1.6rem;
+    border: 0;
+    border-radius: 0;
+    background: var(--violet-lift);
+  }
+
+  .range:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--violet-lift);
+    outline-offset: 3px;
+  }
+
   /* ─── Hairline grid, used sparingly as a background texture ──────────────── */
 
   .rule-grid {

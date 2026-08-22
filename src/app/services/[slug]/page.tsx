@@ -6,6 +6,8 @@ import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { Reveal } from "@/components/landing/reveal";
 import { PageSpeedScores } from "@/components/landing/pagespeed-scores";
+import { Integrations } from "@/components/landing/integrations";
+import { MissedCallCalculator } from "@/components/landing/missed-call-calculator";
 
 export function generateStaticParams() {
   return services.map((service) => ({ slug: service.slug }));
@@ -63,9 +65,13 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
-      {/* Brand & Local SEO argues its case with a measurement, so it shows the
-          measurement — our own scores, on the page that sells the audit. */}
+      {/* Three services make their case with something interactive rather than
+          another paragraph. Each one is the proof the page is actually selling:
+          the audit we run, the stack we connect, the money the phone is
+          leaking. */}
       {service.slug === "brand-seo" ? <PageSpeedScores /> : null}
+      {service.slug === "automations" ? <Integrations /> : null}
+      {service.slug === "ai-receptionist" ? <MissedCallCalculator /> : null}
 
       {/* the blog demo that hangs off this service */}
       <section className="band-paper site-section">
