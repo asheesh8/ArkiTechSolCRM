@@ -59,14 +59,29 @@ export async function PUT(request: Request) {
     return noStore(NextResponse.json({ error: "Two plans share the same slug." }, { status: 400 }));
   }
 
-  await prisma.$transaction([
-    // Anything removed in the editor goes away, so the table always matches
-    // exactly what was saved.
-    prisma.pricingPlan.deleteMany({ where: { slug: { notIn: slugs } } }),
-    ...plans.map((plan) =>
-      prisma.pricingPlan.upsert({ where: { slug: plan.slug }, create: plan, update: plan }),
-    ),
-  ]);
+  try {
+    await prisma.$transaction([
+      // Anything removed in the editor goes away, so the table always matches
+      // exactly what was saved.
+      prisma.pricingPlan.deleteMany({ where: { slug: { notIn: slugs } } }),
+      ...plans.map((plan) =>
+        prisma.pricingPlan.upsert({ where: { slug: plan.slug }, create: plan, update: plan }),
+      ),
+    ]);
+  } catch (err) {
+    // Left to escape, this becomes an uncaught throw, Next answers with a
+    // non-JSON 500, and the editor reports whatever its browser says about
+    // unparseable bodies — which is how a database problem ends up looking
+    // like a typo in a price. The transaction is atomic, so on failure the
+    // table still holds exactly what it held before.
+    console.error("[pricing] save failed", err);
+    return noStore(
+      NextResponse.json(
+        { error: "The prices could not be saved. Nothing was changed — please try again." },
+        { status: 500 },
+      ),
+    );
+  }
 
   // Push the change out now instead of waiting for the 5-minute window.
   revalidatePath("/pricing");

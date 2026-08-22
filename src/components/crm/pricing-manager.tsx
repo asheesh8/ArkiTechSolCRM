@@ -45,6 +45,26 @@ function toCents(value: string): number | null {
   return Math.round(n * 100);
 }
 
+/**
+ * Read a JSON body without letting a parse failure impersonate the error.
+ *
+ * A 500, a gateway timeout, or anything else the platform answers with comes
+ * back as HTML, and calling res.json() on that throws — in Safari with the
+ * message "The string did not match the expected pattern", which then lands in
+ * the owner's error line as though it were something they typed. Check the
+ * status first and treat an unreadable body as "no detail given" rather than as
+ * the problem itself.
+ */
+async function readJson(res: Response): Promise<Record<string, unknown>> {
+  return (await res.json().catch(() => ({}))) as Record<string, unknown>;
+}
+
+/** The server's own message when it sent one, otherwise something diagnosable. */
+function errorFrom(res: Response, data: Record<string, unknown>, fallback: string) {
+  if (typeof data.error === "string" && data.error) return data.error;
+  return `${fallback} The server answered ${res.status} without saying why.`;
+}
+
 export function PricingManager() {
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -53,20 +73,22 @@ export function PricingManager() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/settings/pricing")
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error ?? "Couldn't load pricing.");
-        return data;
-      })
-      .then((data: { plans: PricingPlan[]; seeded: boolean }) => {
+    (async () => {
+      try {
+        const res = await fetch("/api/settings/pricing");
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(errorFrom(res, data, "Couldn't load pricing."));
         if (cancelled) return;
-        setSeeded(data.seeded);
-        setDrafts(data.plans.map((p) => ({ ...p, featuresText: p.features.join("\n") })));
-      })
-      .catch((err: Error) => {
-        if (!cancelled) { setStatus("error"); setMessage(err.message); }
-      });
+        const { plans, seeded: isSeeded } = data as unknown as { plans: PricingPlan[]; seeded: boolean };
+        setSeeded(isSeeded);
+        setDrafts(plans.map((p) => ({ ...p, featuresText: p.features.join("\n") })));
+      } catch (err) {
+        if (!cancelled) {
+          setStatus("error");
+          setMessage(err instanceof Error ? err.message : "Couldn't load pricing.");
+        }
+      }
+    })();
     return () => { cancelled = true; };
   }, []);
 
@@ -94,8 +116,8 @@ export function PricingManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Save failed.");
+      const data = await readJson(res);
+      if (!res.ok) throw new Error(errorFrom(res, data, "Save failed."));
       setStatus("saved");
       setSeeded(true);
       setMessage(`Saved ${data.count} plans. The public pricing page is updating now.`);
