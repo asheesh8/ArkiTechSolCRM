@@ -7,6 +7,7 @@ import { services } from "@/lib/services-content";
 
 const ABOUT_LINKS = [
   { href: "/#about", label: "The studio" },
+  { href: "/service-areas", label: "Service areas" },
   { href: "/#showcase", label: "Our work" },
   { href: "/#team", label: "The team" },
 ];
