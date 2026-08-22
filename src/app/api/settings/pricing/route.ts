@@ -10,6 +10,29 @@ import { DEFAULT_PLANS, SERVICE_PLAN } from "@/lib/pricing";
 // Owner-only rather than manager-only on purpose: this is the number on the
 // website, and changing it is a business decision, not an operational one.
 
+/**
+ * Turn a database failure into something the owner can act on.
+ *
+ * This table arrived in its own migration and nothing in the deploy applies
+ * migrations, so "the table is not there yet" is the failure this endpoint is
+ * most likely to hit — and it is indistinguishable from every other 500 unless
+ * it says so. Everything else stays generic on purpose: the detail goes to the
+ * server log, not to the browser.
+ */
+function databaseError(err: unknown): string | null {
+  const code =
+    typeof err === "object" && err !== null && "code" in err
+      ? String((err as { code: unknown }).code)
+      : null;
+  if (code === "P2021" || code === "P2022") {
+    return "The pricing table isn't in this database yet. Run the pending migration (prisma migrate deploy), then reload.";
+  }
+  if (code === "P1001" || code === "P1002" || code === "P1017") {
+    return "Couldn't reach the database just now. Try again in a moment.";
+  }
+  return null;
+}
+
 function noStore(response: NextResponse) {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
   return response;
@@ -28,7 +51,17 @@ export async function GET() {
   const caller = await requireOwner();
   if (caller.error) return caller.error;
 
-  const rows = await prisma.pricingPlan.findMany({ orderBy: [{ group: "asc" }, { sortOrder: "asc" }] });
+  let rows;
+  try {
+    rows = await prisma.pricingPlan.findMany({ orderBy: [{ group: "asc" }, { sortOrder: "asc" }] });
+  } catch (err) {
+    // Unguarded, this escaped as an uncaught throw and the editor could only
+    // report the status code — which is a 500 that explains nothing.
+    console.error("[pricing] load failed", err);
+    return noStore(
+      NextResponse.json({ error: databaseError(err) ?? "Couldn't read the pricing table." }, { status: 500 }),
+    );
+  }
 
   // Nobody has saved yet, so hand back the same defaults the site is showing
   // rather than an empty editor that looks like the prices vanished.
@@ -77,7 +110,11 @@ export async function PUT(request: Request) {
     console.error("[pricing] save failed", err);
     return noStore(
       NextResponse.json(
-        { error: "The prices could not be saved. Nothing was changed — please try again." },
+        {
+          error:
+            databaseError(err) ??
+            "The prices could not be saved. Nothing was changed — please try again.",
+        },
         { status: 500 },
       ),
     );
