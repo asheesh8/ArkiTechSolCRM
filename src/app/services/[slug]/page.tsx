@@ -8,6 +8,12 @@ import { Reveal } from "@/components/landing/reveal";
 import { PageSpeedScores } from "@/components/landing/pagespeed-scores";
 import { Integrations } from "@/components/landing/integrations";
 import { MissedCallCalculator } from "@/components/landing/missed-call-calculator";
+import { formatMoney, getServicePrice } from "@/lib/pricing";
+
+// Prices are read from the database, so these pages revalidate rather than
+// being frozen at build time. Saving in CRM settings also revalidates them
+// directly, so an edit lands straight away.
+export const revalidate = 300;
 
 export function generateStaticParams() {
   return services.map((service) => ({ slug: service.slug }));
@@ -26,6 +32,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
   if (!service) notFound();
 
   const others = services.filter((s) => s.slug !== service.slug);
+  const price = await getServicePrice(service.slug);
 
   return (
     <main className="site min-h-screen">
@@ -42,6 +49,29 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
               <p className="eyebrow">{service.tagline}</p>
               <h1 className="d1">{service.name}</h1>
               <p className="lede mt-9 max-w-[52ch]">{service.summary}</p>
+
+              {/* Price anchor. Someone reading a service page shouldn't have to
+                  navigate away to find out whether this is $200 or $20,000. */}
+              {price ? (
+                <Link
+                  href="/pricing"
+                  className="mt-9 inline-flex items-baseline gap-3 border-b pb-2 transition-colors duration-150 hover:border-[var(--violet-lift)]"
+                  style={{ borderColor: "var(--rule)" }}
+                >
+                  <span className="mono" style={{ color: "var(--dim)", fontSize: "0.58rem" }}>
+                    {price.priceNote ?? "From"}
+                  </span>
+                  <span
+                    className="leading-none"
+                    style={{ fontStretch: "80%", fontWeight: 660, fontSize: "1.9rem", letterSpacing: "-0.04em" }}
+                  >
+                    {formatMoney(price.monthlyCents ?? price.onceCents ?? 0)}
+                  </span>
+                  <span className="mono" style={{ color: "var(--dim)", fontSize: "0.58rem" }}>
+                    {price.monthlyCents != null ? "/month" : "one time"} · see pricing ↗
+                  </span>
+                </Link>
+              ) : null}
             </div>
           </Reveal>
 

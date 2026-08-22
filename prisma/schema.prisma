@@ -51,13 +51,13 @@ enum LeadExclusionReason {
 }
 
 model User {
-  id                String             @id @default(cuid())
+  id                String                     @id @default(cuid())
   name              String
-  email             String             @unique
+  email             String                     @unique
   passwordHash      String?
-  role              Role               @default(MEMBER)
-  isActive          Boolean            @default(true)
-  leads             Lead[]             @relation("AssignedLeads")
+  role              Role                       @default(MEMBER)
+  isActive          Boolean                    @default(true)
+  leads             Lead[]                     @relation("AssignedLeads")
   callNotes         CallNote[]
   scrapeUsages      ScrapeUsage[]
   staffSessions     StaffSession[]
@@ -66,38 +66,37 @@ model User {
   noteCabinetShares NoteCabinetShare[]
   notePages         NotePage[]
   notePresences     NotePresence[]
-  devWorkRequests   WorkRequest[]      @relation("AssignedDevWorkRequests")
+  devWorkRequests   WorkRequest[]              @relation("AssignedDevWorkRequests")
   coldCalls         ReceptionistConversation[]
   twilioAccount     TwilioAccount?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
 }
 
 /**
  * One teammate's own Twilio account, connected from the cold-call room.
- *
  * Each rep brings their own number and their own bill, so a call is placed on
  * the credentials of whoever dialled it rather than a single company account.
  * When a user has no row here the dialer falls back to the TWILIO_* environment
  * variables, which is how a single shared company line still works.
  */
 model TwilioAccount {
-  id         String @id @default(cuid())
-  userId     String @unique
-  accountSid String
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  accountSid         String
   // The API key pair is provisioned for this app rather than pasted in, so it
   // can be revoked from the Twilio console without touching the auth token.
-  apiKeySid  String
+  apiKeySid          String
   // The TwiML app whose voice URL points back at /api/calls/voice. Created here
   // too — pointing it at the wrong URL is the step people get wrong by hand.
-  twimlAppSid String
+  twimlAppSid        String
   // E.164. Not a secret: it is what the prospect sees on caller ID.
-  callerId    String
-  friendlyName String?
+  callerId           String
+  friendlyName       String?
   // Encrypted with CREDENTIAL_ENCRYPTION_KEY. These place calls and spend money,
   // so they never sit in the database as plaintext and never leave the server.
-  authTokenCipher    String @db.Text
-  apiKeySecretCipher String @db.Text
+  authTokenCipher    String   @db.Text
+  apiKeySecretCipher String   @db.Text
   // An optional second account used only for texting.
   //
   // US carriers filter application-sent SMS from numbers whose A2P brand and
@@ -106,11 +105,11 @@ model TwilioAccount {
   // point texting at a number that has cleared while their own is in review.
   // Null on both means texts go out on the same account as calls.
   smsAccountSid      String?
-  smsAuthTokenCipher String? @db.Text
+  smsAuthTokenCipher String?  @db.Text
   smsFrom            String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Webhooks arrive knowing only the Twilio account, so that is the lookup path
   // for verifying a signature. Not unique: two teammates may share one account.
@@ -191,21 +190,21 @@ model Lead {
 }
 
 model CallNote {
-  id           String      @id @default(cuid())
-  leadId       String
-  userId       String
-  note         String
-  noteType     NoteType    @default(GENERAL)
-  callOutcome  CallOutcome
-  followUpDate DateTime?
+  id              String      @id @default(cuid())
+  leadId          String
+  userId          String
+  note            String
+  noteType        NoteType    @default(GENERAL)
+  callOutcome     CallOutcome
+  followUpDate    DateTime?
   // Set when the note came from a call dialed inside the CRM rather than typed
   // up afterwards. The SID is what a recording and transcript will be joined on
   // once those exist; until then it is just provenance.
   durationSecs    Int?
   providerCallSid String?
-  createdAt    DateTime    @default(now())
-  lead         Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+  lead            Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
   @@index([userId])
@@ -645,4 +644,34 @@ model VoiceDemoSession {
 
   @@index([agentId, createdAt])
   @@index([ipHash, createdAt])
+}
+
+/// A row on the public pricing page, editable by owners in CRM settings so a
+/// price change never needs a deploy. Money is stored in cents; the editor and
+/// the page both format it.
+model PricingPlan {
+  id           String   @id @default(cuid())
+  /// Stable key the marketing pages reference (e.g. "website-reviews").
+  slug         String   @unique
+  /// Which tab the plan sits under on /pricing.
+  group        String
+  name         String
+  blurb        String
+  /// Recurring price in cents. Null for one-off or "let's scope it" plans.
+  monthlyCents Int?
+  /// One-time price in cents. Null when the plan is purely recurring.
+  onceCents    Int?
+  /// Overrides the price line entirely — "From", "Scoped per project", etc.
+  priceNote    String?
+  features     String[]
+  /// Marks the plan the page highlights.
+  featured     Boolean  @default(false)
+  /// Hide without deleting.
+  active       Boolean  @default(true)
+  sortOrder    Int      @default(0)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([group, sortOrder])
 }

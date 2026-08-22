@@ -3,6 +3,7 @@ import { getCurrentUser, isOwner } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeCustomizer } from "@/components/crm/theme-customizer";
 import { TeamManager } from "@/components/crm/team-manager";
+import { PricingManager } from "@/components/crm/pricing-manager";
 
 export const metadata = { title: "Team · LocalLead CRM" };
 
@@ -19,6 +20,19 @@ export default async function SettingsPage() {
       </section>
 
       <TeamManager currentUserId={user.id} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Public pricing</CardTitle>
+          <p className="mt-1 text-sm text-zinc-500">
+            What visitors see on arkitech-sol.com/pricing. Saving here updates the site immediately —
+            no deploy needed.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <PricingManager />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Appearance</CardTitle></CardHeader>

@@ -128,6 +128,7 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
             ))}
           </Dropdown>
 
+          <Link href="/pricing" className="nav-link">Pricing</Link>
           <Link href="/blog" className="nav-link">Blog</Link>
           <a href="tel:+18023103749" className="nav-link">Call us</a>
         </div>
@@ -201,7 +202,7 @@ export function SiteNav({ onStartProject }: { onStartProject?: () => void }) {
 
           <p className="eyebrow mt-9">Studio</p>
           <div className="ledger" style={{ borderTopColor: "var(--rule)" }}>
-            {[...ABOUT_LINKS, { href: "/blog", label: "Blog" }].map((link) => (
+            {[...ABOUT_LINKS, { href: "/pricing", label: "Pricing" }, { href: "/blog", label: "Blog" }].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

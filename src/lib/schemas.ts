@@ -117,3 +117,28 @@ export const twilioConnectSchema = twilioCredentialsSchema.extend({
     .trim()
     .regex(/^\+[1-9]\d{7,14}$/, "Pick one of the numbers on your Twilio account"),
 });
+
+// A row of the public pricing table. Money arrives in cents from the editor,
+// which does the dollar conversion, so nothing here has to parse currency.
+export const pricingPlanSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(60)
+    .regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers, and hyphens"),
+  group: z.enum(["websites", "receptionist", "systems", "growth"]),
+  name: z.string().trim().min(1, "Give the plan a name").max(80),
+  blurb: z.string().trim().min(1, "One sentence on who this is for").max(400),
+  monthlyCents: z.number().int().min(0).max(100_000_00).nullable(),
+  onceCents: z.number().int().min(0).max(1_000_000_00).nullable(),
+  priceNote: z.string().trim().max(40).nullable(),
+  features: z.array(z.string().trim().min(1).max(160)).max(20),
+  featured: z.boolean(),
+  active: z.boolean(),
+  sortOrder: z.number().int().min(0).max(9999),
+});
+
+export const pricingPlansSchema = z.object({
+  plans: z.array(pricingPlanSchema).max(40),
+});
