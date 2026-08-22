@@ -17,10 +17,11 @@ const AUDIT = {
   url: "arkitech-sol.com",
   strategy: "Mobile",
   measuredOn: "21 August 2026",
+  report: "https://pagespeed.web.dev/analysis/https-arkitech-sol-com/76dri7u07s?form_factor=mobile",
   scores: [
-    { label: "Performance", value: 61 },
-    { label: "Accessibility", value: 88 },
-    { label: "Best Practices", value: 96 },
+    { label: "Performance", value: 92 },
+    { label: "Accessibility", value: 97 },
+    { label: "Best Practices", value: 100 },
     { label: "SEO", value: 100 },
   ],
 } as const;
@@ -82,11 +83,22 @@ export function PageSpeedScores() {
         </Reveal>
 
         <Reveal delay={160}>
-          <p className="lede mt-10 max-w-[54ch]">
-            Live from Google PageSpeed Insights, not a screenshot we chose. We run the same audit
-            against your site and against whoever currently outranks you, and re-run it after every
-            build so the number is always current.
-          </p>
+          <div className="mt-10">
+            <p className="lede max-w-[54ch]">
+              Straight from Google PageSpeed Insights, and the full report is public — we run the
+              same audit against your site and against whoever currently outranks you, then re-run
+              it after every build.
+            </p>
+            <a
+              href={AUDIT.report}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="arrow-link mt-7"
+              style={{ color: "var(--violet-lift)" }}
+            >
+              Read the full report <span aria-hidden="true">↗</span>
+            </a>
+          </div>
         </Reveal>
       </div>
     </section>
