@@ -127,7 +127,7 @@ export const pricingPlanSchema = z.object({
     .min(1)
     .max(60)
     .regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers, and hyphens"),
-  group: z.enum(["websites", "receptionist", "systems", "growth"]),
+  group: z.enum(["websites", "receptionist", "systems", "growth", "advisory"]),
   name: z.string().trim().min(1, "Give the plan a name").max(80),
   blurb: z.string().trim().min(1, "One sentence on who this is for").max(400),
   monthlyCents: z.number().int().min(0).max(100_000_00).nullable(),

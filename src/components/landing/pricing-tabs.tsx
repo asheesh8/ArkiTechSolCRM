@@ -26,8 +26,12 @@ function PriceLine({ plan }: { plan: PricingPlan }) {
         ? "one time"
         : "/month";
 
+  // No number does not always mean "scoped". Some plans have a real price that
+  // is not a one-off or a monthly — free, or an hourly rate — and priceNote is
+  // where that lives. Ignoring it here used to render "Let's scope it" over the
+  // top of a stated price.
   if (primary == null) {
-    return <p className="d3" style={{ fontSize: "1.6rem" }}>Let&apos;s scope it</p>;
+    return <p className="d3" style={{ fontSize: "1.6rem" }}>{priceNote ?? "Let\u2019s scope it"}</p>;
   }
 
   return (
