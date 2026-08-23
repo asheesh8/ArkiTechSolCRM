@@ -322,23 +322,6 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     active: true,
     sortOrder: 10,
   },
-  {
-    slug: "ai-operations-audit",
-    group: "advisory",
-    name: "AI Operations Audit",
-    blurb: "A working review of where AI already helps you, where it could, and what to do first.",
-    monthlyCents: null,
-    onceCents: null,
-    priceNote: "$76/hr",
-    features: [
-      "Review current AI use",
-      "Identify opportunities",
-      "Prioritise automation investments",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 20,
-  },
 ];
 
 /** Which plan a service page quotes in its "from" line. */
