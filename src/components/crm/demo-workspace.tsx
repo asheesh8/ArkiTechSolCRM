@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { DEMO_BRIEFS, UNIVERSAL_REQUIREMENTS, PAGESPEED_FLOOR, getBrief } from "@/lib/demo-briefs";
+import { RESOURCE_GROUPS } from "@/lib/demo-resources";
 
 /**
  * The developers' room: the briefs on one side, your builds on the other.
@@ -92,6 +93,7 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [openBrief, setOpenBrief] = useState<string | null>(null);
+  const [openShelf, setOpenShelf] = useState<string | null>(null);
   const [draft, setDraft] = useState({ title: "", businessType: DEMO_BRIEFS[0].key });
 
   const isOwner = viewerRole === "OWNER";
@@ -296,6 +298,57 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
                       </Link>
                     ) : null}
                   </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      {/* ------------------------------------------------------------- shelf */}
+      <Card>
+        <CardHeader>
+          <CardTitle>The shelf</CardTitle>
+          <p className="mt-1 text-sm text-zinc-500">
+            Where to go instead of reaching for the default. The usual failure isn&apos;t a broken build — it&apos;s a
+            correct one nobody remembers: stock button, default indigo, Inter at three weights. Start with type
+            and buttons; they carry most of the difference.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {RESOURCE_GROUPS.map((group) => {
+            const open = openShelf === group.key;
+            return (
+              <div key={group.key} className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+                <button
+                  type="button"
+                  onClick={() => setOpenShelf(open ? null : group.key)}
+                  className="flex w-full items-center justify-between gap-3 p-4 text-left"
+                >
+                  <span>
+                    <span className="text-sm font-semibold">{group.label}</span>
+                    <span className="mt-0.5 block text-xs text-zinc-500">{group.blurb}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-zinc-500">
+                    {open ? "Hide" : `${group.items.length} links`}
+                  </span>
+                </button>
+                {open ? (
+                  <ul className="space-y-3 border-t border-[var(--border)] p-4">
+                    {group.items.map((item) => (
+                      <li key={item.href}>
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="text-sm font-medium text-violet-400 underline underline-offset-2"
+                        >
+                          {item.label} ↗
+                        </a>
+                        <p className="mt-0.5 text-xs leading-5 text-zinc-500">{item.note}</p>
+                      </li>
+                    ))}
+                  </ul>
                 ) : null}
               </div>
             );
