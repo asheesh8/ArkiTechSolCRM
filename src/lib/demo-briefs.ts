@@ -27,6 +27,12 @@ export type DemoBrief = {
   avoid: string[];
   /** A live build to measure against, when we have one. */
   reference?: { label: string; href: string };
+  /**
+   * Square cover for the picker card. Generated stills — interiors and objects,
+   * never a business or a person — so the card carries a mood without
+   * pretending to be a photograph of anybody's premises.
+   */
+  cover: string;
 };
 
 /** The floor every demo has to clear, whatever the business type. */
@@ -45,6 +51,7 @@ export const PAGESPEED_FLOOR = 90;
 export const DEMO_BRIEFS: DemoBrief[] = [
   {
     key: "cleaning",
+    cover: "/demo-briefs/cleaning.jpg",
     label: "Cleaning company",
     audience: "Residential and small-commercial cleaners, 1–15 staff, booked by phone today.",
     angle: "The phone rings while they are inside somebody's house. Every missed call is a lost job.",
@@ -63,6 +70,7 @@ export const DEMO_BRIEFS: DemoBrief[] = [
   },
   {
     key: "trades",
+    cover: "/demo-briefs/trades.jpg",
     label: "Trades & home services",
     audience: "Plumbers, electricians, HVAC, roofers. Emergency-driven, mostly local search.",
     angle: "Something is broken right now. The site has to prove they will pick up and turn up.",
@@ -80,6 +88,7 @@ export const DEMO_BRIEFS: DemoBrief[] = [
   },
   {
     key: "professional",
+    cover: "/demo-briefs/professional.jpg",
     label: "Professional services",
     audience: "Accountants, lawyers, consultants, agencies. Considered purchase, longer cycle.",
     angle: "Credibility before capability. They are being compared to three other firms in a tab.",
@@ -96,6 +105,7 @@ export const DEMO_BRIEFS: DemoBrief[] = [
   },
   {
     key: "restaurant",
+    cover: "/demo-briefs/restaurant.jpg",
     label: "Restaurant & hospitality",
     audience: "Independent restaurants, cafés, bars. Discovery is mobile and immediate.",
     angle: "Someone is hungry, nearby, and deciding in under a minute.",
@@ -112,6 +122,7 @@ export const DEMO_BRIEFS: DemoBrief[] = [
   },
   {
     key: "fitness",
+    cover: "/demo-briefs/fitness.jpg",
     label: "Fitness & wellness",
     audience: "Gyms, studios, trainers, clinics. Subscription or package economics.",
     angle: "The decision is emotional and the objection is commitment. Lower the first step.",

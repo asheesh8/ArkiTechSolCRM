@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { unzipSync } from "fflate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { DEMO_BRIEFS, UNIVERSAL_REQUIREMENTS, PAGESPEED_FLOOR, getBrief } from "@/lib/demo-briefs";
 import { RESOURCE_GROUPS } from "@/lib/demo-resources";
+import { DemoPromptBuilder } from "@/components/crm/demo-prompt-builder";
 
 /**
  * The developers' room: the briefs on one side, your builds on the other.
@@ -236,57 +238,110 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
         </CardContent>
       </Card>
 
+      {/* ------------------------------------------------- prompt builder */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Start a build with Claude Code</CardTitle>
+          <p className="mt-1 text-sm text-zinc-500">
+            Pick what you&apos;re building, answer four short steps, and get a prompt that carries the brief,
+            your type and colour decisions, and an explicit list of the things that make a page read as
+            machine-made.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <DemoPromptBuilder />
+        </CardContent>
+      </Card>
+
       {/* --------------------------------------------------------- the briefs */}
       <Card>
         <CardHeader>
-          <CardTitle>Briefs by business type</CardTitle>
+          <CardTitle>The briefs in full</CardTitle>
           <p className="mt-1 text-sm text-zinc-500">
-            Pick the one you&apos;re building against and keep it open while you work.
+            Tap one to read what it must contain and the failures that recur in that category. Keep it open
+            while you work.
           </p>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {DEMO_BRIEFS.map((brief) => {
-            const open = openBrief === brief.key;
-            return (
-              <div key={brief.key} className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {DEMO_BRIEFS.map((brief) => {
+              const open = openBrief === brief.key;
+              return (
                 <button
+                  key={brief.key}
                   type="button"
                   onClick={() => setOpenBrief(open ? null : brief.key)}
-                  className="flex w-full items-center justify-between gap-3 p-4 text-left"
+                  aria-expanded={open}
+                  className="group relative aspect-square overflow-hidden rounded-2xl border text-left transition focus:outline-none"
+                  style={{ borderColor: open ? "var(--accent)" : "var(--border)" }}
                 >
-                  <span>
-                    <span className="text-sm font-semibold">{brief.label}</span>
-                    <span className="mt-0.5 block text-xs text-zinc-500">{brief.audience}</span>
+                  <Image
+                    src={brief.cover}
+                    alt=""
+                    aria-hidden="true"
+                    fill
+                    sizes="(min-width: 1024px) 20rem, (min-width: 640px) 45vw, 90vw"
+                    className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                    style={{ filter: "brightness(1.45) contrast(1.02) saturate(0.92)" }}
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0"
+                    style={{
+                      background: open
+                        ? "linear-gradient(to top, rgba(8,8,11,0.93) 0%, rgba(8,8,11,0.72) 60%, rgba(8,8,11,0.45) 100%)"
+                        : "linear-gradient(to top, rgba(8,8,11,0.90) 0%, rgba(8,8,11,0.55) 42%, rgba(8,8,11,0.10) 100%)",
+                    }}
+                  />
+                  <span className="absolute inset-x-0 bottom-0 p-4">
+                    <span className="block text-sm font-semibold text-white">{brief.label}</span>
+                    <span className="mt-1 block text-xs leading-5 text-white/60">
+                      {open ? brief.audience : brief.angle}
+                    </span>
                   </span>
-                  <span className="text-xs text-zinc-500">{open ? "Hide" : "Open"}</span>
                 </button>
-                {open ? (
-                  <div className="space-y-4 border-t border-[var(--border)] p-4 text-sm">
+              );
+            })}
+          </div>
+
+          {openBrief ? (
+            <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm">
+              {(() => {
+                const brief = getBrief(openBrief);
+                if (!brief) return null;
+                return (
+                  <div className="space-y-4">
                     <p className="text-zinc-400">
                       <span className="font-semibold text-zinc-300">The angle: </span>
                       {brief.angle}
                     </p>
-                    <div>
-                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">Must have</p>
-                      <ul className="space-y-1.5">
-                        {brief.mustHave.map((m) => (
-                          <li key={m} className="flex gap-2 text-zinc-400">
-                            <span className="text-emerald-500">✓</span>
-                            {m}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">Avoid</p>
-                      <ul className="space-y-1.5">
-                        {brief.avoid.map((a) => (
-                          <li key={a} className="flex gap-2 text-zinc-400">
-                            <span className="text-red-500">✕</span>
-                            {a}
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                          Must have
+                        </p>
+                        <ul className="space-y-1.5">
+                          {brief.mustHave.map((m) => (
+                            <li key={m} className="flex gap-2 text-zinc-400">
+                              <span className="text-emerald-500">✓</span>
+                              {m}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                          Avoid
+                        </p>
+                        <ul className="space-y-1.5">
+                          {brief.avoid.map((a) => (
+                            <li key={a} className="flex gap-2 text-zinc-400">
+                              <span className="text-red-500">✕</span>
+                              {a}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                     {brief.reference ? (
                       <Link
@@ -298,10 +353,10 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
                       </Link>
                     ) : null}
                   </div>
-                ) : null}
-              </div>
-            );
-          })}
+                );
+              })()}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
