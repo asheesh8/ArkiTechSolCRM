@@ -142,3 +142,35 @@ export const pricingPlanSchema = z.object({
 export const pricingPlansSchema = z.object({
   plans: z.array(pricingPlanSchema).max(40),
 });
+
+// A demo build submitted by a contract developer. The zip itself never comes
+// through here — it goes straight to R2 on a presigned URL — so these cover
+// only the metadata around it.
+export const demoCreateSchema = z.object({
+  title: z.string().trim().min(1, "Give the demo a name").max(120),
+  businessType: z.string().trim().min(1).max(40),
+});
+
+export const demoUpdateSchema = z.object({
+  title: z.string().trim().min(1).max(120).optional(),
+  businessType: z.string().trim().min(1).max(40).optional(),
+  previewUrl: z
+    .string()
+    .trim()
+    .url("The preview link needs to be a full URL, starting with https://")
+    .max(500)
+    .nullable()
+    .optional(),
+  notes: z.string().trim().max(4000).nullable().optional(),
+});
+
+export const demoAttachSchema = z.object({
+  zipKey: z.string().trim().min(1).max(300),
+  zipName: z.string().trim().min(1).max(200),
+  zipSize: z.number().int().min(1).max(500 * 1024 * 1024),
+});
+
+export const demoReviewSchema = z.object({
+  action: z.enum(["approve", "request-changes"]),
+  ownerNote: z.string().trim().max(4000).nullable().optional(),
+});

@@ -22,8 +22,7 @@ import {
   Settings,
   Sparkles,
   X,
-  type LucideIcon,
-} from "lucide-react";
+  type LucideIcon, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/crm/theme-toggle";
 import { LogoutButton } from "@/components/crm/logout-button";
@@ -69,6 +68,7 @@ const navSections: NavSection[] = [
       { href: "/agents", label: "Agents", icon: Bot, roles: ["OWNER"] },
       { href: "/clients", label: "CRM Clients", icon: Building2, roles: ["OWNER", "MEMBER"] },
       { href: "/requests", label: "Work Requests", icon: Inbox, roles: ["OWNER", "DEV"] },
+      { href: "/demos", label: "Demo Builds", icon: LayoutTemplate, roles: ["OWNER", "DEV"] },
     ],
   },
   {

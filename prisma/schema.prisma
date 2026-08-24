@@ -13,6 +13,17 @@ enum Role {
   MEMBER
 }
 
+/// Where a demo build has got to. A submission only leaves DRAFT once it has
+/// both a zip and a reachable preview URL, because the quality gate scores the
+/// preview and there is nothing to score without one.
+enum DemoStatus {
+  DRAFT
+  SUBMITTED
+  CHANGES_REQUESTED
+  APPROVED
+  SHIPPED
+}
+
 enum LeadStatus {
   NEW
   SAVED
@@ -67,6 +78,7 @@ model User {
   notePages         NotePage[]
   notePresences     NotePresence[]
   devWorkRequests   WorkRequest[]              @relation("AssignedDevWorkRequests")
+  demoSubmissions   DemoSubmission[]           @relation("DevDemoSubmissions")
   coldCalls         ReceptionistConversation[]
   twilioAccount     TwilioAccount?
   createdAt         DateTime                   @default(now())
@@ -674,4 +686,58 @@ model PricingPlan {
   createdAt DateTime @default(now())
 
   @@index([group, sortOrder])
+}
+
+// ─── Demo Builds ────────────────────────────────────────────────────────────
+
+/**
+ * A demo site built by a contract developer, on its way to being shipped.
+ *
+ * Deliberately not a WorkRequest: that model hangs off a Client and tracks paid
+ * work against a deadline. A demo has no client yet — it is a sales asset built
+ * against a brief, and its lifecycle is review-and-ship rather than
+ * assign-and-complete.
+ *
+ * The zip lives in R2 and never passes through a route handler; it is uploaded
+ * straight from the browser with a presigned URL, because a codebase is far
+ * past the request body limit a serverless function will accept.
+ */
+model DemoSubmission {
+  id           String     @id @default(cuid())
+  title        String
+  /// Key into DEMO_BRIEFS — which brief this build was made against.
+  businessType String
+  developerId  String
+  status       DemoStatus @default(DRAFT)
+
+  /// Where the developer already has it running. The gate scores this.
+  previewUrl String?
+
+  /// The uploaded codebase in R2. Null until the developer uploads.
+  zipKey  String?
+  zipName String?
+  zipSize BigInt?
+
+  /// Developer's own notes, and the owner's review feedback.
+  notes     String?
+  ownerNote String?
+
+  /// Google PageSpeed at submission, so a build that misses the published
+  /// guarantee is flagged before it costs anyone attention.
+  mobileScore  Int?
+  desktopScore Int?
+  scoredAt     DateTime?
+
+  /// Filled in once the owner ships it.
+  repoUrl   String?
+  deployUrl String?
+  shippedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  developer User @relation("DevDemoSubmissions", fields: [developerId], references: [id], onDelete: Cascade)
+
+  @@index([developerId])
+  @@index([status])
 }

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const r2 = new S3Client({
@@ -23,6 +23,15 @@ export async function presignUpload(key: string, contentType: string, expiresIn 
 export async function uploadObject(key: string, body: Buffer | Uint8Array, contentType: string) {
   await r2.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }));
   return { key };
+}
+
+// Pull an object back down. Used when an approved demo zip has to be opened
+// server-side so its contents can be committed to a new repo.
+export async function getObject(key: string): Promise<Buffer> {
+  const res = await r2.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+  const body = res.Body as { transformToByteArray?: () => Promise<Uint8Array> } | undefined;
+  if (!body?.transformToByteArray) throw new Error(`R2 returned no body for ${key}`);
+  return Buffer.from(await body.transformToByteArray());
 }
 
 export async function deleteFile(key: string) {

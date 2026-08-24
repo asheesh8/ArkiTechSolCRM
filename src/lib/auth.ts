@@ -59,6 +59,12 @@ export function isManager(user: { role?: string | null } | null | undefined) {
 // Owners are the only role that can manage the team, share note cabinets, and
 // create/assign work. Currently identical to isManager, kept as its own name so
 // intent reads clearly at call sites that gate ownership rather than lead access.
+// Demo builds are the developers' room. Owners are in it too, because they
+// review and ship what lands there — but a MEMBER has no business here.
+export function canBuildDemos(user: { role?: string | null } | null | undefined) {
+  return user?.role === "DEV" || user?.role === "OWNER";
+}
+
 export function isOwner(user: { role?: string | null } | null | undefined) {
   return user?.role === "OWNER";
 }
