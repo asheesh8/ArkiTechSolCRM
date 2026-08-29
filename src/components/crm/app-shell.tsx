@@ -68,7 +68,7 @@ const navSections: NavSection[] = [
       { href: "/agents", label: "Agents", icon: Bot, roles: ["OWNER"] },
       { href: "/clients", label: "CRM Clients", icon: Building2, roles: ["OWNER", "MEMBER"] },
       { href: "/requests", label: "Work Requests", icon: Inbox, roles: ["OWNER", "DEV"] },
-      { href: "/demos", label: "Demo Builds", icon: LayoutTemplate, roles: ["OWNER", "DEV"] },
+      { href: "/demos", label: "Build Studio", icon: LayoutTemplate, roles: ["OWNER", "DEV"] },
     ],
   },
   {
@@ -109,6 +109,7 @@ const PAGE_DETAILS: Record<string, string> = {
   "/agents": "Voice agents, client assignments, and public demo links.",
   "/clients": "Client relationships, active leads, assignments, and sales stages.",
   "/requests": "Delivery work, client requests, deadlines, and developer handoff.",
+  "/demos": "Source intake, repository references, project briefs, reviews, and delivery.",
   "/analytics": "Traffic and conversion signals across ArkiTech properties.",
   "/calendar": "Meetings, follow-ups, and scheduled work.",
   "/notes": "Shared team notes, research, and client context.",

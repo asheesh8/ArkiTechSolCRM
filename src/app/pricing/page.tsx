@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FileDown } from "lucide-react";
 import { SiteNav } from "@/components/landing/site-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { Reveal } from "@/components/landing/reveal";
@@ -19,7 +20,7 @@ export const revalidate = 300;
 
 const ALWAYS: [string, string][] = [
   ["Month to month", "No lock-in on any recurring plan. Cancel and you keep the domain, the code, and the content."],
-  ["No hidden fees", "Hosting is in the monthly price. The number you see is the number you pay."],
+  ["No hidden fees", "Your initial build fee and ongoing monthly price are shown separately and clearly."],
   ["Scoped before it starts", "Anything marked “from” is quoted in writing after the call, before work begins."],
   ["Real people", "Burlington, Vermont. You talk to whoever is building it."],
 ];
@@ -41,6 +42,14 @@ export default async function PricingPage() {
               Recurring plans are month to month. Project work is quoted in writing before anything
               starts.
             </p>
+            <a
+              href="/ArkiTech-Solutions-Pricing-Guide.pdf"
+              download
+              className="btn btn-outline mt-8 w-fit gap-2.5"
+            >
+              <FileDown aria-hidden="true" size={17} />
+              Download complete pricing guide
+            </a>
           </Reveal>
         </div>
       </section>

@@ -31,7 +31,7 @@ export const PRICING_GROUPS = [
     key: "websites",
     label: "Websites",
     blurb:
-      "A build fee to get the site made, then a care plan if you want it looked after. Every managed site is tested through Google PageSpeed Insights before launch and after any change we make.",
+      "Choose the level that fits: own the build outright and host it yourself, or let us host, maintain, and grow it for you.",
   },
   {
     key: "receptionist",
@@ -64,15 +64,16 @@ export const DEFAULT_PLANS: PricingPlan[] = [
   {
     slug: "website-build",
     group: "websites",
-    name: "Standard Website Build",
-    blurb: "A custom, mobile-first website for a straightforward business site. One build fee, then it is yours.",
+    name: "Website Outright",
+    blurb: "A complete 10-page website build. You receive the full codebase and host it wherever you choose.",
     monthlyCents: null,
     onceCents: 100000,
     priceNote: null,
     features: [
-      "Custom, mobile-first build",
-      "Straightforward business site",
-      "Tested through Google PageSpeed Insights before launch",
+      "Up to 10 custom, mobile-first pages",
+      "Google PageSpeed performance guarantee",
+      "Your complete website codebase",
+      "Private admin dashboard with website analytics",
       "You own the domain, code, and content",
     ],
     featured: false,
@@ -82,53 +83,55 @@ export const DEFAULT_PLANS: PricingPlan[] = [
   {
     slug: "website-care",
     group: "websites",
-    name: "Website Care",
-    blurb: "Hosting and upkeep for a site that is already built, with a limited number of edits each month.",
-    monthlyCents: 10000,
+    name: "Managed Website",
+    blurb: "A fast, professionally managed website with hosting, maintenance, and limited content updates included.",
+    monthlyCents: 9900,
     onceCents: null,
     priceNote: null,
     features: [
-      "Hosting included",
-      "Google PageSpeed Insights performance guarantee",
-      "Limited monthly edits",
+      "Up to 10 custom, mobile-first pages",
+      "Google PageSpeed performance guarantee",
+      "Private admin dashboard with website analytics",
+      "Secure hosting, maintenance, and updates",
+      "Limited monthly content edits",
     ],
-    featured: false,
+    featured: true,
     active: true,
     sortOrder: 20,
   },
   {
     slug: "website-care-growth",
     group: "websites",
-    name: "Growth Website Care",
-    blurb: "Everything in Website Care, with edits uncapped and your Google presence managed alongside the site.",
+    name: "Growth Website",
+    blurb: "Everything in the managed plan, plus ongoing content and local reputation work to help the business grow.",
     monthlyCents: 25000,
     onceCents: null,
     priceNote: null,
     features: [
-      "Hosting included",
-      "Google PageSpeed Insights performance guarantee",
-      "Unlimited edits",
+      "Everything in Managed Website",
+      "Unlimited monthly content edits",
       "Review management",
       "Google Business Profile management",
     ],
-    featured: true,
+    featured: false,
     active: true,
-    sortOrder: 30,
+    sortOrder: 20,
   },
   {
     slug: "website-custom",
     group: "websites",
-    name: "Custom Website / Platform",
-    blurb: "For sites past about fifteen pages, or anything that has to do more than present information.",
+    name: "Complete Brand + Website",
+    blurb: "A complete brand and digital presence built together, with the scope shaped around the business.",
     monthlyCents: null,
     onceCents: null,
-    priceNote: null,
+    priceNote: "Custom proposal",
     features: [
-      "Intricate sites over 15 pages",
-      "E-commerce",
-      "Portals and memberships",
-      "Advanced integrations",
-      "Custom functionality",
+      "Everything in Growth Website",
+      "Brand strategy and positioning",
+      "Logo and visual identity",
+      "Website copy and messaging",
+      "Custom website design and build",
+      "Launch and growth foundation",
     ],
     featured: false,
     active: true,
@@ -160,18 +163,16 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     slug: "receptionist-pro",
     group: "receptionist",
     name: "AI Receptionist Pro",
-    blurb: "A better voice that handles being interrupted, more included minutes, and up to five systems wired in.",
+    blurb: "Everything in Basic, upgraded for higher call volume and more connected business systems.",
     monthlyCents: 35000,
     onceCents: null,
     priceNote: null,
     features: [
+      "Everything in AI Receptionist Basic",
       "Ultra-realistic AI voice",
       "Natural interruption handling",
       "800 included inbound call minutes a month",
       "Up to five integrations",
-      "Additional usage at $0.40/min",
-      "Usage notice at 80% of your included minutes",
-      "Maintenance and business-day support",
     ],
     featured: true,
     active: true,
@@ -181,11 +182,12 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     slug: "receptionist-enterprise",
     group: "receptionist",
     name: "AI Receptionist Enterprise",
-    blurb: "When the voice, the knowledge behind it, and the systems it reaches all need designing from scratch.",
+    blurb: "Everything in Pro, expanded for a custom knowledge base, advanced routing, and unlimited integrations.",
     monthlyCents: null,
     onceCents: null,
     priceNote: null,
     features: [
+      "Everything in AI Receptionist Pro",
       "Advanced voice design",
       "Custom knowledge base",
       "MCP connections",
@@ -358,7 +360,7 @@ export async function getPricingPlans(): Promise<PricingPlan[]> {
       orderBy: [{ group: "asc" }, { sortOrder: "asc" }],
     });
     if (rows.length === 0) return DEFAULT_PLANS;
-    return rows.map((row) => ({
+    const plans = rows.map((row) => ({
       slug: row.slug,
       group: row.group,
       name: row.name,
@@ -371,6 +373,23 @@ export async function getPricingPlans(): Promise<PricingPlan[]> {
       active: row.active,
       sortOrder: row.sortOrder,
     }));
+
+    // Older databases split websites into a build card and separate care
+    // cards. Keep those installs aligned with the new, fully disclosed offers
+    // until an owner saves the replacement plans from pricing settings.
+    const legacyWebsiteBuild = plans.find((plan) => plan.slug === "website-build");
+    const legacyWebsiteCare = plans.find((plan) => plan.slug === "website-care");
+    if (
+      legacyWebsiteBuild?.name === "Standard Website Build" ||
+      legacyWebsiteCare?.monthlyCents === 10000
+    ) {
+      return [
+        ...DEFAULT_PLANS.filter((plan) => plan.group === "websites"),
+        ...plans.filter((plan) => plan.group !== "websites"),
+      ];
+    }
+
+    return plans;
   } catch {
     return DEFAULT_PLANS;
   }

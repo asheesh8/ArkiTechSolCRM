@@ -32,8 +32,11 @@ const EXCLUDED = [
   /(^|\/)\.next\//,
   /(^|\/)\.git\//,
   /(^|\/)\.vercel\//,
+  /(^|\/)\.claude\//,
+  /(^|\/)\.codex\//,
   /(^|\/)\.DS_Store$/,
   /(^|\/)\.env(\.|$)/,
+  /(^|\/)(CLAUDE\.md|PROMPT\.md|rebuild\.sh)$/i,
 ];
 
 function shouldSkip(path: string) {

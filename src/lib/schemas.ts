@@ -161,7 +161,7 @@ export const demoUpdateSchema = z.object({
     .max(500)
     .nullable()
     .optional(),
-  notes: z.string().trim().max(4000).nullable().optional(),
+  notes: z.string().trim().max(16000).nullable().optional(),
 });
 
 export const demoAttachSchema = z.object({

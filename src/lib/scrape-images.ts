@@ -78,6 +78,19 @@ export async function scrapeWebsiteImages(website: string): Promise<ScrapedImage
     return empty;
   }
 
+  return extractWebsiteImages(base.toString(), html);
+}
+
+/** Extract image candidates from HTML that has already been fetched safely. */
+export function extractWebsiteImages(website: string, html: string): ScrapedImages {
+  const empty: ScrapedImages = { logo: null, cover: null, photos: [] };
+  let base: URL;
+  try {
+    base = new URL(website);
+  } catch {
+    return empty;
+  }
+
   const ordered: string[] = [];
   const seen = new Set<string>();
   const push = (raw: string | null) => {

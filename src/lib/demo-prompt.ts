@@ -1,23 +1,9 @@
 import { getBrief, UNIVERSAL_REQUIREMENTS, PAGESPEED_FLOOR } from "@/lib/demo-briefs";
 
 /**
- * Builds the prompt a developer pastes into Claude Code to start a demo.
- *
- * The point is not convenience. Left to itself a model reaches for the same
- * defaults every time — Inter, indigo-600, a shadow-lg card grid, three
- * identical service tiles, "Elevate Your Business" — and the result is
- * competent, anonymous, and instantly recognisable as machine-made. That is the
- * thing we are actually trying to prevent.
- *
- * So this is a decision-forcing device dressed as a form. Every field it
- * insists on is a decision a person has to make before a model can flatten it:
- * which typeface, which palette, which real reference, what single action the
- * page exists to produce. The prompt then instructs Claude Code to execute
- * those decisions rather than invent its own. `missingFor` is what enforces it —
- * the prompt cannot be produced from an empty form.
- *
- * The generated prompt also carries prohibitions, because saying "make it look
- * handcrafted" does nothing while saying "do not use Inter" does.
+ * Turns a compact, source-backed intake into the implementation brief used by
+ * the developer. Business evidence can be collected automatically; only the
+ * business name, offer, and primary conversion action block generation.
  */
 
 export type PromptAnswers = {
@@ -55,141 +41,19 @@ export const EMPTY_ANSWERS: PromptAnswers = {
   specifics: "",
 };
 
-export type PromptStep = {
-  key: string;
-  title: string;
-  /** Why this step exists — shown to the developer, not padding. */
-  why: string;
-  fields: {
-    name: keyof PromptAnswers;
-    label: string;
-    placeholder: string;
-    hint?: string;
-    multiline?: boolean;
-    /** Blocks prompt generation when empty. */
-    required?: boolean;
-  }[];
-};
-
-export const PROMPT_STEPS: PromptStep[] = [
-  {
-    key: "business",
-    title: "The business",
-    why: "A demo aimed at nobody reads as a template. Everything downstream depends on this being specific.",
-    fields: [
-      {
-        name: "businessName",
-        label: "Business name",
-        placeholder: "Sparkle & Co.",
-        hint: "Invented is fine — it just has to be a name, not 'Your Business'.",
-        required: true,
-      },
-      { name: "town", label: "Town or city", placeholder: "Burlington, VT", required: true },
-      {
-        name: "whatTheyDo",
-        label: "What they actually do",
-        placeholder: "Deep cleans for rented flats between tenants, two-person crew",
-        hint: "The specific version, not the category. 'Cleaning services' tells the model nothing.",
-        multiline: true,
-        required: true,
-      },
-      {
-        name: "customer",
-        label: "Who is buying",
-        placeholder: "Letting agents managing 10–40 units who need a turnaround in 24h",
-        multiline: true,
-        required: true,
-      },
-    ],
-  },
-  {
-    key: "job",
-    title: "What the page is for",
-    why: "A page that wants five things converts on none of them. Name the one action and the layout has a spine.",
-    fields: [
-      {
-        name: "primaryAction",
-        label: "The one action",
-        placeholder: "Request a same-week quote",
-        hint: "One. Everything else on the page is subordinate to it.",
-        required: true,
-      },
-      {
-        name: "specifics",
-        label: "Anything the brief can't know",
-        placeholder: "They're the only crew in the area insured for mould remediation",
-        hint: "The detail a competitor can't copy. This is usually where the page's argument comes from.",
-        multiline: true,
-      },
-    ],
-  },
-  {
-    key: "character",
-    title: "Character",
-    why: "'Modern and clean' is what everything defaults to. Three sharper words force a position — and a position is what makes a page feel made by someone.",
-    fields: [
-      {
-        name: "personality",
-        label: "Three adjectives",
-        placeholder: "Meticulous, unfussy, quietly expensive",
-        hint: "Avoid modern, clean, professional, sleek. They carry no information.",
-        required: true,
-      },
-      {
-        name: "reference",
-        label: "A real site you're measuring against",
-        placeholder: "https://…",
-        hint: "From the shelf. Say what you're taking from it — the density, the type, the restraint.",
-        required: true,
-      },
-    ],
-  },
-  {
-    key: "craft",
-    title: "Type and colour",
-    why: "The two decisions that carry most of the difference, and the two a model will always default on if you let it. Decide them yourself and it executes rather than invents.",
-    fields: [
-      {
-        name: "headingFont",
-        label: "Heading typeface",
-        placeholder: "Instrument Serif",
-        hint: "From Fontshare or Google Fonts. Not Inter.",
-        required: true,
-      },
-      {
-        name: "bodyFont",
-        label: "Body typeface",
-        placeholder: "Satoshi",
-        hint: "Can be the same family at a different weight. Just decide it.",
-        required: true,
-      },
-      {
-        name: "palette",
-        label: "Palette",
-        placeholder: "Warm off-white #F7F4EF, ink #14120F, one accent: oxblood #6B2028",
-        hint: "Background, text, and one accent is enough. Not indigo-600.",
-        multiline: true,
-        required: true,
-      },
-    ],
-  },
-];
-
 /** Which required fields are still empty, by step. */
 export function missingFor(answers: PromptAnswers): { step: string; label: string }[] {
-  const missing: { step: string; label: string }[] = [];
-  for (const step of PROMPT_STEPS) {
-    for (const field of step.fields) {
-      if (field.required && !answers[field.name]?.trim()) {
-        missing.push({ step: step.key, label: field.label });
-      }
-    }
-  }
-  return missing;
+  return [
+    ["business", "Business name", answers.businessName],
+    ["business", "What they do", answers.whatTheyDo],
+    ["job", "Primary action", answers.primaryAction],
+  ]
+    .filter(([, , value]) => !value.trim())
+    .map(([step, label]) => ({ step, label }));
 }
 
 /**
- * Compose the prompt.
+ * Compose the developer brief.
  *
  * Written as instructions to an agent that will otherwise reach for defaults,
  * so it is deliberately prescriptive and carries an explicit banned list. Vague
@@ -204,16 +68,16 @@ export function buildPrompt(answers: PromptAnswers): string {
   const parts: string[] = [];
 
   parts.push(
-    `Build a single-page demo site for ${answers.businessName}, a ${brief?.label.toLowerCase() ?? "local business"} in ${answers.town}.
+    `Work as a senior web designer, UI designer, and front-end engineer. Build a polished demo site for ${answers.businessName}, a ${brief?.label.toLowerCase() ?? "local business"}${answers.town ? ` in ${answers.town}` : ""}.
 
-This is a sales demo. It has to look like one person designed it on purpose — not like it came out of a component library. Read every section below before writing any code, and treat the constraints as constraints rather than suggestions.`,
+This is a client-facing sales demo. It must feel deliberately art-directed and professionally engineered, never like an AI product, prompt interface, chatbot, or component-library sample. Read the source material before writing code and treat the constraints below as the working specification.`,
   );
 
   parts.push(
     section(
       "The business",
       `- What they do: ${answers.whatTheyDo}
-- Who is buying: ${answers.customer}
+- Who is buying: ${answers.customer || brief?.audience || "Infer carefully from the supplied business evidence."}
 - The one action this page exists to cause: **${answers.primaryAction}**${
         answers.specifics ? `\n- What makes them different: ${answers.specifics}` : ""
       }
@@ -222,23 +86,20 @@ Every section on the page must earn its place by moving someone toward that one 
     ),
   );
 
-  parts.push(
-    section(
-      "Character",
-      `The site should feel: **${answers.personality}**.
+  parts.push(section(
+    "Art direction",
+    `${answers.personality ? `The site should feel: **${answers.personality}**.` : "Establish a specific visual point of view from the real business, audience, and source material. Avoid generic 'modern and clean' styling."}
+${answers.reference ? `\nPrimary reference: ${answers.reference}` : ""}
 
-Measuring against: ${answers.reference}
-
-Hold that character in every decision — spacing, weight, how much is left empty. A page reads as handcrafted when the same taste shows up in small places, not because of one hero flourish.`,
-    ),
-  );
+Hold the same point of view across typography, spacing, imagery, interaction, and copy. It should look like a web designer made a series of connected decisions, not like software assembled sections.`,
+  ));
 
   parts.push(
     section(
-      "Type and colour — decided, not yours to choose",
-      `- Headings: **${answers.headingFont}**
-- Body: **${answers.bodyFont}**
-- Palette: ${answers.palette}
+      "Design system",
+      `- Headings: **${answers.headingFont || "Choose a distinctive, appropriate display family - never Inter by default."}**
+- Body: **${answers.bodyFont || "Choose a highly legible companion family."}**
+- Palette: ${answers.palette || "Derive a restrained palette from the source logo and photography; document the final tokens."}
 
 Load the fonts properly and set a real type scale — pick a ratio and stick to it rather than choosing sizes ad hoc. Body text must pass WCAG AA against its background; check it rather than assuming.`,
     ),
@@ -281,6 +142,7 @@ ${brief.avoid.map((a) => `- ${a}`).join("\n")}`,
 - A section that exists only because sites usually have one.
 - Emoji as icons.
 - Gradient text on the hero heading.
+- Chat bubbles, prompt boxes, sparkle motifs, neural-network graphics, glowing AI gradients, or any other visual shorthand for AI software.
 
 If you find yourself producing any of these because nothing better came to mind, stop and ask me instead.`,
     ),
@@ -289,10 +151,11 @@ If you find yourself producing any of these because nothing better came to mind,
   parts.push(
     section(
       "How to work",
-      `1. Before writing code, tell me in a few lines what the page's argument is and what the section order will be. Wait for me to agree.
-2. Then build it. Real copy throughout — no lorem ipsum, and no filler that could belong to any business in this category.
-3. Every placeholder person must be unmistakably fictional: Jane Doe, phone numbers in the 555-01xx range.
-4. When it is running, tell me what you would change with another day on it.`,
+      `1. Inspect the supplied source, assets, and references first. State the page argument and section order in a short implementation note, then proceed unless a real blocker requires a decision.
+2. Build the complete experience with real copy throughout - no lorem ipsum and no filler that could belong to any business in the category.
+3. Work mobile-first, then refine desktop composition and interaction.
+4. Every placeholder person must be unmistakably fictional: Jane Doe and phone numbers in the 555-01xx range.
+5. Finish as an engineer: accessibility, responsive behavior, metadata, image treatment, and performance are part of the build rather than cleanup.`,
     ),
   );
 

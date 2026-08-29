@@ -6,7 +6,7 @@ import Image from "next/image";
 import { unzipSync } from "fflate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label, Select, Textarea } from "@/components/ui/field";
+import { Input, Label, Textarea } from "@/components/ui/field";
 import { DEMO_BRIEFS, UNIVERSAL_REQUIREMENTS, PAGESPEED_FLOOR, getBrief } from "@/lib/demo-briefs";
 import { RESOURCE_GROUPS } from "@/lib/demo-resources";
 import { DemoPromptBuilder } from "@/components/crm/demo-prompt-builder";
@@ -96,7 +96,6 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
   const [busy, setBusy] = useState(false);
   const [openBrief, setOpenBrief] = useState<string | null>(null);
   const [openShelf, setOpenShelf] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ title: "", businessType: DEMO_BRIEFS[0].key });
 
   const isOwner = viewerRole === "OWNER";
 
@@ -124,19 +123,44 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function create() {
-    if (!draft.title.trim()) return say("Give the demo a name first.", true);
+  async function createBuild(
+    nextDraft: { title: string; businessType: string },
+    brief?: string,
+  ) {
+    if (!nextDraft.title.trim()) {
+      say("Give the build a name first.", true);
+      return;
+    }
     setBusy(true);
     const res = await fetch("/api/demos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(draft),
+      body: JSON.stringify(nextDraft),
     });
     const data = await readJson(res);
+    if (!res.ok) {
+      setBusy(false);
+      say(String(data.error ?? "Couldn't start that build."), true);
+      return;
+    }
+
+    const demo = data.demo as { id?: string } | undefined;
+    if (brief && demo?.id) {
+      const saveBrief = await fetch(`/api/demos/${demo.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: brief }),
+      });
+      if (!saveBrief.ok) {
+        setBusy(false);
+        say("The build was created, but the prepared brief could not be attached. Copy it before continuing.", true);
+        load();
+        return;
+      }
+    }
+
     setBusy(false);
-    if (!res.ok) return say(String(data.error ?? "Couldn't start that build."), true);
-    setDraft({ title: "", businessType: DEMO_BRIEFS[0].key });
-    say("Build started. Attach the codebase and a preview link when you're ready.");
+    say(brief ? "Build created with its source-backed brief attached." : "Build started. Attach the codebase and a preview link when you're ready.");
     load();
   }
 
@@ -238,18 +262,17 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
         </CardContent>
       </Card>
 
-      {/* ------------------------------------------------- prompt builder */}
+      {/* ---------------------------------------------------- project prep */}
       <Card>
         <CardHeader>
-          <CardTitle>Start a build with Claude Code</CardTitle>
+          <CardTitle>Project prep</CardTitle>
           <p className="mt-1 text-sm text-zinc-500">
-            Pick what you&apos;re building, answer four short steps, and get a prompt that carries the brief,
-            your type and colour decisions, and an explicit list of the things that make a page read as
-            machine-made.
+            Inspect the client&apos;s current site, choose a proven repository reference, confirm three project
+            decisions, and hand the developer a complete design and engineering brief.
           </p>
         </CardHeader>
         <CardContent>
-          <DemoPromptBuilder />
+          <DemoPromptBuilder onCreateBuild={(input) => createBuild(input, input.brief)} />
         </CardContent>
       </Card>
 
@@ -411,45 +434,6 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
         </CardContent>
       </Card>
 
-      {/* ---------------------------------------------------------- new build */}
-      <Card>
-          <CardHeader>
-            <CardTitle>Start a build</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-[1fr_240px_auto] sm:items-end">
-              <div>
-                <Label htmlFor="demo-title">Name</Label>
-                <Input
-                  id="demo-title"
-                  className="mt-1.5"
-                  value={draft.title}
-                  placeholder="Sparkle Cleaning demo"
-                  onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="demo-type">Business type</Label>
-                <Select
-                  id="demo-type"
-                  className="mt-1.5"
-                  value={draft.businessType}
-                  onChange={(e) => setDraft((d) => ({ ...d, businessType: e.target.value }))}
-                >
-                  {DEMO_BRIEFS.map((b) => (
-                    <option key={b.key} value={b.key}>
-                      {b.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <Button type="button" onClick={create} disabled={busy}>
-                Start
-              </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* ------------------------------------------------------------- builds */}
       <Card>
         <CardHeader>
@@ -507,6 +491,7 @@ function DemoRow({
 }) {
   const [preview, setPreview] = useState(demo.previewUrl ?? "");
   const [feedback, setFeedback] = useState("");
+  const [briefCopied, setBriefCopied] = useState(false);
   const brief = getBrief(demo.businessType);
   const locked = demo.status === "APPROVED" || demo.status === "SHIPPED";
   const editable = !locked && (isMine || isOwner);
@@ -535,6 +520,34 @@ function DemoRow({
             <span className="font-semibold">Review note: </span>
             {demo.ownerNote}
           </div>
+        ) : null}
+
+        {demo.notes ? (
+          <details className="rounded-lg border border-[var(--border)] bg-black/10">
+            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-zinc-400">
+              Prepared project brief
+            </summary>
+            <div className="border-t border-[var(--border)] p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-xs text-zinc-500">Source-backed design and engineering specification</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(demo.notes ?? "");
+                    setBriefCopied(true);
+                    window.setTimeout(() => setBriefCopied(false), 1600);
+                  }}
+                >
+                  {briefCopied ? "Copied" : "Copy brief"}
+                </Button>
+              </div>
+              <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md bg-black/20 p-3 font-mono text-[11px] leading-5 text-zinc-400">
+                {demo.notes}
+              </pre>
+            </div>
+          </details>
         ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">

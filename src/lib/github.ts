@@ -53,6 +53,112 @@ async function gh(cfg: GitHubConfig, path: string, init: RequestInit = {}) {
   return res.json();
 }
 
+export type ReferenceRepo = {
+  id: number;
+  name: string;
+  fullName: string;
+  description: string | null;
+  htmlUrl: string;
+  cloneUrl: string;
+  homepage: string | null;
+  language: string | null;
+  topics: string[];
+  private: boolean;
+  updatedAt: string;
+};
+
+type GitHubRepoPayload = {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  html_url: string;
+  clone_url: string;
+  homepage: string | null;
+  language: string | null;
+  topics?: string[];
+  private: boolean;
+  fork: boolean;
+  archived: boolean;
+  updated_at: string;
+  owner?: { login?: string };
+};
+
+function serializeReferenceRepo(repo: GitHubRepoPayload): ReferenceRepo {
+  return {
+    id: repo.id,
+    name: repo.name,
+    fullName: repo.full_name,
+    description: repo.description,
+    htmlUrl: repo.html_url,
+    cloneUrl: repo.clone_url,
+    homepage: repo.homepage,
+    language: repo.language,
+    topics: repo.topics ?? [],
+    private: repo.private,
+    updatedAt: repo.updated_at,
+  };
+}
+
+async function readRepoPage(path: string, token?: string): Promise<GitHubRepoPayload[]> {
+  const res = await fetch(`${API}${path}`, {
+    cache: "no-store",
+    headers: {
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) throw new Error(`GitHub responded ${res.status}`);
+  const payload = await res.json();
+  return Array.isArray(payload) ? payload : [];
+}
+
+/**
+ * Repositories developers may use as implementation references.
+ *
+ * Public repositories work without configuration. When GITHUB_TOKEN belongs
+ * to the reference owner, private repositories are merged in as well. Only
+ * repository metadata reaches the browser; the token remains server-side.
+ */
+export async function listReferenceRepos(): Promise<{ owner: string; repos: ReferenceRepo[] }> {
+  const owner = process.env.GITHUB_REFERENCE_OWNER?.trim() || "ashishsubedi";
+  const token = process.env.GITHUB_TOKEN;
+
+  const publicRepos = await readRepoPage(
+    `/users/${encodeURIComponent(owner)}/repos?per_page=100&type=owner&sort=updated`,
+    token,
+  );
+
+  let privateRepos: GitHubRepoPayload[] = [];
+  if (token) {
+    try {
+      const owned = await readRepoPage(
+        "/user/repos?per_page=100&visibility=all&affiliation=owner&sort=updated",
+        token,
+      );
+      privateRepos = owned.filter(
+        (repo) => repo.owner?.login?.toLowerCase() === owner.toLowerCase(),
+      );
+    } catch {
+      // A token used only for the organization may not be able to read the
+      // configured personal account. Public inspiration still remains usable.
+    }
+  }
+
+  const unique = new Map<number, GitHubRepoPayload>();
+  for (const repo of [...privateRepos, ...publicRepos]) {
+    if (!repo.fork && !repo.archived) unique.set(repo.id, repo);
+  }
+
+  const repos = [...unique.values()]
+    .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))
+    .slice(0, 60)
+    .map(serializeReferenceRepo);
+
+  return { owner, repos };
+}
+
 /** A repo name GitHub will accept, derived from the demo title. */
 export function repoNameFrom(title: string, businessType: string) {
   const base = title
