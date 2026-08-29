@@ -122,7 +122,7 @@ async function readRepoPage(path: string, token?: string): Promise<GitHubRepoPay
  * repository metadata reaches the browser; the token remains server-side.
  */
 export async function listReferenceRepos(): Promise<{ owner: string; repos: ReferenceRepo[] }> {
-  const owner = process.env.GITHUB_REFERENCE_OWNER?.trim() || "ashishsubedi";
+  const owner = process.env.GITHUB_REFERENCE_OWNER?.trim() || "asheesh8";
   const token = process.env.GITHUB_TOKEN;
 
   const publicRepos = await readRepoPage(

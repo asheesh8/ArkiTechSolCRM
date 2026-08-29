@@ -87,7 +87,7 @@ export function DemoPromptBuilder({
   const [answers, setAnswers] = useState<PromptAnswers>(EMPTY_ANSWERS);
   const [intake, setIntake] = useState<SiteIntake | null>(null);
   const [repos, setRepos] = useState<ReferenceRepo[] | null>(null);
-  const [repoOwner, setRepoOwner] = useState("ashishsubedi");
+  const [repoOwner, setRepoOwner] = useState("asheesh8");
   const [repoQuery, setRepoQuery] = useState("");
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -105,7 +105,7 @@ export function DemoPromptBuilder({
         if (!response.ok) throw new Error(String(payload.error ?? "Repository shelf unavailable."));
         if (!cancelled) {
           setRepos(payload.repos as ReferenceRepo[]);
-          setRepoOwner(String(payload.owner ?? "ashishsubedi"));
+          setRepoOwner(String(payload.owner ?? "asheesh8"));
         }
       })
       .catch((error) => {
