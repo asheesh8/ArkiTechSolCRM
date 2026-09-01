@@ -174,3 +174,8 @@ export const demoReviewSchema = z.object({
   action: z.enum(["approve", "request-changes"]),
   ownerNote: z.string().trim().max(4000).nullable().optional(),
 });
+
+export const staffPasswordChangeSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password.").max(128),
+  newPassword: z.string().min(8, "Use at least 8 characters.").max(72, "Use 72 characters or fewer."),
+});

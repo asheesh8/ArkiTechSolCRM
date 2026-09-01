@@ -30,6 +30,19 @@ export async function revokeStaffSession(token: string | null | undefined) {
   await prisma.staffSession.deleteMany({ where: { tokenHash: hashSessionToken(token) } });
 }
 
+/** Change a password and end other sessions as one atomic security update. */
+export async function changeStaffPassword(userId: string, passwordHash: string, currentToken: string) {
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
+    prisma.staffSession.deleteMany({
+      where: {
+        userId,
+        tokenHash: { not: hashSessionToken(currentToken) },
+      },
+    }),
+  ]);
+}
+
 export async function getCurrentUser() {
   const cookieStore = await cookies();
   const token = cookieStore.get(STAFF_SESSION_COOKIE)?.value;

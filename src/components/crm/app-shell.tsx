@@ -82,7 +82,7 @@ const navSections: NavSection[] = [
     items: [
       { href: "/calendar", label: "Calendar", icon: CalendarDays },
       { href: "/notes", label: "Notes", icon: NotebookText },
-      { href: "/settings", label: "Team", icon: Settings, roles: ["OWNER"] },
+      { href: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
@@ -113,7 +113,7 @@ const PAGE_DETAILS: Record<string, string> = {
   "/analytics": "Traffic and conversion signals across ArkiTech properties.",
   "/calendar": "Meetings, follow-ups, and scheduled work.",
   "/notes": "Shared team notes, research, and client context.",
-  "/settings": "Team members, access, and operating preferences.",
+  "/settings": "Account security and workspace preferences.",
 };
 
 // Order the bottom tab bar picks from. Whichever four the signed-in role can
@@ -135,7 +135,7 @@ const MOBILE_TAB_LABELS: Record<string, string> = {
   "/agents": "Agents",
   "/analytics": "Stats",
   "/accountability": "Today",
-  "/settings": "Team",
+  "/settings": "Settings",
 };
 
 function LiquidLogo() {

@@ -4,35 +4,52 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeCustomizer } from "@/components/crm/theme-customizer";
 import { TeamManager } from "@/components/crm/team-manager";
 import { PricingManager } from "@/components/crm/pricing-manager";
+import { PasswordChangeForm } from "@/components/crm/password-change-form";
 
-export const metadata = { title: "Team · LocalLead CRM" };
+export const metadata = { title: "Settings · LocalLead CRM" };
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (!isOwner(user)) redirect("/dashboard");
+  const owner = isOwner(user);
 
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-2xl font-semibold tracking-tight">Team &amp; settings</h2>
-        <p className="mt-1 text-sm text-zinc-500">Add teammates, set what each role can access, and manage logins.</p>
+        <h2 className="text-2xl font-semibold tracking-tight">Settings</h2>
+        <p className="mt-1 text-sm text-zinc-500">Manage your account security and workspace preferences.</p>
       </section>
-
-      <TeamManager currentUserId={user.id} />
 
       <Card>
         <CardHeader>
-          <CardTitle>Public pricing</CardTitle>
+          <CardTitle>Account security</CardTitle>
           <p className="mt-1 text-sm text-zinc-500">
-            What visitors see on arkitech-sol.com/pricing. Saving here updates the site immediately —
-            no deploy needed.
+            Change the password you use to sign in as {user.email}.
           </p>
         </CardHeader>
         <CardContent>
-          <PricingManager />
+          <PasswordChangeForm />
         </CardContent>
       </Card>
+
+      {owner ? (
+        <>
+          <TeamManager currentUserId={user.id} />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Public pricing</CardTitle>
+              <p className="mt-1 text-sm text-zinc-500">
+                What visitors see on arkitech-sol.com/pricing. Saving here updates the site immediately —
+                no deploy needed.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <PricingManager />
+            </CardContent>
+          </Card>
+        </>
+      ) : null}
 
       <Card>
         <CardHeader><CardTitle>Appearance</CardTitle></CardHeader>
