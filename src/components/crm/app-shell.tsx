@@ -247,7 +247,7 @@ export function AppShell({
   );
 
   return (
-    <div className="crm-app-background min-h-screen overflow-x-hidden bg-[var(--background)] text-zinc-950 dark:text-zinc-50">
+    <div className="crm-app-background min-h-screen overflow-x-clip bg-[var(--background)] text-zinc-950 dark:text-zinc-50">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 flex-col border-r border-[var(--border)] bg-[var(--surface)] backdrop-blur-2xl lg:flex">
         <div className="px-4 pt-4">
           <Link href="/dashboard" className="crm-card-strong flex items-center gap-3 rounded-lg border p-3">

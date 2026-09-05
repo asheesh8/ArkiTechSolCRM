@@ -14,7 +14,7 @@ export default async function DemosPage() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-2xl font-semibold tracking-tight">Build studio</h2>
+        <h2 className="studio-display text-2xl font-semibold">Build studio</h2>
         <p className="mt-1 text-sm text-zinc-500">
           Prepare the project from a real business source, work from proven references, then attach the
           codebase and live preview for review and delivery.

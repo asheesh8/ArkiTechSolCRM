@@ -944,3 +944,134 @@ textarea {
 .site a.nav-link:hover {
   color: #ece9e3;
 }
+
+/* ─── Build studio shell ─────────────────────────────────────────────────
+   Wrapped in `@layer components` for the same reason as the block above:
+   unlayered rules beat every Tailwind utility regardless of specificity.
+
+   Values here follow Apple's interface guidance rather than being picked by
+   eye — press response at 100ms, a critically damped curve for panel changes,
+   translucency as a material rather than an opacity trick, and honoured
+   reduced-motion / reduced-transparency / high-contrast preferences.
+   ------------------------------------------------------------------------ */
+@layer components {
+  /* The section bar floats over content, so it is a material: content passes
+     underneath it and stays faintly legible, rather than hitting a hard rule. */
+  .studio-bar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: color-mix(in srgb, var(--background) 72%, transparent);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /* The CRM header remains pinned on desktop. Keep this local navigation
+     immediately beneath it; owners also have the 56px stats rail. */
+  @media (min-width: 64rem) {
+    .studio-bar {
+      top: calc(5rem + 1px);
+    }
+    .studio-bar-owner {
+      top: calc(8.5rem + 2px);
+    }
+  }
+
+  /* Scroll edge effect: a short fade where content meets the chrome. A hard
+     divider reads as a seam; a gradient reads as depth. */
+  .studio-bar::after {
+    content: "";
+    position: absolute;
+    inset: 100% 0 auto 0;
+    height: 14px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--background) 60%, transparent), transparent);
+  }
+
+  /* Press feedback belongs on pointer-down, not release, and at a duration
+     short enough to feel like contact rather than animation. */
+  .studio-tab {
+    transition:
+      transform 100ms ease-out,
+      background-color 160ms ease-out,
+      color 160ms ease-out,
+      border-color 160ms ease-out;
+    will-change: transform;
+  }
+  .studio-tab:active {
+    transform: scale(0.97);
+  }
+
+  /* Same treatment for anything else in the studio that is pressable. */
+  .studio-press {
+    transition: transform 100ms ease-out, border-color 160ms ease-out;
+    will-change: transform;
+  }
+  .studio-press:active {
+    transform: scale(0.985);
+  }
+
+  /* Panel changes settle quickly without overshoot because nothing here was
+     thrown or flicked. Only compositor-friendly properties are animated. */
+  .studio-panel {
+    animation: studio-panel-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+  @keyframes studio-panel-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 8px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Display type: tracking tightens as size grows, leading tightens with it. */
+  .studio-display {
+    letter-spacing: -0.021em;
+    line-height: 1.08;
+  }
+
+  /* Legibility on a translucent surface wants a touch more weight and a
+     hair of tracking, which is what vibrancy does on Apple's own materials. */
+  .studio-vibrant {
+    letter-spacing: 0.002em;
+    font-weight: 560;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .studio-panel {
+      animation: none;
+    }
+    .studio-tab,
+    .studio-press {
+      transition: background-color 160ms ease-out, color 160ms ease-out;
+    }
+    .studio-tab:active,
+    .studio-press:active {
+      transform: none;
+    }
+  }
+
+  /* Frostier and more solid rather than blurred, when asked. */
+  @media (prefers-reduced-transparency: reduce) {
+    .studio-bar {
+      background: var(--background);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .studio-bar::after {
+      display: none;
+    }
+  }
+
+  @media (prefers-contrast: more) {
+    .studio-bar {
+      background: var(--background);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: 1px solid var(--foreground);
+    }
+  }
+}

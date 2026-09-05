@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { unzipSync } from "fflate";
@@ -10,14 +10,14 @@ import { Input, Label, Textarea } from "@/components/ui/field";
 import { DEMO_BRIEFS, UNIVERSAL_REQUIREMENTS, PAGESPEED_FLOOR, getBrief } from "@/lib/demo-briefs";
 import { RESOURCE_GROUPS } from "@/lib/demo-resources";
 import { DemoPromptBuilder } from "@/components/crm/demo-prompt-builder";
+import { Hammer, BookOpen, Library, Boxes, X } from "lucide-react";
 
 /**
- * The developers' room: the briefs on one side, your builds on the other.
+ * The developers' room: project preparation, standards, references, and builds.
  *
  * The gallery is not decoration. An outside developer producing work that looks
- * like ours is a function of starting from a written standard, so the brief for
- * whichever business type they picked stays on screen while they work rather
- * than being something they read once and closed.
+ * like ours is a function of starting from a written standard, so an opened
+ * business brief retains its place while the developer moves through the room.
  */
 
 type Demo = {
@@ -89,6 +89,34 @@ async function inspectZip(file: File): Promise<{ ok: true; files: number } | { o
   }
 }
 
+/**
+ * The studio is four places, not one scroll.
+ *
+ * Everything used to be stacked in a single column, so the page never answered
+ * the questions any workspace has to answer on sight: where am I, what else is
+ * here, and how much of it is there. Each section is now addressable, useful
+ * counts are visible at a glance, and the room remembers where you were.
+ *
+ * Labels name their contents rather than their category — "Builds" and
+ * "Reference", not "Tools" and "More" — because a generic label makes someone
+ * click to find out what is behind it.
+ */
+const SECTIONS = [
+  { key: "studio", label: "Studio", icon: Hammer, hint: "Prepare a project from a real site" },
+  { key: "briefs", label: "Briefs", icon: BookOpen, hint: "What each business type must contain" },
+  { key: "reference", label: "Reference", icon: Library, hint: "Where to go instead of the default" },
+  { key: "builds", label: "Builds", icon: Boxes, hint: "Submit, review, and ship" },
+] as const;
+
+type SectionKey = (typeof SECTIONS)[number]["key"];
+
+const SECTION_STORE = "arkitech.studio.section.v1";
+const SHELF_LINK_COUNT = RESOURCE_GROUPS.reduce((total, group) => total + group.items.length, 0);
+
+function isSectionKey(value: string | null): value is SectionKey {
+  return Boolean(value) && SECTIONS.some((s) => s.key === value);
+}
+
 export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; viewerId: string }) {
   const [demos, setDemos] = useState<Demo[] | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -96,8 +124,57 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
   const [busy, setBusy] = useState(false);
   const [openBrief, setOpenBrief] = useState<string | null>(null);
   const [openShelf, setOpenShelf] = useState<string | null>(null);
+  const [section, setSection] = useState<SectionKey>("studio");
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const isOwner = viewerRole === "OWNER";
+
+  /**
+   * Restore where you were, hash first so a shared link wins over local memory.
+   * Runs after mount rather than during render because both sources are
+   * browser-only and would otherwise disagree with the server's HTML.
+   */
+  useEffect(() => {
+    const syncFromHash = () => {
+      const fromHash = window.location.hash.replace("#", "");
+      if (!isSectionKey(fromHash)) return false;
+      setSection(fromHash);
+      try {
+        window.localStorage.setItem(SECTION_STORE, fromHash);
+      } catch {
+        /* site data can be unavailable without breaking navigation */
+      }
+      return true;
+    };
+
+    if (!syncFromHash()) {
+      try {
+        const stored = window.localStorage.getItem(SECTION_STORE);
+        if (isSectionKey(stored)) setSection(stored);
+      } catch {
+        /* private mode, or site data blocked — the default section is fine */
+      }
+    }
+
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
+  /**
+   * Switching sections must be instant, so this deliberately does not go
+   * through the router: a soft navigation would put a server round trip on the
+   * input path for what is a local view change. The hash is written directly so
+   * the address bar still says where you are and the link is shareable.
+   */
+  const goTo = useCallback((next: SectionKey) => {
+    setSection(next);
+    try {
+      window.localStorage.setItem(SECTION_STORE, next);
+    } catch {
+      /* not worth failing a navigation over */
+    }
+    window.history.replaceState(null, "", `#${next}`);
+  }, []);
 
   async function readJson(res: Response) {
     return (await res.json().catch(() => ({}))) as Record<string, unknown>;
@@ -161,7 +238,8 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
 
     setBusy(false);
     say(brief ? "Build created with its source-backed brief attached." : "Build started. Attach the codebase and a preview link when you're ready.");
-    load();
+    goTo("builds");
+    load().catch(() => say("The build was created, but the builds list could not be refreshed.", true));
   }
 
   async function patch(id: string, body: Record<string, unknown>, done?: string) {
@@ -238,8 +316,127 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
     load();
   }
 
+  const inReview = (demos ?? []).filter((demo) => demo.status === "SUBMITTED").length;
+
+  // A tab that only shows a name makes you click to find out what is behind it.
+  const countFor = (key: SectionKey) => {
+    if (key === "briefs") return String(DEMO_BRIEFS.length);
+    if (key === "reference") return String(SHELF_LINK_COUNT);
+    if (key === "builds") return demos == null ? "" : String(demos.length);
+    return "";
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* -------------------------------------------------------- section bar */}
+      <div
+        className={`studio-bar -mx-3 px-3 py-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 2xl:-mx-10 2xl:px-10 ${isOwner ? "studio-bar-owner" : ""}`}
+      >
+        <nav
+          role="tablist"
+          aria-label="Build studio sections"
+          className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-nowrap sm:overflow-x-auto"
+        >
+          {SECTIONS.map((item, index) => {
+            const active = section === item.key;
+            const Icon = item.icon;
+            const count = countFor(item.key);
+            return (
+              <button
+                key={item.key}
+                type="button"
+                role="tab"
+                id={`studio-tab-${item.key}`}
+                aria-selected={active}
+                aria-controls={`studio-panel-${item.key}`}
+                tabIndex={active ? 0 : -1}
+                title={item.hint}
+                ref={(node) => {
+                  tabRefs.current[index] = node;
+                }}
+                onClick={() => goTo(item.key)}
+                onKeyDown={(event) => {
+                  let nextIndex: number | null = null;
+                  if (event.key === "ArrowRight") {
+                    nextIndex = (index + 1) % SECTIONS.length;
+                  } else if (event.key === "ArrowLeft") {
+                    nextIndex = (index - 1 + SECTIONS.length) % SECTIONS.length;
+                  } else if (event.key === "Home") {
+                    nextIndex = 0;
+                  } else if (event.key === "End") {
+                    nextIndex = SECTIONS.length - 1;
+                  }
+
+                  if (nextIndex == null) return;
+                  event.preventDefault();
+                  goTo(SECTIONS[nextIndex].key);
+                  tabRefs.current[nextIndex]?.focus();
+                }}
+                className="studio-tab flex h-11 min-w-0 items-center justify-center gap-1 rounded-full border px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 sm:shrink-0 sm:gap-2 sm:px-3.5 lg:h-10"
+                style={{
+                  borderColor: active ? "var(--accent)" : "var(--border)",
+                  background: active ? "var(--surface-strong)" : "transparent",
+                  color: active ? "var(--foreground)" : "var(--muted)",
+                }}
+              >
+                <Icon size={15} className="hidden sm:block" aria-hidden="true" />
+                <span className={`truncate ${active ? "studio-vibrant" : ""}`}>{item.label}</span>
+                {count ? (
+                  <span
+                    className="hidden rounded-full px-1.5 py-0.5 font-mono text-[10px] sm:inline"
+                    style={{ background: "var(--surface)", color: "var(--muted)" }}
+                  >
+                    {count}
+                  </span>
+                ) : null}
+                {item.key === "builds" && inReview > 0 ? (
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-amber-500"
+                    aria-label={`${inReview} awaiting review`}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </nav>
+        <p className="mt-2 text-xs text-zinc-500">
+          {SECTIONS.find((s) => s.key === section)?.hint}
+        </p>
+
+        {/* Action feedback stays attached to the sticky chrome so work done at
+            the bottom of a long panel never resolves off-screen. */}
+        {message ? (
+          <div
+            role={error ? "alert" : "status"}
+            aria-live={error ? "assertive" : "polite"}
+            aria-atomic="true"
+            className={`absolute left-3 right-3 top-full mt-2 flex items-start gap-3 rounded-xl border bg-[var(--surface-strong)] px-3 py-2.5 text-sm shadow-lg backdrop-blur-xl sm:left-auto sm:right-6 sm:max-w-md lg:right-8 2xl:right-10 ${
+              error
+                ? "border-red-500/40 text-red-600 dark:text-red-400"
+                : "border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+            }`}
+          >
+            <span className="min-w-0 flex-1">{message}</span>
+            <button
+              type="button"
+              aria-label="Dismiss notification"
+              onClick={() => setMessage(null)}
+              className="studio-tab -my-2 -mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--muted)] hover:bg-black/5 hover:text-[var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:bg-white/10 sm:-my-1 sm:-mr-1 sm:h-8 sm:w-8"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      <section
+        id="studio-panel-studio"
+        role="tabpanel"
+        aria-labelledby="studio-tab-studio"
+        tabIndex={0}
+        hidden={section !== "studio"}
+        className={section === "studio" ? "studio-panel space-y-6" : "space-y-6"}
+      >
       {/* ------------------------------------------------------ the standard */}
       <Card>
         <CardHeader>
@@ -275,7 +472,16 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
           <DemoPromptBuilder onCreateBuild={(input) => createBuild(input, input.brief)} />
         </CardContent>
       </Card>
+      </section>
 
+      <section
+        id="studio-panel-briefs"
+        role="tabpanel"
+        aria-labelledby="studio-tab-briefs"
+        tabIndex={0}
+        hidden={section !== "briefs"}
+        className={section === "briefs" ? "studio-panel space-y-6" : "space-y-6"}
+      >
       {/* --------------------------------------------------------- the briefs */}
       <Card>
         <CardHeader>
@@ -295,7 +501,7 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
                   type="button"
                   onClick={() => setOpenBrief(open ? null : brief.key)}
                   aria-expanded={open}
-                  className="group relative aspect-square overflow-hidden rounded-2xl border text-left transition focus:outline-none"
+                  className="studio-press group relative aspect-square overflow-hidden rounded-2xl border text-left focus-visible:outline-2 focus-visible:outline-offset-2"
                   style={{ borderColor: open ? "var(--accent)" : "var(--border)" }}
                 >
                   <Image
@@ -382,7 +588,16 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
           ) : null}
         </CardContent>
       </Card>
+      </section>
 
+      <section
+        id="studio-panel-reference"
+        role="tabpanel"
+        aria-labelledby="studio-tab-reference"
+        tabIndex={0}
+        hidden={section !== "reference"}
+        className={section === "reference" ? "studio-panel space-y-6" : "space-y-6"}
+      >
       {/* ------------------------------------------------------------- shelf */}
       <Card>
         <CardHeader>
@@ -399,9 +614,12 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
             return (
               <div key={group.key} className="rounded-xl border border-[var(--border)] bg-[var(--surface)]">
                 <button
+                  id={`shelf-trigger-${group.key}`}
                   type="button"
                   onClick={() => setOpenShelf(open ? null : group.key)}
-                  className="flex w-full items-center justify-between gap-3 p-4 text-left"
+                  aria-expanded={open}
+                  aria-controls={`shelf-panel-${group.key}`}
+                  className="studio-press flex w-full items-center justify-between gap-3 rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
                   <span>
                     <span className="text-sm font-semibold">{group.label}</span>
@@ -412,7 +630,11 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
                   </span>
                 </button>
                 {open ? (
-                  <ul className="space-y-3 border-t border-[var(--border)] p-4">
+                  <ul
+                    id={`shelf-panel-${group.key}`}
+                    aria-labelledby={`shelf-trigger-${group.key}`}
+                    className="space-y-3 border-t border-[var(--border)] p-4"
+                  >
                     {group.items.map((item) => (
                       <li key={item.href}>
                         <a
@@ -433,7 +655,16 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
           })}
         </CardContent>
       </Card>
+      </section>
 
+      <section
+        id="studio-panel-builds"
+        role="tabpanel"
+        aria-labelledby="studio-tab-builds"
+        tabIndex={0}
+        hidden={section !== "builds"}
+        className={section === "builds" ? "studio-panel space-y-6" : "space-y-6"}
+      >
       {/* ------------------------------------------------------------- builds */}
       <Card>
         <CardHeader>
@@ -443,7 +674,7 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
           {demos == null ? (
             <p className="text-sm text-zinc-500">Loading…</p>
           ) : demos.length === 0 ? (
-            <p className="text-sm text-zinc-500">Nothing here yet. Start a build above.</p>
+            <p className="text-sm text-zinc-500">Nothing here yet. Start a build in Studio.</p>
           ) : (
             demos.map((demo) => (
               <DemoRow
@@ -460,14 +691,7 @@ export function DemoWorkspace({ viewerRole, viewerId }: { viewerRole: string; vi
           )}
         </CardContent>
       </Card>
-
-      {message ? (
-        <p
-          className={`text-sm ${error ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}
-        >
-          {message}
-        </p>
-      ) : null}
+      </section>
     </div>
   );
 }
