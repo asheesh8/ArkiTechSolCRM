@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, WorkLogKind } from "@prisma/client";
 import { getCurrentUser, isOwner } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const entryInclude = {
   user: { select: { id: true, name: true, email: true } },
+  client: { select: { id: true, businessName: true } },
 } satisfies Prisma.OwnerWorkLogInclude;
 
 type EntryWithUser = Prisma.OwnerWorkLogGetPayload<{ include: typeof entryInclude }>;
@@ -14,6 +15,13 @@ function durationSeconds(entry: Pick<EntryWithUser, "startedAt" | "endedAt">) {
   return Math.max(0, Math.round((end.getTime() - entry.startedAt.getTime()) / 1000));
 }
 
+// Money is summed in cents. Rounding hours times a float rate per entry and
+// then adding the results is how an invoice ends up a penny off its own lines.
+function billableCents(entry: Pick<EntryWithUser, "kind" | "hourlyRate" | "startedAt" | "endedAt">) {
+  if (entry.kind !== "CLIENT_BILLABLE" || !entry.hourlyRate) return 0;
+  return Math.round((durationSeconds(entry) / 3_600) * entry.hourlyRate * 100);
+}
+
 function serializeEntry(entry: EntryWithUser) {
   return {
     id: entry.id,
@@ -21,8 +29,54 @@ function serializeEntry(entry: EntryWithUser) {
     endedAt: entry.endedAt?.toISOString() ?? null,
     workSummary: entry.workSummary ?? "",
     durationSeconds: durationSeconds(entry),
+    kind: entry.kind,
+    client: entry.client ? { id: entry.client.id, businessName: entry.client.businessName } : null,
+    hourlyRate: entry.hourlyRate,
+    billableCents: billableCents(entry),
+    invoiced: entry.invoiceId !== null,
     user: entry.user,
   };
+}
+
+type Billing = { kind: WorkLogKind; clientId: string | null; hourlyRate: number | null };
+
+/**
+ * Decide what an entry bills, and reject the combinations that would produce a
+ * mislabelled or unbillable hour.
+ *
+ * The rate is copied off the client here rather than read back at invoice time.
+ * That is deliberate: raising a client's rate must not silently restate work
+ * already done at the old one, which is how a sent invoice stops matching its
+ * own line items. `previous` carries an existing entry's billing so an edit
+ * that leaves the client alone keeps the rate it was logged at.
+ */
+async function resolveBilling(body: Record<string, unknown>, previous?: Billing) {
+  const rawKind = typeof body.kind === "string" ? body.kind : previous?.kind ?? "COMPANY";
+  if (rawKind !== "CLIENT_BILLABLE" && rawKind !== "COMPANY") {
+    return { error: "Log this as client work or company work" };
+  }
+
+  if (rawKind === "COMPANY") {
+    return { value: { kind: "COMPANY", clientId: null, hourlyRate: null } satisfies Billing };
+  }
+
+  const requested = typeof body.clientId === "string" && body.clientId ? body.clientId : previous?.clientId ?? "";
+  if (!requested) return { error: "Pick the client this time is billed to" };
+
+  if (previous && previous.kind === "CLIENT_BILLABLE" && previous.clientId === requested && previous.hourlyRate) {
+    return { value: previous };
+  }
+
+  const client = await prisma.client.findUnique({
+    where: { id: requested },
+    select: { id: true, businessName: true, hourlyRate: true },
+  });
+  if (!client) return { error: "That client no longer exists" };
+  if (!client.hourlyRate) {
+    return { error: `Set an hourly rate on ${client.businessName} before billing time to it` };
+  }
+
+  return { value: { kind: "CLIENT_BILLABLE", clientId: client.id, hourlyRate: client.hourlyRate } satisfies Billing };
 }
 
 function cleanSummary(value: unknown) {
@@ -271,8 +325,11 @@ export async function POST(request: Request) {
       });
       if (activeEntry) return NextResponse.json({ activeEntry: serializeEntry(activeEntry) });
 
+      const billing = await resolveBilling(body);
+      if ("error" in billing) return NextResponse.json({ error: billing.error }, { status: 400 });
+
       const created = await prisma.ownerWorkLog.create({
-        data: { userId: user.id },
+        data: { userId: user.id, ...billing.value },
         include: entryInclude,
       });
       return NextResponse.json({ activeEntry: serializeEntry(created) }, { status: 201 });
@@ -286,9 +343,20 @@ export async function POST(request: Request) {
       if (!activeEntry) return NextResponse.json({ error: "No active clock-in found" }, { status: 400 });
 
       const summary = cleanSummary(body.workSummary);
+      if (!summary) {
+        return NextResponse.json({ error: "Write down what you worked on before clocking out" }, { status: 400 });
+      }
+
+      const billing = await resolveBilling(body, {
+        kind: activeEntry.kind,
+        clientId: activeEntry.clientId,
+        hourlyRate: activeEntry.hourlyRate,
+      });
+      if ("error" in billing) return NextResponse.json({ error: billing.error }, { status: 400 });
+
       const updated = await prisma.ownerWorkLog.update({
         where: { id: activeEntry.id },
-        data: { endedAt: new Date(), workSummary: summary || null },
+        data: { endedAt: new Date(), workSummary: summary, ...billing.value },
         include: entryInclude,
       });
       return NextResponse.json({ entry: serializeEntry(updated) });
@@ -316,8 +384,11 @@ export async function POST(request: Request) {
       });
       if (overlapping) return NextResponse.json({ error: "That overlaps with another work log" }, { status: 400 });
 
+      const billing = await resolveBilling(body);
+      if ("error" in billing) return NextResponse.json({ error: billing.error }, { status: 400 });
+
       const created = await prisma.ownerWorkLog.create({
-        data: { userId: user.id, startedAt, endedAt, workSummary: summary },
+        data: { userId: user.id, startedAt, endedAt, workSummary: summary, ...billing.value },
         include: entryInclude,
       });
       return NextResponse.json({ entry: serializeEntry(created) }, { status: 201 });
@@ -340,12 +411,38 @@ export async function PATCH(request: Request) {
     const id = typeof body.id === "string" ? body.id : "";
     if (!id) return NextResponse.json({ error: "Work log id is required" }, { status: 400 });
 
-    const existing = await prisma.ownerWorkLog.findUnique({ where: { id }, select: { userId: true } });
+    const existing = await prisma.ownerWorkLog.findUnique({
+      where: { id },
+      select: { userId: true, endedAt: true, kind: true, clientId: true, hourlyRate: true, invoiceId: true },
+    });
     if (!existing) return NextResponse.json({ error: "Work log not found" }, { status: 404 });
     if (existing.userId !== user.id) return NextResponse.json({ error: "You can only edit your own work log" }, { status: 403 });
+    if (existing.invoiceId) {
+      return NextResponse.json({ error: "That entry is already on an invoice and can no longer be edited" }, { status: 409 });
+    }
 
     const summary = cleanSummary(body.workSummary);
-    const data: Prisma.OwnerWorkLogUpdateInput = { workSummary: summary || null };
+    // A finished entry without a note is the thing this log exists to prevent,
+    // so an edit cannot strip one back out. An entry still running has not been
+    // written up yet, and is left alone.
+    const staysFinished = existing.endedAt !== null || body.endedAt !== undefined;
+    if (staysFinished && !summary) {
+      return NextResponse.json({ error: "Say what you worked on — finished entries need a note" }, { status: 400 });
+    }
+
+    const billing = await resolveBilling(body, {
+      kind: existing.kind,
+      clientId: existing.clientId,
+      hourlyRate: existing.hourlyRate,
+    });
+    if ("error" in billing) return NextResponse.json({ error: billing.error }, { status: 400 });
+
+    const data: Prisma.OwnerWorkLogUpdateInput = {
+      workSummary: summary || null,
+      kind: billing.value.kind,
+      client: billing.value.clientId ? { connect: { id: billing.value.clientId } } : { disconnect: true },
+      hourlyRate: billing.value.hourlyRate,
+    };
 
     if (body.startedAt !== undefined || body.endedAt !== undefined) {
       const rawStartedAt = parseIsoDate(body.startedAt);

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BarChart3, CalendarPlus, Clock3, FileCheck2, Flame, Gauge, LogIn, LogOut, NotebookPen, Pencil, Plus, Save, TimerReset, UsersRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input, Label, Textarea } from "@/components/ui/field";
+import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
 type WorkLogUser = {
@@ -13,14 +13,31 @@ type WorkLogUser = {
   email: string;
 };
 
+type WorkKind = "CLIENT_BILLABLE" | "COMPANY";
+
+type ClientOption = {
+  id: string;
+  businessName: string;
+  hourlyRate: number | null;
+};
+
 type WorkLogEntry = {
   id: string;
   startedAt: string;
   endedAt: string | null;
   workSummary: string;
   durationSeconds: number;
+  kind: WorkKind;
+  client: { id: string; businessName: string } | null;
+  hourlyRate: number | null;
+  billableCents: number;
+  invoiced: boolean;
   user: WorkLogUser;
 };
+
+function formatMoney(cents: number) {
+  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
 
 type TodayOwnerTotal = {
   name: string;
@@ -188,6 +205,9 @@ function InsightTile({ icon: Icon, label, value, detail }: { icon: React.Compone
 export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
   const [data, setData] = useState<WorkLogResponse | null>(null);
   const [summary, setSummary] = useState("");
+  const [workKind, setWorkKind] = useState<WorkKind>("COMPANY");
+  const [workClientId, setWorkClientId] = useState("");
+  const [clients, setClients] = useState<ClientOption[]>([]);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualForm, setManualForm] = useState<ManualForm>({ date: "", startTime: "", endTime: "", workSummary: "" });
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -248,6 +268,41 @@ export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
     [data?.todayByUser],
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/clients");
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (!cancelled && Array.isArray(payload.clients)) setClients(payload.clients);
+      } catch {
+        // A missing client list only disables billable logging, so the clock
+        // still works. No need to shout about it.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Mirror whatever the running entry was clocked in against, so reopening the
+  // dashboard mid-session shows what you actually picked rather than a default.
+  useEffect(() => {
+    if (!activeEntry) return;
+    setWorkKind(activeEntry.kind);
+    setWorkClientId(activeEntry.client?.id ?? "");
+  }, [activeEntry]);
+
+  const billingPayload = () => ({
+    kind: workKind,
+    clientId: workKind === "CLIENT_BILLABLE" ? workClientId : null,
+  });
+
+  const clockOutBlocker = !summary.trim()
+    ? "Write what you got done before clocking out."
+    : workKind === "CLIENT_BILLABLE" && !workClientId
+      ? "Pick the client this time is billed to."
+      : "";
+
   async function runAction(action: "clock-in" | "clock-out") {
     setBusy(action);
     setError("");
@@ -256,7 +311,7 @@ export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
       const response = await fetch("/api/owner/work-log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, workSummary: summary }),
+        body: JSON.stringify({ action, workSummary: summary, ...billingPayload() }),
       });
       if (!response.ok) throw new Error(await readError(response));
       await loadEntries(true);
@@ -277,7 +332,7 @@ export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
       const response = await fetch("/api/owner/work-log", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: activeEntry.id, workSummary: summary }),
+        body: JSON.stringify({ id: activeEntry.id, workSummary: summary, ...billingPayload() }),
       });
       if (!response.ok) throw new Error(await readError(response));
       await loadEntries(true);
@@ -497,7 +552,41 @@ export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="owner-work-kind">This time counts as</Label>
+                    <Select
+                      id="owner-work-kind"
+                      value={workKind}
+                      onChange={(event) => setWorkKind(event.target.value as WorkKind)}
+                      className="bg-white/90 dark:bg-zinc-950/80"
+                    >
+                      <option value="COMPANY">Company work — logged, not billed</option>
+                      <option value="CLIENT_BILLABLE">Client work — billable</option>
+                    </Select>
+                  </div>
+                  {workKind === "CLIENT_BILLABLE" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="owner-work-client">Billed to</Label>
+                      <Select
+                        id="owner-work-client"
+                        value={workClientId}
+                        onChange={(event) => setWorkClientId(event.target.value)}
+                        className="bg-white/90 dark:bg-zinc-950/80"
+                      >
+                        <option value="">Pick a client...</option>
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.businessName}
+                            {client.hourlyRate ? ` — $${client.hourlyRate}/hr` : " — no rate set"}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-3 space-y-2">
                   <Label htmlFor="owner-work-summary">Work completed</Label>
                   <Textarea
                     id="owner-work-summary"
@@ -513,11 +602,19 @@ export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
                     <Save className="h-4 w-4" />
                     {busy === "save" ? "Saving..." : "Save note"}
                   </Button>
-                  <Button type="button" className="w-full sm:flex-1" disabled={Boolean(busy)} onClick={() => void runAction("clock-out")}>
+                  <Button
+                    type="button"
+                    className="w-full sm:flex-1"
+                    disabled={Boolean(busy) || Boolean(clockOutBlocker)}
+                    onClick={() => void runAction("clock-out")}
+                  >
                     <LogOut className="h-4 w-4" />
                     {busy === "clock-out" ? "Clocking out..." : "Clock out"}
                   </Button>
                 </div>
+                {clockOutBlocker ? (
+                  <p className="mt-2 text-xs text-zinc-500">{clockOutBlocker}</p>
+                ) : null}
               </div>
             ) : (
               <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
@@ -527,7 +624,7 @@ export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold">Ready for the next work block</p>
-                    <p className="mt-1 text-xs leading-5 text-zinc-500">Clock in first, then add the work summary before you clock out.</p>
+                    <p className="mt-1 text-xs leading-5 text-zinc-500">Clock in first. You cannot clock out until you have written down what you did.</p>
                   </div>
                 </div>
                 <Button type="button" className="mt-4 w-full" disabled={Boolean(busy)} onClick={() => void runAction("clock-in")}>
@@ -641,6 +738,24 @@ export function OwnerTimeClock({ onChange }: OwnerTimeClockProps = {}) {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold">{entry.user.name}</p>
                             <p className="mt-0.5 text-xs text-zinc-500">{formatClockTime(entry.startedAt)}</p>
+                            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 font-medium",
+                                  entry.kind === "CLIENT_BILLABLE"
+                                    ? "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400",
+                                )}
+                              >
+                                {entry.kind === "CLIENT_BILLABLE" ? entry.client?.businessName ?? "Client work" : "Company"}
+                              </span>
+                              {entry.billableCents > 0 ? (
+                                <span className="font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">
+                                  {formatMoney(entry.billableCents)}
+                                </span>
+                              ) : null}
+                              {entry.invoiced ? <span className="text-zinc-400">On an invoice</span> : null}
+                            </p>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
                             {canEdit && (
