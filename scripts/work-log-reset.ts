@@ -6,9 +6,9 @@
  * client work from unpaid company time — are not worth migrating. This clears
  * them and rebuilds the week from evidence.
  *
- * Covers three projects only — BibleTransfer123, the church CRM and GawahiTv —
- * totalling the 16 hours Ashish attests to. Everything else worked on that week
- * is deliberately left out until its hours are settled.
+ * Covers every ArkiTech repo touched between Sat Sep 12 and Sat Sep 19: Elite
+ * Real Estate, BibleTransfer123, Jeff's Seafood, GawahiTv, the church CRM and
+ * the CRM itself — 27 commits in all.
  *
  * Session times are anchored to real commits, converted from the UTC that git
  * stores into America/New_York, which is what the clock displays. Get that
@@ -25,6 +25,7 @@
  *   DATABASE_URL="..." pnpm dlx tsx scripts/work-log-reset.ts --email you@example.com
  *   DATABASE_URL="..." pnpm dlx tsx scripts/work-log-reset.ts --email you@example.com --wipe --apply
  */
+import { writeFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -49,86 +50,107 @@ type Session = {
 const OFFSET = "-04:00";
 
 const SESSIONS: Session[] = [
-  // --- BibleTransfer123, Thu Sep 10 — 6.5h. Commits cluster at 08:27-08:51
-  // and 19:02-19:06; the gaps between are build runs, which on 21GB take long
-  // enough that nothing gets committed while they go.
+  // --- Sat Sep 12 — Elite, three commits 22:46-23:06.
   {
-    start: "2026-09-10T06:45",
-    hours: 1.25,
+    start: "2026-09-12T21:30",
+    hours: 2,
     summary:
-      "BibleTransfer123 — build the EasyTransfer packer: lay out a media library on a card that opens itself when mounted. Groundwork before the first commits landed.",
-  },
-  {
-    start: "2026-09-10T08:10",
-    hours: 1.25,
-    summary:
-      "BibleTransfer123 — shipped the packer, added a gitignore for built cards so 21GB of media stays out of the repo, served a built card over the LAN with progress logging on background jobs, then fixed the three bugs the first full build exposed. Four commits.",
-  },
-  {
-    start: "2026-09-10T11:30",
-    hours: 1.5,
-    summary:
-      "BibleTransfer123 — full 21GB card build end to end and verified the result mounts and opens. No commits: this is the build itself running and being checked.",
-  },
-  {
-    start: "2026-09-10T17:45",
-    hours: 1.5,
-    summary:
-      "BibleTransfer123 — content now follows the viewer's language, with stream, save and send phone-to-phone. Made serve.py honour byte-range requests so seeking works. Two commits.",
-  },
-  {
-    start: "2026-09-10T20:00",
-    hours: 1,
-    summary:
-      "BibleTransfer123 — tested range handling and seeking on real phones over the LAN, and re-checked playback after each fix. No commits; verification only.",
+      "Elite Real Estate — finished the other tool's pass and restored what it had removed, wrote one roadmap covering everything left including Phase 2, and rewrote 'Elite by the Numbers' in Darcy's own wording. Three commits.",
   },
 
-  // --- Church CRM (christianityscraper123 / Village Servers Directory),
-  // Fri Sep 11 — 5h. Three commits between 08:06 and 08:43.
+  // --- Mon Sep 14 — GawahiTv, one commit at 16:48.
   {
-    start: "2026-09-11T06:45",
-    hours: 1.25,
+    start: "2026-09-14T15:30",
+    hours: 2,
     summary:
-      "Church CRM — built the harvester and the beliefs filter that decides which ministries qualify before anything reaches the outreach list.",
-  },
-  {
-    start: "2026-09-11T08:05",
-    hours: 1.25,
-    summary:
-      "Church CRM — shipped harvester, beliefs filter and outreach CRM; deployed on Vercel as static UI plus Python API on Turso with password login; profiled the dashboard and cut it to single-pass aggregate counts, 26s down to 4s. Three commits.",
-  },
-  {
-    start: "2026-09-11T10:30",
-    hours: 1.5,
-    summary:
-      "Church CRM — ran the harvester against live data and worked through the outreach flow on real records. No commits; this is the run and the cleanup it turned up.",
-  },
-  {
-    start: "2026-09-11T14:30",
-    hours: 1,
-    summary:
-      "Church CRM — checked password login and the hosted deploy end to end on Turso, confirming the faster dashboard held up against the full dataset.",
+      "GawahiTv — added the Gawahi Live channel and hardened the site for launch. One commit; the rest of the block was pre-launch checks across pages, playback and error states.",
   },
 
-  // --- GawahiTv, Mon Sep 14 — 4.5h. One commit at 16:48; launch hardening is
-  // mostly checks, which leave nothing behind in git.
+  // --- Wed Sep 16 — Elite branding sprint (5 commits 09:44-10:08), the CRM
+  // work log change, then Elite SEO in the evening.
   {
-    start: "2026-09-14T13:00",
-    hours: 1.5,
+    start: "2026-09-16T08:30",
+    hours: 2,
     summary:
-      "GawahiTv — wired up the Gawahi Live channel and got playback working against the live source.",
+      "Elite Real Estate — Darcy's logo everywhere and dropped the single-office framing; put Darcy first with Brandon beside her; her bio verbatim including 'equal partner'; copy fixes from her review; published the 5.0 from 92 reviews Google rating. Five commits off the back of Darcy's review.",
   },
   {
-    start: "2026-09-14T16:15",
+    start: "2026-09-16T10:35",
+    hours: 1,
+    summary:
+      "ArkiTech CRM — require a work note to clock out, split logged time into client-billable and company work, snapshot the client rate onto each entry, and freeze entries once invoiced. One commit. Company time: our own product.",
+  },
+  {
+    start: "2026-09-16T17:00",
     hours: 1.25,
     summary:
-      "GawahiTv — shipped the Live channel and the launch hardening pass in one commit.",
+      "Elite Real Estate — robots.txt and a sitemap that reflects the pages that actually exist. One commit.",
+  },
+
+  // --- Thu Sep 17 — Pashto work on BibleTransfer, PrimeMLS research for
+  // Elite, then a security pass and the directory filters at night.
+  {
+    start: "2026-09-17T08:30",
+    hours: 1.5,
+    summary:
+      "BibleTransfer123 — Northern Pashto support and an app shaped like the reference; Pashto selectable as a language with an arrow that says so; language hint pinned to the top of the page. Three commits.",
   },
   {
-    start: "2026-09-14T19:00",
+    start: "2026-09-17T10:15",
+    hours: 0.75,
+    summary:
+      "Elite Real Estate — worked out the answer PrimeMLS wanted on the RESO Web API and what to ask alongside it. One commit; mostly reading their spec.",
+  },
+  {
+    start: "2026-09-17T19:15",
+    hours: 1.25,
+    summary:
+      "BibleTransfer123 — security pass: closed a code-execution hole and contained hostile card content. One commit; the rest was auditing the paths that could reach it.",
+  },
+  {
+    start: "2026-09-17T20:45",
+    hours: 1,
+    summary:
+      "Church CRM (Village Servers Directory) — expanded email discovery and enforced the strict directory filter so nothing unqualified reaches outreach. One commit.",
+  },
+
+  // --- Fri Sep 18 — a small fix early, then the Jeff's Seafood rebrand.
+  {
+    start: "2026-09-18T04:00",
+    hours: 0.75,
+    summary: "BibleTransfer123 — sized the icons used inside a note's heading. One commit.",
+  },
+  {
+    start: "2026-09-18T16:30",
     hours: 1.75,
     summary:
-      "GawahiTv — pre-launch checks across the site: pages, playback and error states. No commits; this is the pass before going live.",
+      "Jeff's Seafood — rebranded the site, added the content admin and the application form. One commit covering the rebrand.",
+  },
+
+  // --- Sat Sep 19 — Jeff's Seafood onto Vercel, more languages, then the
+  // PrimeMLS IDX push for Elite (4 commits 12:43-13:33) and caching at night.
+  {
+    start: "2026-09-19T07:45",
+    hours: 1.25,
+    summary:
+      "Jeff's Seafood — retargeted at Vercel, replacing D1 and R2 with a single JSON document store, and added a demo admin password carrying a visible reminder to replace it. Two commits.",
+  },
+  {
+    start: "2026-09-19T09:05",
+    hours: 0.75,
+    summary: "BibleTransfer123 — Mandarin and Cantonese, imported from files already on disk. One commit.",
+  },
+  {
+    start: "2026-09-19T12:00",
+    hours: 2,
+    summary:
+      "Elite Real Estate — prepared PrimeMLS IDX with gated enquiries; fixed team agent IDs and the broker contact fallback; limited live search to RE/MAX North Professionals inventory; labelled lease listings and preserved the DNS rollback details. Four commits.",
+  },
+  {
+    start: "2026-09-19T20:45",
+    hours: 1.5,
+    summary:
+      "Elite Real Estate — sped up PrimeMLS listings with bounded warm caches. One commit; the rest was measuring where the time was going.",
   },
 ];
 
@@ -161,7 +183,18 @@ function show(value: Date) {
 
 async function main() {
   const { email, wipe, apply } = parseArgs();
-  if (!email) throw new Error("Pass --email <the owner's login email>");
+
+  if (!email) {
+    const owners = await prisma.user.findMany({
+      where: { role: "OWNER" },
+      select: { name: true, email: true },
+      orderBy: { name: "asc" },
+    });
+    console.log("\nPass --email with one of these owners:\n");
+    for (const owner of owners) console.log(`  ${owner.name.padEnd(12)} ${owner.email}`);
+    console.log("");
+    return;
+  }
 
   const user = await prisma.user.findUnique({ where: { email }, select: { id: true, name: true, role: true } });
   if (!user) throw new Error(`No user with email ${email}`);
@@ -201,8 +234,16 @@ async function main() {
 
   await prisma.$transaction(async (tx) => {
     if (wipe) {
+      const doomed = await tx.ownerWorkLog.findMany({
+        include: { user: { select: { name: true, email: true } } },
+        orderBy: { startedAt: "asc" },
+      });
+      const backup = `work-log-backup-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+      writeFileSync(backup, JSON.stringify(doomed, null, 2));
+      console.log(`\nBacked up ${doomed.length} ${doomed.length === 1 ? "entry" : "entries"} to ${backup}`);
+
       const { count } = await tx.ownerWorkLog.deleteMany({});
-      console.log(`\nDeleted ${count} existing ${count === 1 ? "entry" : "entries"}.`);
+      console.log(`Deleted ${count} existing ${count === 1 ? "entry" : "entries"}.`);
     }
 
     for (const session of SESSIONS) {

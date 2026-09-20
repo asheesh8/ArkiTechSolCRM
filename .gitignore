@@ -33,3 +33,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Pre-wipe dumps from scripts/work-log-reset.ts
+work-log-backup-*.json
