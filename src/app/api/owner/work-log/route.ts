@@ -362,6 +362,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ entry: serializeEntry(updated) });
     }
 
+    // Closing out a shift somebody walked away from. Separate from clock-out
+    // because that stamps "now", and a forgotten clock-in is only discovered
+    // hours or days later — stamping now would bill the gap they were asleep.
+    if (action === "close-stale") {
+      const openEntry = await prisma.ownerWorkLog.findFirst({
+        where: { userId: user.id, endedAt: null },
+        orderBy: { startedAt: "asc" },
+      });
+      if (!openEntry) return NextResponse.json({ error: "No open shift to close" }, { status: 400 });
+
+      const endedAt = parseIsoDate(body.endedAt);
+      const summary = cleanSummary(body.workSummary);
+      if (!endedAt) return NextResponse.json({ error: "Say when you actually finished" }, { status: 400 });
+      if (!summary) return NextResponse.json({ error: "Write down what you worked on" }, { status: 400 });
+      if (endedAt <= openEntry.startedAt) {
+        return NextResponse.json({ error: "You cannot finish before you started" }, { status: 400 });
+      }
+      if (endedAt.getTime() > Date.now() + 5 * 60 * 1000) {
+        return NextResponse.json({ error: "That finish time is in the future" }, { status: 400 });
+      }
+      if (durationSeconds({ startedAt: openEntry.startedAt, endedAt }) > 24 * 60 * 60) {
+        return NextResponse.json({ error: "A shift cannot run longer than 24 hours — pick the time you actually stopped" }, { status: 400 });
+      }
+
+      const billing = await resolveBilling(body, {
+        kind: openEntry.kind,
+        clientId: openEntry.clientId,
+        hourlyRate: openEntry.hourlyRate,
+      });
+      if ("error" in billing) return NextResponse.json({ error: billing.error }, { status: 400 });
+
+      const closed = await prisma.ownerWorkLog.update({
+        where: { id: openEntry.id },
+        data: { endedAt, workSummary: summary, ...billing.value },
+        include: entryInclude,
+      });
+      return NextResponse.json({ entry: serializeEntry(closed) });
+    }
+
     if (action === "manual-entry") {
       const rawStartedAt = parseIsoDate(body.startedAt);
       const rawEndedAt = parseIsoDate(body.endedAt);
