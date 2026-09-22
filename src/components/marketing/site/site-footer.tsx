@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mark } from "@/components/marketing/brand/mark";
+import { FooterLogo } from "@/components/marketing/site/footer-logo";
 import { Plate } from "@/components/marketing/art/plate";
 import { services } from "@/lib/services-content";
 import { COMPANY_LINKS, SITE } from "@/lib/marketing/site";
@@ -20,13 +20,7 @@ export function SiteFooter() {
       <div className="shell pb-10 pt-20 sm:pt-24">
         <div className="grid gap-14 lg:grid-cols-[1.3fr_1fr_1fr_1.15fr]">
           <div>
-            <Link href="/" aria-label="ArkiTech Solutions, home" className="inline-flex items-center gap-4">
-              <Mark className="h-14 w-14" />
-              <span className="flex flex-col leading-none">
-                <span className="ak-display text-[2.3rem]">ArkiTech</span>
-                <span className="mt-1.5 ak-mono text-[0.62rem] tracking-[0.5em]">Solutions</span>
-              </span>
-            </Link>
+            <FooterLogo />
             <p className="mt-7 max-w-[32ch] text-[var(--dim)]">
               Websites, automations, and the systems behind them. Built by hand in Burlington, Vermont.
             </p>
