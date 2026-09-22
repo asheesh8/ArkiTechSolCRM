@@ -1,0 +1,648 @@
+/* ===========================================================================
+   ArkiTech public site (rebrand, September 2026)
+
+   Everything here is scoped to the .ark wrapper that SiteFrame renders around
+   the public pages, so none of it reaches the CRM. Classes whose names the
+   CRM's globals.css already uses are prefixed ak- (ak-btn, ak-display,
+   ak-lede, ak-arrow-link, ak-range).
+
+   Colours come from the supplied assets: paper and ink from the logo
+   artwork, night from the Burlington timelapse, lamp (#EAA14D, the only
+   accent) from its lit windows. Day / Night is set by data-ark-theme on
+   <html>, written before paint by SiteFrame's inline script.
+
+   Component classes live in @layer components, which the CRM's Tailwind
+   declares, so utilities still win over them.
+   =========================================================================== */
+
+.ark {
+  /* Type, from next/font variables set on this same element */
+  --ak-display: var(--font-caslon), "Libre Caslon Display", Georgia, serif;
+  --ak-italic: var(--font-caslon-text), "Libre Caslon Text", Georgia, serif;
+  --ak-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --ak-mono: var(--font-dm-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* Raw palette */
+  --paper: #f4f2ec;
+  --paper-2: #eae7df;
+  --paper-3: #dfdbd1;
+  --ink: #101216;
+  --ink-2: #2b2f36;
+  --graphite: #5b5f66;
+
+  --night: #0c1118;
+  --night-2: #131b26;
+  --night-3: #1c2634;
+  --dusk: #22374d;
+  --bone: #ede9e0;
+
+  --lamp: #eaa14d;
+  --lamp-deep: #8a5212;
+
+  /* Semantic tokens: Day */
+  --bg: var(--paper);
+  --bg-2: var(--paper-2);
+  --bg-3: var(--paper-3);
+  --fg: var(--ink);
+  --fg-2: var(--ink-2);
+  --dim: var(--graphite);
+  --rule: rgba(16, 18, 22, 0.13);
+  --rule-strong: rgba(16, 18, 22, 0.3);
+  --accent: var(--lamp);
+  --accent-text: var(--lamp-deep);
+  --btn-bg: var(--ink);
+  --btn-fg: var(--paper);
+  --art: rgba(16, 18, 22, 0.86);
+  --surface: #fbfaf6;
+  --shadow: 0 1px 1px rgba(16, 18, 22, 0.05), 0 22px 44px -26px rgba(34, 55, 77, 0.42);
+
+  /* Devices in the work showcase: silver by day, space grey by night */
+  --mac-body-1: #e4e5e8;
+  --mac-body-2: #b4b7bc;
+  --mac-edge: #c9cbcf;
+  --mac-chrome: #ececee;
+  --mac-chrome-rule: rgba(0, 0, 0, 0.09);
+  --mac-url: #ffffff;
+  --mac-url-fg: #4a4d52;
+
+  /* Measure */
+  --page-pad: clamp(1rem, 4.5vw, 4rem);
+  --shell: 86rem;
+  --nav-h: 4.5rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: light;
+}
+
+/* Night: the same page after the lights come on. */
+html[data-ark-theme="night"] .ark {
+  --bg: var(--night);
+  --bg-2: var(--night-2);
+  --bg-3: var(--night-3);
+  --fg: var(--bone);
+  --fg-2: rgba(237, 233, 224, 0.86);
+  --dim: rgba(237, 233, 224, 0.64);
+  --rule: rgba(237, 233, 224, 0.13);
+  --rule-strong: rgba(237, 233, 224, 0.3);
+  --accent-text: var(--lamp);
+  --btn-bg: var(--lamp);
+  --btn-fg: var(--ink);
+  --art: rgba(237, 233, 224, 0.82);
+  --surface: #161f2b;
+  --shadow: 0 1px 1px rgba(0, 0, 0, 0.4), 0 26px 50px -26px rgba(0, 0, 0, 0.85);
+  --mac-body-1: #6a6d72;
+  --mac-body-2: #3b3d41;
+  --mac-edge: #55585d;
+  --mac-chrome: #2b2c30;
+  --mac-chrome-rule: rgba(255, 255, 255, 0.07);
+  --mac-url: #1d1e21;
+  --mac-url-fg: #b9bcc2;
+  color-scheme: dark;
+}
+
+/* The page around the wrapper: paper by day, night by night, so overscroll
+   and the space under a short page never show the CRM's gradient. */
+html:has(.ark) {
+  scroll-padding-top: calc(4.5rem + 1rem);
+  scrollbar-color: rgba(16, 18, 22, 0.3) transparent;
+  scrollbar-width: thin;
+  background: #f4f2ec;
+}
+:root body:has(.ark) {
+  background: #f4f2ec;
+}
+html[data-ark-theme="night"]:has(.ark),
+html[data-ark-theme="night"] body:has(.ark) {
+  background: #0c1118;
+  scrollbar-color: rgba(237, 233, 224, 0.3) transparent;
+}
+
+.ark {
+  min-height: 100dvh;
+  flex: 1 1 auto;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ak-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  caret-color: var(--lamp);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition:
+    background-color 0.6s var(--ease-out),
+    color 0.6s var(--ease-out);
+}
+
+
+.ark ::selection {
+  background: var(--lamp);
+  color: var(--ink);
+}
+
+.ark :focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 3px;
+}
+
+@layer components {
+  /* ------------------------------------------------------------ Bands */
+  .band {
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .band-2 {
+    background: var(--bg-2);
+    color: var(--fg);
+  }
+
+  /* Always night, whatever the theme: the hero footage, the closing block and
+     the footer. In Night theme it drops a step deeper so it stays distinct. */
+  .band-night {
+    --bg: var(--night);
+    --bg-2: var(--night-2);
+    --bg-3: var(--night-3);
+    --fg: var(--bone);
+    --fg-2: rgba(237, 233, 224, 0.86);
+    --dim: rgba(237, 233, 224, 0.66);
+    --rule: rgba(237, 233, 224, 0.15);
+    --rule-strong: rgba(237, 233, 224, 0.34);
+    --accent-text: var(--lamp);
+    --btn-bg: var(--lamp);
+    --btn-fg: var(--ink);
+    --art: rgba(237, 233, 224, 0.82);
+    --surface: #161f2b;
+    --shadow: 0 1px 1px rgba(0, 0, 0, 0.4), 0 30px 60px -30px rgba(0, 0, 0, 0.85);
+    background: var(--night);
+    color: var(--bone);
+    color-scheme: dark;
+  }
+  html[data-ark-theme="night"] .ark .band-night {
+    background: #080c11;
+  }
+
+  .shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: var(--page-pad);
+  }
+
+  .section {
+    padding-block: clamp(4.5rem, 9vw, 8rem);
+  }
+  .section-tight {
+    padding-block: clamp(3.5rem, 6vw, 5.5rem);
+  }
+
+  /* ------------------------------------------------------------ Type */
+  .ak-display {
+    font-family: var(--ak-display);
+    font-weight: 400;
+    letter-spacing: -0.012em;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+  /* Emphasis stays in the family: Caslon Text italic, sized down a touch
+     because its x-height runs larger than the display cut. */
+  .ak-display em {
+    font-family: var(--ak-italic);
+    font-style: italic;
+    font-size: 0.9em;
+    letter-spacing: -0.02em;
+  }
+
+  .h-hero {
+    font-size: clamp(3rem, 7.4vw, 6rem);
+    line-height: 1;
+  }
+  .h-xl {
+    font-size: clamp(2.6rem, 5.6vw, 4.9rem);
+  }
+  .h-lg {
+    font-size: clamp(2.1rem, 4vw, 3.6rem);
+    line-height: 1.04;
+  }
+  .h-md {
+    font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+    line-height: 1.1;
+  }
+  .h-sm {
+    font-size: clamp(1.3rem, 1.7vw, 1.55rem);
+    line-height: 1.15;
+  }
+
+  .ak-lede {
+    font-size: clamp(1.06rem, 1.3vw, 1.2rem);
+    line-height: 1.6;
+    color: var(--fg-2);
+    text-wrap: pretty;
+  }
+
+  .body-dim {
+    color: var(--dim);
+    line-height: 1.7;
+    text-wrap: pretty;
+  }
+
+  /* Phone numbers and small figures: the body face with tabular digits.
+     Large prices are set in the display face instead. */
+  .figure {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+  .price {
+    font-family: var(--ak-display);
+    font-variant-numeric: lining-nums;
+    letter-spacing: -0.01em;
+  }
+  .meta {
+    font-family: var(--ak-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    color: var(--dim);
+  }
+
+  .ak-mono {
+    font-family: var(--ak-mono);
+  }
+
+  .accent-text {
+    color: var(--accent-text);
+  }
+
+  /* ------------------------------------------------------------ Links */
+  .text-link {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.24em;
+    text-decoration-color: var(--rule-strong);
+    transition:
+      text-decoration-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .text-link:hover {
+    text-decoration-color: var(--lamp);
+  }
+
+  .ak-arrow-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--fg);
+    padding-block: 0.3rem;
+    border-bottom: 1px solid var(--rule-strong);
+    transition:
+      border-color 0.2s ease,
+      gap 0.3s var(--ease-out);
+  }
+  .ak-arrow-link:hover {
+    border-color: var(--lamp);
+    gap: 0.8rem;
+  }
+
+  /* ------------------------------------------------------------ Buttons
+     Square, like the mark. The primary fills and warms to lamplight on hover;
+     the ghost is a hairline. Both press down a pixel. */
+  .ak-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 3rem;
+    padding: 0.7rem 1.35rem;
+    font-family: var(--ak-sans);
+    font-size: 0.97rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease,
+      border-color 0.25s ease,
+      transform 0.15s ease;
+  }
+  .ak-btn:active {
+    transform: translateY(1px);
+  }
+  .ak-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .ak-btn-primary {
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+  }
+  .ak-btn-primary:hover:not(:disabled) {
+    background: var(--lamp);
+    color: var(--ink);
+  }
+  .band-night .ak-btn-primary:hover:not(:disabled),
+  html[data-ark-theme="night"] .ark .ak-btn-primary:hover:not(:disabled) {
+    background: var(--bone);
+    color: var(--ink);
+  }
+  .ak-btn-ghost {
+    border-color: var(--rule-strong);
+    color: var(--fg);
+    background: transparent;
+  }
+  .ak-btn-ghost:hover {
+    border-color: var(--fg);
+  }
+  .ak-btn-sm {
+    min-height: 2.5rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* ------------------------------------------------------------ Mark */
+  .lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: currentColor;
+  }
+  .lockup__mark {
+    width: 2.1rem;
+    height: 2.1rem;
+    flex-shrink: 0;
+  }
+  .lockup__words {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+  .lockup__name {
+    font-family: var(--ak-display);
+    font-size: 1.5rem;
+    letter-spacing: 0.01em;
+  }
+  .lockup__sub {
+    font-family: var(--ak-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.5em;
+    margin-top: 0.28rem;
+  }
+  .lockup--compact .lockup__mark {
+    width: 1.8rem;
+    height: 1.8rem;
+  }
+  .lockup--compact .lockup__name {
+    font-size: 1.3rem;
+  }
+
+  /* The mark rules itself in: each bar grows from the end it starts at. */
+  .mark--draw path {
+    transform-box: fill-box;
+    animation: mark-rule-y 0.8s var(--ease-out) both;
+    animation-delay: calc(var(--i) * 95ms + 200ms);
+  }
+  .mark--draw path[data-axis="x"] {
+    animation-name: mark-rule-x;
+  }
+  .mark--draw path[data-axis="xy"] {
+    animation-name: mark-rule-xy;
+  }
+
+  /* ------------------------------------------------------------ Artwork
+     Public-domain plates cut to alpha masks by research/scripts/cut-art.py,
+     inked with a token: black on Day paper, bone on Night. */
+  .plate {
+    background-color: var(--art);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ------------------------------------------------------------ Forms */
+  .field-label {
+    display: block;
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: var(--fg);
+    margin-bottom: 0.45rem;
+  }
+  .field {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
+    padding: 0.8rem 0.95rem;
+    font-size: 1rem;
+    line-height: 1.4;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .field::placeholder {
+    color: var(--dim);
+    opacity: 0.85;
+  }
+  .field:hover {
+    border-color: var(--fg-2);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--lamp);
+    background: color-mix(in srgb, var(--lamp) 6%, transparent);
+  }
+  .field-hint {
+    font-size: 0.8rem;
+    color: var(--dim);
+    margin-top: 0.4rem;
+  }
+  .field-error {
+    font-size: 0.84rem;
+    color: #b3261e;
+    margin-top: 0.4rem;
+  }
+  .band-night .field-error,
+  html[data-ark-theme="night"] .ark .field-error {
+    color: #ffb4a8;
+  }
+
+  /* ------------------------------------------------------------ Range */
+  .ak-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 1.5rem;
+    background: transparent;
+    cursor: pointer;
+  }
+  .ak-range::-webkit-slider-runnable-track {
+    height: 1px;
+    background: var(--rule-strong);
+  }
+  .ak-range::-moz-range-track {
+    height: 1px;
+    background: var(--rule-strong);
+  }
+  .ak-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: -0.55rem;
+    background: var(--lamp);
+    border: 2px solid var(--ink);
+  }
+  .ak-range::-moz-range-thumb {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0;
+    background: var(--lamp);
+    border: 2px solid var(--ink);
+  }
+
+  /* ------------------------------------------------------------ Prose */
+  .prose-ark {
+    color: var(--fg-2);
+    font-size: 1.06rem;
+    line-height: 1.75;
+  }
+  .prose-ark > * + * {
+    margin-top: 1.1em;
+  }
+  .prose-ark h2 {
+    font-family: var(--ak-display);
+    color: var(--fg);
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    line-height: 1.15;
+    margin-top: 2.2em;
+  }
+  .prose-ark h3 {
+    color: var(--fg);
+    font-weight: 600;
+    margin-top: 1.8em;
+  }
+  .prose-ark ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+  .prose-ark li + li {
+    margin-top: 0.4em;
+  }
+  .prose-ark li::marker {
+    color: var(--lamp);
+  }
+  .prose-ark a {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-color: var(--rule-strong);
+  }
+  .prose-ark a:hover {
+    text-decoration-color: var(--lamp);
+  }
+  .prose-ark strong {
+    color: var(--fg);
+    font-weight: 600;
+  }
+}
+
+@keyframes mark-rule-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes mark-rule-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes mark-rule-xy {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ark *,
+  .ark *::before,
+  .ark *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Day / Night: the new theme opens outward from the toggle, like a lamp. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: theme-wipe 0.75s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes theme-wipe {
+  from {
+    clip-path: circle(0 at var(--vt-x, 90%) var(--vt-y, 2rem));
+  }
+  to {
+    clip-path: circle(150vmax at var(--vt-x, 90%) var(--vt-y, 2rem));
+  }
+}
+
+/* Integration tiles bob on their own clocks, so the field never syncs up. */
+.float-tile {
+  animation: tile-float 10s ease-in-out infinite alternate;
+}
+@keyframes tile-float {
+  from {
+    transform: translate3d(0, -7px, 0) rotate(-2deg);
+  }
+  to {
+    transform: translate3d(0, 7px, 0) rotate(2deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .float-tile {
+    animation: none;
+  }
+}
+
+/* A new capture settles into the screen instead of snapping in. */
+.screen-in {
+  animation: screen-in 0.45s var(--ease-out) both;
+}
+@keyframes screen-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The CRM's globals.css resets links with an unlayered
+   `a { color: inherit; text-decoration: none }`, and unlayered CSS outranks
+   every cascade layer, so each colour and underline class on a link here
+   would be silently ignored (ink text on an ink button, headings vanishing on
+   night cards). revert-layer hands links back to the layered styles:
+   utilities, then components, then Tailwind's own reset. Public site only. */
+.ark a {
+  color: revert-layer;
+  text-decoration: revert-layer;
+}

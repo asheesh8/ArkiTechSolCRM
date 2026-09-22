@@ -1,7 +1,7 @@
 /**
  * Town pages for local search.
  *
- * The whole risk with location pages is the doorway page — near-identical
+ * The whole risk with location pages is the doorway page - near-identical
  * copy with the town name swapped, which Google penalises and readers see
  * through instantly. So every entry here has to carry something that could
  * only have been written about that town: its economy, its geography, the
@@ -28,13 +28,13 @@ export type ServiceArea = {
    * A photograph of somewhere in this town that a local would recognise.
    *
    * Shoot these yourselves. A phone photo of Maple Tree Place that you took is
-   * worth more here than a stock image — you own it outright, it is definitely
+   * worth more here than a stock image - you own it outright, it is definitely
    * the right place, and "we know this town" is the entire argument the page is
    * making. A borrowed photo of Church Street is the same one every other
    * Burlington business is using.
    *
    * If you do use someone else's, it must be licensed for commercial use and
-   * `credit` must be filled in. Never CC BY-SA on a commercial page — the
+   * `credit` must be filled in. Never CC BY-SA on a commercial page - the
    * ShareAlike clause is more trouble than the picture is worth.
    *
    * Pages render fine without this. Add them as you take them.
@@ -49,14 +49,14 @@ export const SERVICE_AREAS: ServiceArea[] = [
     short: "Home base. The most competitive local search market in the state.",
     headline: "Website design in Burlington, Vermont",
     intro: [
-      "Burlington is where we work from, and it is the hardest place in Vermont to rank. Between Church Street, the waterfront, and the hill, you are competing against every other business in Chittenden County for the same handful of searches — and against national franchises with budgets that dwarf yours.",
+      "Burlington is where we work from, and it is the hardest place in Vermont to rank. Between Church Street, the waterfront, and the hill, you are competing against every other business in Chittenden County for the same handful of searches, and against national franchises with budgets that dwarf yours.",
       "That competition is exactly why the technical side matters here more than anywhere else in the state. When four businesses all look credible, Google sorts on the things you cannot fake: how fast the page loads on a phone, whether the Business Profile is complete, and how recent the reviews are.",
     ],
     local: [
       {
         term: "You are ranking against franchises",
         detail:
-          "National chains with Burlington locations outspend you on ads and lose to you on relevance. A page that is genuinely about Burlington beats a corporate location page every time — but only if it actually loads.",
+          "National chains with Burlington locations outspend you on ads and lose to you on relevance. A page that is genuinely about Burlington beats a corporate location page every time, but only if it actually loads.",
       },
       {
         term: "Everyone is searching on a phone",
@@ -69,7 +69,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "In a market this dense, the three-pack is won on review recency as much as count. Twelve current reviews read better than forty from two years ago.",
       },
     ],
-    proof: { text: "We are based here — Ashish studied at Champlain College, a few blocks from Church Street." },
+    proof: { text: "We are based here. Ashish studied at Champlain College, a few blocks from Church Street." },
   },
   {
     slug: "essex",
@@ -77,14 +77,14 @@ export const SERVICE_AREAS: ServiceArea[] = [
     short: "Trades and home services, where the work still arrives by phone.",
     headline: "Website design in Essex and Essex Junction, Vermont",
     intro: [
-      "Essex and Essex Junction run on trades and home services — landscaping, excavation, plowing, HVAC, contractors working out of trucks rather than storefronts. The Five Corners and the Champlain Valley Expo pull traffic through, but most of the work here is booked over the phone, not walked into.",
+      "Essex and Essex Junction run on trades and home services: landscaping, excavation, plowing, HVAC, contractors working out of trucks rather than storefronts. The Five Corners and the Champlain Valley Expo pull traffic through, but most of the work here is booked over the phone, not walked into.",
       "That changes what a website is for. It is not a brochure. It is the thing that decides whether a homeowner calls you or the next result, and the admin side behind it is where those enquiries have to land so none of them get lost in a text thread.",
     ],
     local: [
       {
         term: "The phone is the whole funnel",
         detail:
-          "If the job arrives by call, a missed call is a lost job. This is the market where an AI receptionist pays for itself fastest — run the numbers yourself on the receptionist page.",
+          "If the job arrives by call, a missed call is a lost job. This is the market where an AI receptionist pays for itself fastest. Run the numbers yourself on the receptionist page.",
       },
       {
         term: "Seasonal swings are brutal",
@@ -101,7 +101,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
       text: "We built and run the site for Black Sheep Landscaping, whose home base is Essex.",
       href: "https://black-sheep-property-mgmt.vercel.app",
     },
-    // Wikimedia Commons, "Essex Junction, Vermont Amtrak.jpg" — public domain.
+    // Wikimedia Commons, "Essex Junction, Vermont Amtrak.jpg" - public domain.
     photo: {
       src: "/service-areas-essex.jpg",
       alt: "The Amtrak platform at Essex Junction station, Vermont.",
@@ -133,7 +133,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "Search volume here swings hard between ski season, mud season, and foliage. Content and Business Profile updates should move with it rather than sitting static all year.",
       },
     ],
-    // Wikimedia Commons, "The Chin of Mount Mansfield, 2007.jpg" — public domain.
+    // Wikimedia Commons, "The Chin of Mount Mansfield, 2007.jpg" - public domain.
     photo: {
       src: "/service-areas-stowe.jpg",
       alt: "The Chin of Mount Mansfield rising above the treeline near Stowe, Vermont.",
@@ -142,10 +142,10 @@ export const SERVICE_AREAS: ServiceArea[] = [
   {
     slug: "winooski",
     town: "Winooski",
-    short: "Dense, independent, and walkable — a small-business market of its own.",
+    short: "Dense, independent, and walkable: a small-business market of its own.",
     headline: "Website design in Winooski, Vermont",
     intro: [
-      "Winooski packs more independent businesses into a square mile than anywhere else in Vermont. Around the Circle and down the riverfront it is restaurants, studios, salons, and small shops — mostly owner-operated, mostly without anyone whose job is the website.",
+      "Winooski packs more independent businesses into a square mile than anywhere else in Vermont. Around the Circle and down the riverfront it is restaurants, studios, salons, and small shops, mostly owner-operated, mostly without anyone whose job is the website.",
       "Being next door to Burlington cuts both ways. You get the spillover traffic, and you also get buried under Burlington results unless your pages are explicit about being in Winooski.",
     ],
     local: [
@@ -165,22 +165,22 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "For most businesses on the Circle, the two things a visitor wants are hours and what you serve. Everything else is decoration.",
       },
     ],
-    // Wikimedia Commons, "Textile mill. Winooski, Vermont.jpg" — public domain.
+    // Wikimedia Commons, "Textile mill. Winooski, Vermont.jpg" - public domain.
     // A period photograph rather than a modern one, because no freely licensed
     // modern shot of Winooski exists. The mill is still standing.
     photo: {
       src: "/service-areas-winooski.jpg",
       alt: "The Champlain Mill beside the falls on the Winooski River, photographed in the mid-twentieth century.",
-      credit: "The Winooski mill on the falls — still standing, now offices and shops.",
+      credit: "The Winooski mill on the falls, still standing, now offices and shops.",
     },
   },
   {
     slug: "williston",
     town: "Williston",
-    short: "The commercial corridor — retail, showrooms, and contractors.",
+    short: "The commercial corridor: retail, showrooms, and contractors.",
     headline: "Website design in Williston, Vermont",
     intro: [
-      "Williston is where Chittenden County does its commerce. Taft Corners and the Route 2 corridor mean retail, showrooms, trades suppliers, and service businesses with actual premises — a different shape of business from downtown Burlington.",
+      "Williston is where Chittenden County does its commerce. Taft Corners and the Route 2 corridor mean retail, showrooms, trades suppliers, and service businesses with actual premises, a different shape of business from downtown Burlington.",
       "It is also where you are most directly up against national retail. The advantage you have is that you are here and they are a location pin; the site has to make that difference obvious in the first screen.",
     ],
     local: [
@@ -192,7 +192,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
       {
         term: "Big-box competition on every term",
         detail:
-          "You will not outspend them. You can out-specify them — local pages, real photos, and a Business Profile that is actually maintained.",
+          "You will not outspend them. You can out-specify them with local pages, real photos, and a Business Profile that is actually maintained.",
       },
       {
         term: "Quotes over checkouts",
@@ -227,7 +227,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "Referrals here are strong, but the referred person still Googles you first. What they find decides whether the referral converts.",
       },
     ],
-    // Wikimedia Commons, "Malletsbaycauseway.JPG" — public domain.
+    // Wikimedia Commons, "Malletsbaycauseway.JPG" - public domain.
     photo: {
       src: "/service-areas-colchester.jpg",
       alt: "The Colchester Causeway path running out between the waters of Lake Champlain.",
@@ -239,7 +239,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     short: "Professional services, medical, and the airport corridor.",
     headline: "Website design in South Burlington, Vermont",
     intro: [
-      "South Burlington is where a lot of Chittenden County's professional work actually happens — medical and dental practices, law and accounting offices, and the commercial stretch along Dorset Street, with the airport at the edge of it.",
+      "South Burlington is where a lot of Chittenden County's professional work actually happens: medical and dental practices, law and accounting offices, and the commercial stretch along Dorset Street, with the airport at the edge of it.",
       "This is a market where credibility does more work than personality. Someone choosing a dentist or an accountant is scanning for signals that you are established, current, and easy to reach, and they are making that judgement in seconds.",
     ],
     local: [
@@ -259,7 +259,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
           "Booking, forms, and reminders are where practices lose hours a week. That is automation work, not design work.",
       },
     ],
-    // Wikimedia Commons, "South Burlington City Hall, 180 Market Street.jpg" — CC0.
+    // Wikimedia Commons, "South Burlington City Hall, 180 Market Street.jpg" - CC0.
     photo: {
       src: "/service-areas-south-burlington.jpg",
       alt: "South Burlington Public Library and City Hall on Market Street.",
