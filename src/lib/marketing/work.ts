@@ -63,8 +63,8 @@ export const WORK: Work[] = [
     kind: "client",
     what: "Landscaping and seasonal property care",
     where: "Essex",
-    url: "https://black-sheep-property-mgmt.vercel.app",
-    host: "black-sheep-property-mgmt.vercel.app",
+    url: "https://blacksheepvt.com",
+    host: "blacksheepvt.com",
   },
   {
     slug: "vsi",

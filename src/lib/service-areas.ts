@@ -99,7 +99,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     ],
     proof: {
       text: "We built and run the site for Black Sheep Landscaping, whose home base is Essex.",
-      href: "https://black-sheep-property-mgmt.vercel.app",
+      href: "https://blacksheepvt.com",
     },
     // Wikimedia Commons, "Essex Junction, Vermont Amtrak.jpg" - public domain.
     photo: {
