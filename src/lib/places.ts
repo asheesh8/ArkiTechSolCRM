@@ -58,6 +58,43 @@ export async function getPlaceReviews(placeId: string | null | undefined): Promi
   }
 }
 
+/**
+ * Turn Google's error body into something a person can act on.
+ *
+ * The two failures that actually happen are easy to confuse: a key Google has
+ * never seen comes back 400 INVALID_ARGUMENT, while a real key that is being
+ * refused comes back 403 PERMISSION_DENIED. The second one is nearly always a
+ * key restriction (server calls carry no HTTP referrer) or a key whose API
+ * restrictions don't list Places API (New), so say so rather than printing raw
+ * JSON into the search form.
+ */
+async function describePlacesError(response: Response) {
+  const body = await response.text();
+  let message = body;
+  let reason = "";
+  try {
+    const parsed = JSON.parse(body);
+    message = parsed?.error?.message ?? body;
+    reason = parsed?.error?.details?.[0]?.reason ?? "";
+  } catch {
+    // Not JSON; the raw body is the best we have.
+  }
+
+  if (response.status === 403) {
+    if (reason === "SERVICE_DISABLED" || /has not been used in project|is disabled/i.test(message)) {
+      return `Google is refusing the key: Places API (New) is not enabled on that Cloud project. Enable it, wait a minute, and search again. (${message})`;
+    }
+    return `Google is refusing the key (403). Usually the key has an application restriction (websites/IP) and this call comes from the server with no referrer, or its API restrictions don't include Places API (New). Check the key at console.cloud.google.com/apis/credentials. (${message})`;
+  }
+  if (response.status === 400 && (reason === "API_KEY_INVALID" || /API key not valid/i.test(message))) {
+    return "GOOGLE_PLACES_API_KEY is not a valid key. Check the value in the hosting environment. (Google: API key not valid.)";
+  }
+  if (response.status === 429) {
+    return `Google is rate limiting or the project is out of quota. (${message})`;
+  }
+  return `Google Places error (${response.status}): ${message}`;
+}
+
 export async function searchGooglePlaces(input: SearchInput) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
@@ -79,8 +116,7 @@ export async function searchGooglePlaces(input: SearchInput) {
   });
 
   if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Google Places error (${response.status}): ${body}`);
+    throw new Error(await describePlacesError(response));
   }
 
   const data = await response.json();
