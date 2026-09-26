@@ -238,6 +238,7 @@ export default function ClientsPage() {
   const [bulkAssignee, setBulkAssignee] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState("");
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [showDead, setShowDead] = useState(false);
 
   useEffect(() => {
@@ -302,6 +303,7 @@ export default function ClientsPage() {
       else next.add(id);
       return next;
     });
+    setConfirmBulkDelete(false);
   }
 
   async function bulkAssign() {
@@ -321,6 +323,38 @@ export default function ClientsPage() {
       setSelected(new Set()); setBulkAssignee("");
     } catch {
       setBulkMsg("Network error — nothing was assigned.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  /**
+   * Delete every selected company. Permanent: their call notes go too. The
+   * API refuses any that were onboarded as clients and names them back, so
+   * a client record never loses the lead underneath it.
+   */
+  async function bulkDelete() {
+    if (selected.size === 0) return;
+    const ids = [...selected];
+    setBulkBusy(true); setBulkMsg("");
+    try {
+      const res = await fetch("/api/leads/bulk-delete", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setBulkMsg(data.error ?? "Could not delete."); return; }
+      const skipped = (data.skipped ?? []) as { id: string; businessName: string }[];
+      const kept = new Set(skipped.map((c) => c.id));
+      setAllLeads((prev) => prev.filter((l) => !selected.has(l.id) || kept.has(l.id)));
+      setBulkMsg(
+        `Deleted ${data.count} compan${data.count === 1 ? "y" : "ies"}.` +
+          (skipped.length
+            ? ` Kept ${skipped.length} onboarded ${skipped.length === 1 ? "client" : "clients"}: ${skipped.map((c) => c.businessName).join(", ")}.`
+            : ""),
+      );
+      setSelected(new Set()); setConfirmBulkDelete(false);
+    } catch {
+      setBulkMsg("Network error, nothing was deleted.");
     } finally {
       setBulkBusy(false);
     }
@@ -631,6 +665,21 @@ export default function ClientsPage() {
                 <Button size="sm" onClick={bulkAssign} disabled={bulkBusy || !bulkAssignee} className="h-11 shrink-0 lg:h-8">
                   {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}Assign
                 </Button>
+                {confirmBulkDelete ? (
+                  <>
+                    <Button size="sm" variant="danger" onClick={bulkDelete} disabled={bulkBusy} className="h-11 shrink-0 lg:h-8">
+                      {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      Delete {selected.size} for good
+                    </Button>
+                    <button type="button" onClick={() => setConfirmBulkDelete(false)} className="shrink-0 rounded-lg px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => setConfirmBulkDelete(true)} disabled={bulkBusy} className="h-11 shrink-0 text-red-600 hover:text-red-700 dark:text-red-400 lg:h-8">
+                    <Trash2 className="h-4 w-4" />Delete
+                  </Button>
+                )}
                 <button type="button" onClick={() => setSelected(new Set())} className="hidden rounded-lg px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 lg:block">Clear</button>
               </div>
             </div>
