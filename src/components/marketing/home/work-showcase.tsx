@@ -66,7 +66,7 @@ export function WorkShowcase() {
         <div className="max-w-3xl">
           <h2 className="ak-display h-xl">Every pixel, built here.</h2>
           <p className="ak-lede mt-6 max-w-[54ch]">
-            Five client sites that are live today, and two builds we made so you can judge the work before you ever
+            Six client sites that are live today, and two builds we made so you can judge the work before you ever
             book a call. Pick one to scroll through it.
           </p>
         </div>

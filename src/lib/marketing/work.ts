@@ -77,6 +77,17 @@ export const WORK: Work[] = [
     host: "villageservers.org",
   },
   {
+    slug: "joe",
+    mobileH: 5400,
+    fullH: 5600,
+    name: "Joe The Cleaner",
+    kind: "client",
+    what: "House and office cleaning",
+    where: "Saint Albans",
+    url: "https://www.joethecleaner.net",
+    host: "joethecleaner.net",
+  },
+  {
     slug: "bbopenbox",
     mobileH: 4621,
     fullH: 2179,
