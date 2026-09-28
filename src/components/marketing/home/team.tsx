@@ -8,6 +8,9 @@ const TEAM: {
   initials: string;
   country: Country;
   tags: string[];
+  /** Direct line. The site's main number (SITE.phone) is Tei's. */
+  phone: string;
+  phoneHref: string;
 }[] = [
   {
     name: "Ashish Subedi",
@@ -16,6 +19,8 @@ const TEAM: {
     initials: "AS",
     country: "nepal",
     tags: ["Fullstack Dev", "UI/UX", "Product"],
+    phone: "(802) 310-3749",
+    phoneHref: "tel:+18023103749",
   },
   {
     name: "Teibiroa Ambo",
@@ -24,6 +29,8 @@ const TEAM: {
     initials: "TA",
     country: "kiribati",
     tags: ["Client Success", "Sales", "Relations", "Consultant"],
+    phone: "(802) 557-8828",
+    phoneHref: "tel:+18025578828",
   },
 ];
 
@@ -50,6 +57,9 @@ export function Team() {
               </div>
               <h3 className="ak-display mt-10 text-[2rem] leading-none">{p.name}</h3>
               <p className="mt-2 font-medium text-[var(--accent-text)]">{p.role}</p>
+              <a href={p.phoneHref} className="mt-3 inline-block text-sm tabular-nums text-[var(--fg-2)] hover:text-[var(--fg)]">
+                {p.phone}
+              </a>
               <p className="mt-6 max-w-[50ch] leading-relaxed text-[var(--fg-2)]">{p.bio}</p>
               <ul className="mt-7 flex flex-wrap gap-2">
                 {p.tags.map((t) => (

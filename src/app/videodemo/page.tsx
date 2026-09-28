@@ -161,7 +161,7 @@ export default function VideoDemoPage() {
                 Try the live agent
                 <ArrowUpRight aria-hidden="true" />
               </Link>
-              <a href="tel:+18023103749" className={styles.buttonGhost}>
+              <a href="tel:+18025578828" className={styles.buttonGhost}>
                 <PhoneCall aria-hidden="true" />
                 Book a 15-minute call
               </a>
@@ -309,7 +309,7 @@ export default function VideoDemoPage() {
         <h2>Your next job is already calling.</h2>
         <p className={styles.sectionBody}>Let&apos;s make sure someone answers.</p>
         <div className={styles.heroActions}>
-          <a href="tel:+18023103749" className={styles.buttonPrimary}>
+          <a href="tel:+18025578828" className={styles.buttonPrimary}>
             <PhoneCall aria-hidden="true" />
             Book a 15-minute call
           </a>

@@ -243,7 +243,7 @@ export function QualificationGate({
       forget();
       window.setTimeout(onQualified, 450);
     } catch {
-      setError("Network error. Try again, or call (802) 310-3749.");
+      setError("Network error. Try again, or call (802) 557-8828.");
       setStatus("error");
     }
   }

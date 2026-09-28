@@ -1,8 +1,8 @@
 /** Facts the whole site repeats. One place to change them. */
 export const SITE = {
   name: "ArkiTech Solutions",
-  phone: "(802) 310-3749",
-  phoneHref: "tel:+18023103749",
+  phone: "(802) 557-8828",
+  phoneHref: "tel:+18025578828",
   email: "hello@arkitech-sol.com",
   studio: "Burlington, Vermont",
   hours: "Mon-Fri, 8am-5pm",

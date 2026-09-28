@@ -229,7 +229,7 @@ export async function sendMissedCallReport(opts: {
 <p>These are your figures, not ours — change any of them and the shape holds. The point is that
 the loss doesn't arrive as a bill. It arrives as a slightly quieter month.</p>
 <p>If you want to talk about answering those calls, reply here or ring
-<strong>(802) 310-3749</strong>. Twenty minutes, no obligation, and we'll tell you if we're not the
+<strong>(802) 557-8828</strong>. Twenty minutes, no obligation, and we'll tell you if we're not the
 right fit.</p>
 <p>— Ashish, ArkiTech Solutions</p>
 `),

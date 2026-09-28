@@ -106,7 +106,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[Missed-call report]", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json(
-      { error: "Something went wrong on our end. Call (802) 310-3749 and we'll sort it out." },
+      { error: "Something went wrong on our end. Call (802) 557-8828 and we'll sort it out." },
       { status: 500 },
     );
   }

@@ -86,7 +86,7 @@ export function BookingForm({
       forget();
       onBooked();
     } catch {
-      setError("Network error. Try calling (802) 310-3749 instead.");
+      setError("Network error. Try calling (802) 557-8828 instead.");
       setStatus("error");
     }
   }
@@ -127,11 +127,11 @@ export function BookingForm({
                 your {form.bestTime.split(" ")[0].toLowerCase()} window. If you&apos;d rather not wait, call us now.
               </p>
               <a
-                href="tel:+18023103749"
+                href="tel:+18025578828"
                 className="mt-2 inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold text-white transition hover:brightness-110"
                 style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}
               >
-                <Phone className="h-4 w-4" /> (802) 310-3749
+                <Phone className="h-4 w-4" /> (802) 557-8828
               </a>
             </motion.div>
           ) : (
@@ -260,8 +260,8 @@ export function BookingForm({
 
                 <p className="pt-1 text-center text-xs text-white/30">
                   Or call us directly —{" "}
-                  <a href="tel:+18023103749" className="font-semibold text-white/60 underline-offset-4 hover:underline">
-                    (802) 310-3749
+                  <a href="tel:+18025578828" className="font-semibold text-white/60 underline-offset-4 hover:underline">
+                    (802) 557-8828
                   </a>
                 </p>
               </form>
