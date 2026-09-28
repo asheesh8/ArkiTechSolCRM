@@ -6,7 +6,7 @@ import { PricingBand } from "@/components/marketing/home/pricing-band";
 import { Studio } from "@/components/marketing/home/studio";
 import { Capabilities } from "@/components/marketing/home/capabilities";
 import { Team } from "@/components/marketing/home/team";
-import { ServiceMap } from "@/components/marketing/home/service-map";
+import { ServiceAreas } from "@/components/marketing/home/service-areas";
 import { Closing } from "@/components/marketing/site/closing";
 import { PageView } from "@/components/marketing/site/page-view";
 
@@ -25,7 +25,7 @@ export default function Home() {
       <Studio />
       <Capabilities />
       <Team />
-      <ServiceMap />
+      <ServiceAreas />
       <Closing />
     </>
   );

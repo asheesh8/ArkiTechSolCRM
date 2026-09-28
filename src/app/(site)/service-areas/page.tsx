@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/marketing/site/page-header";
-import { ServiceMap } from "@/components/marketing/home/service-map";
+import { ServiceAreas } from "@/components/marketing/home/service-areas";
 import { Closing } from "@/components/marketing/site/closing";
 import { Plate } from "@/components/marketing/art/plate";
 import { SITE } from "@/lib/marketing/site";
@@ -19,7 +19,7 @@ export default function ServiceAreasPage() {
         lede="Burlington and Essex are home. We work across the state and we'll take work anywhere in the US, but the towns below are the ones we actually know, and it shows in the work."
         plate="chart-burlington"
       />
-      <ServiceMap />
+      <ServiceAreas hubLink={false} />
       <section className="band section-tight">
         <div className="shell grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-center">
           <p className="max-w-[60ch] text-[1.1rem] leading-relaxed text-[var(--fg-2)]">
