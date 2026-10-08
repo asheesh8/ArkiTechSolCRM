@@ -6,7 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { readConsent, writeConsent, type ConsentValue } from "@/lib/consent";
 
 /**
- * Consent copy is unchanged from the live site; only the styling moved.
+ * The copy names Google as well as Meta: the Google tag runs on every public
+ * page in Consent Mode, cookieless until the visitor accepts.
  * Closing without choosing is a decline, never a silent grant.
  */
 export function CookieNotice() {
@@ -37,8 +38,8 @@ export function CookieNotice() {
         >
           <div className="border border-[var(--rule)] bg-[var(--bg)] p-4 text-[var(--fg)] shadow-[var(--shadow)] sm:p-5">
             <p className="text-[0.84rem] leading-relaxed text-[var(--fg-2)]">
-              We use cookies to run this site. With your permission we also measure how our advertising
-              performs, which sets cookies from Meta. See our{" "}
+              We use cookies to run this site, and Google Analytics counts visits without them. With your
+              permission we also measure how our advertising performs, which sets cookies from Google and Meta. See our{" "}
               <Link href="/legal/privacy" className="text-link text-[var(--fg)]">
                 Privacy Policy
               </Link>

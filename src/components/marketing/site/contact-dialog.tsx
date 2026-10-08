@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle, EnvelopeSimple, Phone, X } from "@phosphor-icons/react";
 import { Mark } from "@/components/marketing/brand/mark";
 import { useContact } from "@/components/marketing/site/contact-context";
+import { trackGoogleEvent } from "@/lib/google-tag";
 import { SITE } from "@/lib/marketing/site";
 
 type Status = "idle" | "sending" | "sent" | "error";
@@ -59,6 +60,7 @@ export function ContactDialog() {
         body: JSON.stringify({ name: `Project enquiry from ${name.trim()}`, email: email.trim(), message: message.trim() }),
       });
       setStatus(res.ok ? "sent" : "error");
+      if (res.ok) trackGoogleEvent("generate_lead", { lead_source: "site-contact-form" });
     } catch {
       setStatus("error");
     }

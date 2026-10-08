@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle, PhoneCall, X } from "@phosphor-icons/react";
 import { useContact } from "@/components/marketing/site/contact-context";
 import { CALLBACK_CONSENT_TEXT } from "@/lib/callback-consent";
+import { trackGoogleEvent } from "@/lib/google-tag";
 import { checkPhone } from "@/lib/phone";
 
 type Status = "idle" | "sending" | "sent" | "error";
@@ -55,6 +56,7 @@ export function CallbackWidget() {
         return;
       }
       setStatus("sent");
+      trackGoogleEvent("generate_lead", { lead_source: "site-callback-request" });
     } catch {
       setError("We couldn't reach the server just now. Try again in a moment.");
       setStatus("error");

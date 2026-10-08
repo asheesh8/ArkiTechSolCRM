@@ -1,4 +1,5 @@
 import { Libre_Caslon_Display, Libre_Caslon_Text, Schibsted_Grotesk, DM_Mono } from "next/font/google";
+import { GoogleTag } from "@/components/marketing/google-tag";
 import { SiteChrome } from "@/components/marketing/site/site-chrome";
 import "./site.css";
 
@@ -24,12 +25,13 @@ const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem("ark-theme");if
 
 /**
  * Everything public renders inside this: the site's fonts and stylesheet, the
- * theme, and the shared chrome. The CRM's own pages never load any of it.
+ * theme, the Google tag, and the shared chrome. The CRM's own pages never load any of it.
  */
 export function SiteFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className={`ark ${caslonDisplay.variable} ${caslonText.variable} ${schibsted.variable} ${dmMono.variable}`}>
       <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      <GoogleTag />
       <SiteChrome>{children}</SiteChrome>
     </div>
   );

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <article>
-      <DocHeader title="Privacy Policy" updated="August 17, 2026" active="privacy" />
+      <DocHeader title="Privacy Policy" updated="October 8, 2026" active="privacy" />
 
       <P>
         This Privacy Policy explains how ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects,
@@ -94,6 +94,14 @@ export default function PrivacyPolicyPage() {
         <P>
           If we use analytics or advertising tools, those providers may set their own cookies or similar technologies. Your choices may also be available
           through those third-party providers or applicable industry opt-out tools.
+        </P>
+        <P>
+          We use Google Analytics and Google Ads to understand how visitors use the website and how our advertising performs. Until you accept cookies, the
+          Google tag runs in Google&rsquo;s consent mode: it sets no cookies and sends Google only limited, cookieless signals about your visit, such as the
+          page viewed. If you accept, Google may set cookies to measure visits and ad conversions. You can read{" "}
+          <InlineLink href="https://policies.google.com/technologies/partner-sites">how Google uses information from sites that use its services</InlineLink>{" "}
+          and opt out of Google Analytics with the{" "}
+          <InlineLink href="https://tools.google.com/dlpage/gaoptout">Google Analytics opt-out browser add-on</InlineLink>.
         </P>
       </Section>
 

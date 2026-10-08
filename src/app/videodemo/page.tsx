@@ -8,6 +8,7 @@ import {
   MessageCircleQuestion,
   PhoneCall,
 } from "lucide-react";
+import { GoogleTag } from "@/components/marketing/google-tag";
 import { FILM_POSTER } from "@/components/videodemo/film";
 import { FilmProvider } from "@/components/videodemo/film-provider";
 import { FilmStage } from "@/components/videodemo/film-stage";
@@ -100,6 +101,7 @@ const capabilities = [
 export default function VideoDemoPage() {
   return (
     <main className={styles.page}>
+      <GoogleTag />
       {/* The film's poster is set through the `poster` attribute, which next/image
           can't prioritise — preloading it keeps the hero's real subject ahead of
           the decoration. React hoists this into <head>. */}

@@ -44,8 +44,9 @@ export function CookieNotice() {
                 <Cookie className="h-4 w-4 text-[#b3a7ff]" aria-hidden="true" />
               </span>
               <p className="text-[0.72rem] leading-[1.5] text-[rgba(236,233,227,0.55)] sm:text-[0.8rem] sm:leading-6">
-                We use cookies to run this site. With your permission we also measure how our
-                advertising performs, which sets cookies from Meta. See our{" "}
+                We use cookies to run this site, and Google Analytics counts visits without them. With
+                your permission we also measure how our advertising performs, which sets cookies from
+                Google and Meta. See our{" "}
                 <Link href="/legal/privacy" className="text-[#b3a7ff] underline underline-offset-4 transition hover:text-[#ece9e3]">
                   Privacy Policy
                 </Link>.

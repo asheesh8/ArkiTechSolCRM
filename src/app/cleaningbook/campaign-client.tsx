@@ -11,7 +11,9 @@ import { MissedCallMath } from "@/components/adcampaign/missed-call-math";
 import { Founder, HowItWorks, Objections } from "@/components/adcampaign/sections";
 import { StickyCta } from "@/components/adcampaign/sticky-cta";
 import { CookieNotice } from "@/components/landing/cookie-notice";
+import { GoogleTag } from "@/components/marketing/google-tag";
 import { attributionPath, captureAttribution, type CampaignAttribution } from "@/lib/campaign";
+import { trackGoogleEvent } from "@/lib/google-tag";
 import { trackMetaCustomEvent, trackMetaEvent } from "@/lib/meta-pixel";
 import { QualificationGate } from "./qualification-gate";
 
@@ -62,6 +64,7 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
       content_name: "cleaningbook-voice-demo",
       content_category: META_CONTENT_CATEGORY,
     });
+    trackGoogleEvent("voice_demo_start", { content_name: "cleaningbook-voice-demo" });
   }, []);
 
   const handleBooked = useCallback(() => {
@@ -72,6 +75,7 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
       currency: "USD",
     });
     trackMetaEvent("Schedule", { content_name: "cleaningbook-callback-request" });
+    trackGoogleEvent("generate_lead", { lead_source: "cleaningbook-callback-request", value: 0, currency: "USD" });
   }, []);
 
   const handleQualified = useCallback(() => {
@@ -85,6 +89,7 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
       content_name: "cleaningbook-intake-gate",
       content_category: META_CONTENT_CATEGORY,
     });
+    trackGoogleEvent("generate_lead", { lead_source: "cleaningbook-qualification-form", value: 0, currency: "USD" });
     setGateOpen(false);
   }, []);
 
@@ -92,6 +97,7 @@ export function CampaignClient({ agent }: { agent: CampaignAgent }) {
     <main className="relative min-h-screen overflow-x-hidden text-white">
       <AmbientBackground />
       <MetaPixel pageEvent={CLEANINGBOOK_PAGE_EVENT} />
+      <GoogleTag />
 
       <div
         aria-hidden={gateOpen}

@@ -9,15 +9,16 @@ export type ConsentValue = "granted" | "denied";
 
 // A new key on purpose. Everyone who dismissed the old notice was answering a
 // different question — one with no tracker behind it — so that dismissal can't
-// be replayed as permission.
-const STORAGE_KEY = "arkitech-cookie-consent";
+// be replayed as permission. Exported for the Google tag's inline bootstrap,
+// which reads it outside React — see `src/lib/google-tag.ts`.
+export const CONSENT_STORAGE_KEY = "arkitech-cookie-consent";
 
 /** Fired on the window whenever the answer changes, so listeners react in the same tab. */
 export const CONSENT_EVENT = "arkitech:consent";
 
 export function readConsent(): ConsentValue | null {
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = window.localStorage.getItem(CONSENT_STORAGE_KEY);
     return stored === "granted" || stored === "denied" ? stored : null;
   } catch {
     // Private-mode Safari and hardened settings throw on access. No stored
@@ -28,7 +29,7 @@ export function readConsent(): ConsentValue | null {
 
 export function writeConsent(value: ConsentValue) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, value);
+    window.localStorage.setItem(CONSENT_STORAGE_KEY, value);
   } catch {
     // Nothing to persist to — the choice still holds for this page view, and
     // the banner returns on the next visit.
