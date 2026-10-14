@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, LogOut, MessageSquarePlus } from "lucide-react";
+import { SITE } from "@/lib/marketing/site";
 
 type Props = {
   client: { name: string; businessName: string; email: string };
@@ -70,7 +71,7 @@ export default function PortalShell({ client, children }: Props) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
 
       <footer className="border-t border-zinc-200 py-4 text-center text-xs text-zinc-400">
-        ArkiTech Solutions Client Portal · <a href="mailto:hello@arkitechsol.com" className="hover:underline">hello@arkitechsol.com</a>
+        ArkiTech Solutions Client Portal · <a href={`mailto:${SITE.email}`} className="hover:underline">{SITE.email}</a>
       </footer>
     </div>
   );

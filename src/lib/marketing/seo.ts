@@ -66,6 +66,7 @@ export function organizationJsonLd() {
     "@type": "ProfessionalService",
     "@id": ORG_ID,
     name: SITE.name,
+    legalName: SITE.legalName,
     url: SITE_URL,
     logo: `${SITE_URL}/icon.png`,
     image: `${SITE_URL}${DEFAULT_IMAGE}`,

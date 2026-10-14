@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SITE } from "@/lib/marketing/site";
 
 const requestSchema = z.object({
   message: z.string().trim().min(1).max(1_500),
@@ -22,7 +23,7 @@ const COMPANY_CONTEXT = `
 ArkiTech Solutions is a Burlington, Vermont digital product studio serving growing teams and established organizations.
 Services: corporate and campaign websites, customer portals, ecommerce and web apps, custom CRM platforms, workflow automation, internal dashboards, SEO and conversion strategy, analytics, performance/accessibility/UX improvements, enterprise technical discovery and architecture, maintenance, product iteration, and ongoing technical guidance.
 ArkiTech does not publish starting prices. Project scope, timing, and investment are discussed with the team after discovery.
-Contact: (802) 557-8828 or hello@arkitech-sol.com. Call hours are Monday-Friday, 9am-6pm Eastern.
+Contact: ${SITE.phone} or ${SITE.email}. Call hours are ${SITE.hours} Eastern.
 `;
 
 function json(body: Record<string, unknown>, status = 200, extraHeaders?: HeadersInit) {

@@ -1,4 +1,4 @@
-import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, Section, Subhead } from "@/components/marketing/legal/prose";
+import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, StudioEmail, Section, Subhead } from "@/components/marketing/legal/prose";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
@@ -11,17 +11,17 @@ export const metadata = pageMetadata({
 export default function PrivacyPolicyPage() {
   return (
     <article>
-      <DocHeader title="Privacy Policy" updated="October 8, 2026" active="privacy" />
+      <DocHeader title="Privacy Policy" updated="October 14, 2026" active="privacy" />
 
       <P>
-        This Privacy Policy explains how ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects,
+        This Privacy Policy explains how ArkiTech Solutions LLC, operating as ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects,
         uses, discloses, and protects personal information when you visit{" "}
         <InlineLink href="https://arkitech-sol.com/">https://arkitech-sol.com/</InlineLink>, contact us, submit a project inquiry, request information, or
         otherwise interact with us online or in connection with our business.
       </P>
       <P>
         ArkiTech is a Burlington, Vermont digital product studio. You can contact us at{" "}
-        <InlineLink href="mailto:hello@arkitech-sol.com">hello@arkitech-sol.com</InlineLink>.
+        <StudioEmail />.
       </P>
       <P>
         This Privacy Policy applies to our website and general business communications. A separate client agreement, statement of work, data processing
@@ -66,6 +66,12 @@ export default function PrivacyPolicyPage() {
           We may receive information from third-party services we use to operate our business, such as hosting providers, analytics providers, email
           systems, CRM tools, scheduling tools, payment processors, advertising platforms, security tools, or public business sources.
         </P>
+
+        <Subhead>Information from ArkiTech team members</Subhead>
+        <P>
+          ArkiTech team members who use Command Center, our internal workspace, may give us a mobile number to receive internal text notifications. We use
+          that number only to send the notifications they opted in to, as described below.
+        </P>
       </Section>
 
       <Section id="use" title="2. How We Use Personal Information">
@@ -76,6 +82,10 @@ export default function PrivacyPolicyPage() {
           <Bullet>Evaluate project fit, prepare proposals, schedule calls, and manage business opportunities.</Bullet>
           <Bullet>Provide services to clients and administer client relationships.</Bullet>
           <Bullet>Send service-related messages, administrative notices, invoices, and project communications.</Bullet>
+          <Bullet>
+            Send internal new-lead notifications, company announcements, and system alerts by text to ArkiTech team members who opted in to them in
+            Command Center.
+          </Bullet>
           <Bullet>Send marketing or business updates where permitted by law.</Bullet>
           <Bullet>Analyze website traffic, performance, and user interaction.</Bullet>
           <Bullet>Protect against fraud, abuse, security incidents, and misuse of the website.</Bullet>
@@ -138,11 +148,19 @@ export default function PrivacyPolicyPage() {
         <P>
           ArkiTech may use text messaging (SMS) to reply to inquiries, confirm appointments and calls, and share updates on active work. You consent to
           receive those messages by giving us your mobile number and agreeing to be contacted - on a booking or inquiry form, during onboarding, or in
-          writing. Message frequency varies with your activity, message and data rates may apply, and you can stop at any time by replying STOP. Our{" "}
-          <InlineLink href="/legal/sms">SMS Terms</InlineLink> cover this in full.
+          writing. Message frequency varies with your activity, message and data rates may apply, and you can stop at any time by replying STOP.
         </P>
         <P>
-          Mobile numbers are used only to provide the services you asked for. We share them with the vendor that delivers the messages - our telephony
+          Internal team notifications (Command Center). ArkiTech team members may opt in to SMS notifications in Command Center under Settings &rarr; Text
+          notifications. Messages include internal new-lead notifications, company announcements and system alerts. New-lead notification frequency varies
+          as leads arrive; company announcements and system alerts total no more than 3 messages per week. Enrollment is optional and not required to use
+          Command Center. Reply STOP to opt out or HELP for help. Message and data rates may apply.
+        </P>
+        <P>
+          Our <InlineLink href="/legal/sms">SMS Terms</InlineLink> cover both programs in full.
+        </P>
+        <P>
+          Mobile numbers are used only to send the messages described above. We share them with the vendor that delivers the messages - our telephony
           provider, Twilio - solely so a message reaches you, and with nobody else.
         </P>
         <P>
@@ -192,12 +210,12 @@ export default function PrivacyPolicyPage() {
           <Bullet>Appeal a decision we make about a privacy request, where required by law.</Bullet>
         </Bullets>
         <P>
-          To make a privacy request, contact us at <InlineLink href="mailto:hello@arkitech-sol.com">hello@arkitech-sol.com</InlineLink>. We may need to
+          To make a privacy request, contact us at <StudioEmail />. We may need to
           verify your identity before processing your request. We will respond as required by applicable law.
         </P>
         <P>
           You may unsubscribe from non-essential marketing emails by using the unsubscribe link in the email, if available, or by contacting us at{" "}
-          <InlineLink href="mailto:hello@arkitech-sol.com">hello@arkitech-sol.com</InlineLink>. We may still send non-marketing messages, such as responses
+          <StudioEmail />. We may still send non-marketing messages, such as responses
           to inquiries, project communications, invoices, legal notices, and administrative updates.
         </P>
       </Section>
@@ -220,7 +238,7 @@ export default function PrivacyPolicyPage() {
         </P>
         <P>
           If you believe a child has provided personal information to us, contact us at{" "}
-          <InlineLink href="mailto:hello@arkitech-sol.com">hello@arkitech-sol.com</InlineLink> and we will take appropriate steps to delete it.
+          <StudioEmail /> and we will take appropriate steps to delete it.
         </P>
       </Section>
 

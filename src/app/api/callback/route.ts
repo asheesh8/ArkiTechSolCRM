@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { CALLBACK_CONSENT_TEXT } from "@/lib/callback-consent";
+import { sendCallbackRequest } from "@/lib/email";
 import { checkPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 
@@ -99,6 +100,13 @@ export async function POST(request: Request) {
       { error: "Something went wrong on our end. Call (802) 557-8828 and we'll sort it out." },
       { status: 500 },
     );
+  }
+
+  // The lead is saved; a failed heads-up to the inbox isn't the caller's problem.
+  try {
+    await sendCallbackRequest({ name: data.name, phone: phone.national ?? data.phone, message: data.message });
+  } catch (error) {
+    console.error("[Callback request] notification failed:", error instanceof Error ? error.message : "unknown error");
   }
 
   return NextResponse.json({ ok: true });

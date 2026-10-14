@@ -1,4 +1,4 @@
-import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, Section } from "@/components/marketing/legal/prose";
+import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, StudioEmail, Section } from "@/components/marketing/legal/prose";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
@@ -11,7 +11,7 @@ export const metadata = pageMetadata({
 export default function TermsOfServicePage() {
   return (
     <article>
-      <DocHeader title="Terms of Service" updated="August 1, 2026" active="terms" />
+      <DocHeader title="Terms of Service" updated="October 14, 2026" active="terms" />
 
       <P>
         These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of the ArkiTech Solutions website located at{" "}
@@ -19,9 +19,9 @@ export default function TermsOfServicePage() {
         make available through the website (collectively, the &ldquo;Site&rdquo;).
       </P>
       <P>
-        The Site is operated by ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), a digital product
+        The Site is operated by ArkiTech Solutions LLC, operating as ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), a digital product
         studio based in Burlington, Vermont. You can contact us at{" "}
-        <InlineLink href="mailto:hello@arkitech-sol.com">hello@arkitech-sol.com</InlineLink>.
+        <StudioEmail />.
       </P>
       <P>
         These Terms apply to use of the Site. Paid client services, project work, retainers, statements of work, proposals, invoices, and other business
@@ -152,7 +152,7 @@ export default function TermsOfServicePage() {
         </P>
         <P>
           You may opt out of non-essential marketing communications by following the unsubscribe instructions in the message, if provided, or by contacting
-          us at <InlineLink href="mailto:hello@arkitech-sol.com">hello@arkitech-sol.com</InlineLink>.
+          us at <StudioEmail />.
         </P>
       </Section>
 

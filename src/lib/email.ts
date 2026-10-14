@@ -1,9 +1,13 @@
 import { Resend } from "resend";
+import { SITE } from "@/lib/marketing/site";
 
 const ENABLED = !!process.env.RESEND_API_KEY;
 const resend = new Resend(process.env.RESEND_API_KEY ?? "re_placeholder");
 
-const rawFrom = process.env.RESEND_FROM ?? "onboarding@resend.dev";
+// studio@ is the one address for everything: it sends, it receives the replies,
+// and it is where every enquiry lands. RESEND_FROM only overrides the sender.
+const STUDIO_INBOX = SITE.email;
+const rawFrom = process.env.RESEND_FROM ?? STUDIO_INBOX;
 const FROM = rawFrom.includes("@") && !rawFrom.includes("<")
   ? `ArkiTech Solutions <${rawFrom}>`
   : rawFrom;
@@ -13,13 +17,15 @@ async function send(payload: Parameters<typeof resend.emails.send>[0]) {
     console.log("[email stub] would send:", payload.subject, "→", payload.to);
     return { data: null, error: null };
   }
-  return resend.emails.send(payload);
+  // A client replying to an invoice or an agreement reaches the studio inbox,
+  // whichever address the mail went out from.
+  return resend.emails.send({ ...payload, replyTo: payload.replyTo ?? STUDIO_INBOX });
 }
 
 export async function sendContactEmail(opts: { fromEmail: string; subject: string; message: string }) {
   return send({
     from: FROM,
-    to: "subediashish31@gmail.com",
+    to: STUDIO_INBOX,
     replyTo: opts.fromEmail,
     subject: `[ArkiTech] ${opts.subject}`,
     html: base(`
@@ -29,6 +35,62 @@ export async function sendContactEmail(opts: { fromEmail: string; subject: strin
   <p style="margin-top:8px"><strong>Subject:</strong> ${opts.subject}</p>
 </div>
 <p style="white-space:pre-wrap">${opts.message.replace(/</g, "&lt;")}</p>
+`),
+  });
+}
+
+function esc(value: string) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/** "Book a free call": the questionnaire answers, to the studio inbox. */
+export async function sendBookingRequest(opts: {
+  name: string;
+  email: string;
+  phone?: string;
+  business?: string;
+  services: string[];
+  timeline: string;
+  budget: string;
+  message?: string;
+}) {
+  const rows: Array<[string, string | undefined]> = [
+    ["Looking for", opts.services.join(", ")],
+    ["Timeline", opts.timeline],
+    ["Budget", opts.budget],
+    ["Business", opts.business],
+    ["Email", opts.email],
+    ["Phone", opts.phone],
+  ];
+  return send({
+    from: FROM,
+    to: STUDIO_INBOX,
+    replyTo: opts.email,
+    subject: `[ArkiTech] Free call: ${opts.name} (${opts.services.join(", ")}, ${opts.timeline.toLowerCase()})`,
+    html: base(`
+<h1>Free call request</h1>
+<p>${esc(opts.name)} answered the booking questions on the site. If a calendar invite follows, it comes from the booking page; reply here to reach them directly.</p>
+<div class="info">
+${rows.filter(([, v]) => v).map(([k, v], i) => `  <p${i ? ' style="margin-top:8px"' : ""}><strong>${k}:</strong> ${esc(v!)}</p>`).join("\n")}
+</div>
+${opts.message ? `<p style="white-space:pre-wrap">${esc(opts.message)}</p>` : ""}
+`),
+  });
+}
+
+/** The "Get a callback" widget. No email address, so replies can't go to them. */
+export async function sendCallbackRequest(opts: { name: string; phone: string; message?: string }) {
+  return send({
+    from: FROM,
+    to: STUDIO_INBOX,
+    subject: `[ArkiTech] Callback: ${opts.name}, ${opts.phone}`,
+    html: base(`
+<h1>Callback request</h1>
+<p>${esc(opts.name)} asked to be called back. It is in the CRM as a priority lead.</p>
+<div class="info">
+  <p><strong>Phone:</strong> ${esc(opts.phone)}</p>
+</div>
+${opts.message ? `<p style="white-space:pre-wrap">${esc(opts.message)}</p>` : ""}
 `),
   });
 }
@@ -150,15 +212,15 @@ ${opts.correction ? `<div class="info" style="border-left:3px solid #f59e0b;back
 `);
 }
 
-function portalWelcomeHtml(opts: { name: string; businessName: string; setupUrl: string }) {
+function portalWelcomeHtml(opts: { to: string; name: string; businessName: string; setupUrl: string }) {
   return base(`
 <h1>Welcome to your client portal 🎉</h1>
 <p>Hi ${opts.name},</p>
 <p>Your agreement for <strong>${opts.businessName}</strong> is signed and we're ready to get to work. Click below to create your password and access your portal — you'll be able to track your project, submit requests, and pay invoices all in one place.</p>
 <a class="btn" href="${opts.setupUrl}">Create my password →</a>
 <div class="info">
-  <p><strong>Your portal:</strong> arkitechsol.com/login</p>
-  <p style="margin-top:8px"><strong>Email:</strong> ${opts.name}</p>
+  <p><strong>Your portal:</strong> arkitech-sol.com/portal/login</p>
+  <p style="margin-top:8px"><strong>Email:</strong> ${opts.to}</p>
 </div>
 <p style="font-size:13px;color:#a1a1aa">This setup link expires in 72 hours. If you have trouble, just reply to this email.</p>
 `);

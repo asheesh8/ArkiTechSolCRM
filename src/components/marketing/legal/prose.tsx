@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE } from "@/lib/marketing/site";
 
 /**
  * Building blocks for the legal pages. Same API as the CRM repo's version so
@@ -78,12 +79,12 @@ export function Callout({ children }: { children: React.ReactNode }) {
 export function ContactBlock() {
   return (
     <address className="mt-6 not-italic text-[1rem] leading-[1.75] text-[var(--fg-2)]">
-      ArkiTech Solutions
+      {SITE.legalName}
       <br />
       Burlington, Vermont
       <br />
-      <a href="mailto:hello@arkitech-sol.com" className="text-link text-[var(--fg)]">
-        hello@arkitech-sol.com
+      <a href={`mailto:${SITE.email}`} className="text-link text-[var(--fg)]">
+        {SITE.email}
       </a>
     </address>
   );
@@ -104,4 +105,9 @@ export function InlineLink({ href, children }: { href: string; children: React.R
       {children}
     </Link>
   );
+}
+
+/** The studio inbox, linked. Every legal page names it, so it comes from SITE. */
+export function StudioEmail() {
+  return <InlineLink href={`mailto:${SITE.email}`}>{SITE.email}</InlineLink>;
 }
