@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
 import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, Section } from "@/components/marketing/legal/prose";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Terms of Service | ArkiTech Solutions",
-  description: "The terms that govern your access to and use of the ArkiTech Solutions website.",
-};
+  description:
+    "The terms that govern your access to and use of the ArkiTech Solutions website.",
+  path: "/legal/terms",
+});
 
 export default function TermsOfServicePage() {
   return (

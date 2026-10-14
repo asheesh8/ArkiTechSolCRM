@@ -12,6 +12,9 @@ import { SERVICE_PLATE } from "@/lib/marketing/art";
 import { getServiceArea, SERVICE_AREAS } from "@/lib/service-areas";
 import { services } from "@/lib/services-content";
 import { SPEED_FLOOR } from "@/lib/pagespeed-audit";
+import { WORK } from "@/lib/marketing/work";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
+import { breadcrumbJsonLd, pageMetadata, serviceJsonLd } from "@/lib/marketing/seo";
 
 export function generateStaticParams() {
   return SERVICE_AREAS.map((a) => ({ slug: a.slug }));
@@ -21,10 +24,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const area = getServiceArea(slug);
   if (!area) return {};
-  return {
-    title: `${area.town} Website Design & Local SEO | ArkiTech Solutions`,
-    description: `${area.headline}. Hand-coded sites, AI reception, and local SEO for ${area.town}, Vermont businesses, built in Burlington by people who live here.`,
-  };
+  return pageMetadata({
+    title: `${area.town} Website Design & Local SEO | ArkiTech`,
+    description: `${area.headline}. Hand-coded sites, AI receptionists and local SEO for ${area.town} businesses, built by two people who live nearby.`,
+    path: `/service-areas/${area.slug}`,
+  });
 }
 
 const TEAM_FACTS: [string, string][] = [
@@ -39,9 +43,24 @@ export default async function ServiceAreaPage({ params }: { params: Promise<{ sl
   const area = getServiceArea(slug);
   if (!area) notFound();
   const others = SERVICE_AREAS.filter((a) => a.slug !== area.slug);
+  // Client work, this town's first. Real sites only; demos are never shown as
+  // local proof.
+  const clients = WORK.filter((w) => w.kind === "client" && w.where).sort(
+    (a, b) => Number(b.where === area.town) - Number(a.where === area.town),
+  );
+  const path = `/service-areas/${area.slug}`;
 
   return (
     <>
+      <JsonLd
+        data={[
+          serviceJsonLd({ name: area.headline, description: area.intro[0], path, area: area.town }),
+          breadcrumbJsonLd([
+            { name: "Service areas", path: "/service-areas" },
+            { name: area.town, path },
+          ]),
+        ]}
+      />
       <PageHeader
         back={{ href: "/service-areas", label: "All service areas" }}
         title={area.headline}
@@ -93,11 +112,9 @@ export default async function ServiceAreaPage({ params }: { params: Promise<{ sl
           <h2 className="ak-display h-lg max-w-[18ch]">The local version of the problem.</h2>
           <dl className="mt-12 grid gap-x-10 gap-y-10 md:grid-cols-3">
             {area.local.map((item, i) => (
-              <Reveal key={item.term} delay={i * 80}>
-                <div className="border-t border-[var(--rule-strong)] pt-5">
-                  <dt className="ak-display text-[1.5rem] leading-tight">{item.term}</dt>
-                  <dd className="mt-3 leading-relaxed text-[var(--fg-2)]">{item.detail}</dd>
-                </div>
+              <Reveal key={item.term} delay={i * 80} className="border-t border-[var(--rule-strong)] pt-5">
+                <dt className="ak-display text-[1.5rem] leading-tight">{item.term}</dt>
+                <dd className="mt-3 leading-relaxed text-[var(--fg-2)]">{item.detail}</dd>
               </Reveal>
             ))}
           </dl>
@@ -142,6 +159,23 @@ export default async function ServiceAreaPage({ params }: { params: Promise<{ sl
                 </li>
               ))}
             </ul>
+            <h2 className="mt-12 text-sm text-[var(--dim)]">Sites we built for Vermont businesses</h2>
+            <ul className="mt-4 border-t border-[var(--rule)]">
+              {clients.map((w) => (
+                <li key={w.slug} className="border-b border-[var(--rule)]">
+                  <a href={w.url} target="_blank" rel="noopener noreferrer" className="group flex items-baseline justify-between gap-5 py-3.5">
+                    <span>
+                      <span className="font-medium group-hover:text-[var(--accent-text)]">{w.name}</span>
+                      <span className="text-[var(--dim)]"> · {w.what}</span>
+                    </span>
+                    <span className="shrink-0 text-sm text-[var(--dim)]">{w.where}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <Link href="/work" className="ak-arrow-link mt-5">
+              See all the work <span aria-hidden="true">→</span>
+            </Link>
             <h2 className="mt-12 text-sm text-[var(--dim)]">Nearby</h2>
             <ul className="mt-4 flex flex-wrap gap-2">
               {others.map((o) => (

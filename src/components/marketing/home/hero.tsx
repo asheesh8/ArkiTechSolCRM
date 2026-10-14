@@ -32,7 +32,26 @@ export function Hero() {
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
     if (conn?.saveData || (conn?.effectiveType && /^(slow-)?2g$/.test(conn.effectiveType))) return;
     const wide = window.matchMedia("(min-width: 1024px)").matches;
-    setSrc(wide ? "/media/burlington-dusk-1080.mp4" : "/media/burlington-dusk-720.mp4");
+    const start = () => setSrc(wide ? "/media/burlington-dusk-1080.mp4" : "/media/burlington-dusk-720.mp4");
+
+    // Wait for the page to finish loading and the browser to go idle, so the
+    // clip never competes with first paint. The poster is its first frame, so
+    // nothing visibly changes when the video takes over.
+    // Safari has no requestIdleCallback; a short timeout after load stands in.
+    const hasIdle = typeof window.requestIdleCallback === "function";
+    let idle: number | undefined;
+    const schedule = () => {
+      idle = hasIdle ? window.requestIdleCallback(start, { timeout: 2000 }) : window.setTimeout(start, 200);
+    };
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+
+    return () => {
+      window.removeEventListener("load", schedule);
+      if (idle === undefined) return;
+      if (hasIdle) window.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+    };
   }, [reduce]);
 
   useEffect(() => {
@@ -90,7 +109,15 @@ export function Hero() {
       >
         <Mark draw className="h-14 w-14 text-[var(--bone)] sm:h-16 sm:w-16" />
 
-        <h1 className="ak-display h-hero mt-9 max-w-[14ch]">
+        {/* The H1 says what search needs to read; the display line below
+            keeps the voice. */}
+        <h1 className="meta mt-8 uppercase tracking-[0.18em]" style={{ color: "rgba(237,233,224,0.72)" }}>
+          Website design &amp; AI receptionists
+          <span className="hidden sm:inline"> · </span>
+          <span className="block sm:inline">Burlington, Vermont</span>
+        </h1>
+
+        <p className="ak-display h-hero mt-5 max-w-[14ch]">
           <span className="block">We build</span>
           <span className="relative block h-[1.08em] overflow-hidden" aria-live="off">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -107,7 +134,7 @@ export function Hero() {
               </motion.em>
             </AnimatePresence>
           </span>
-        </h1>
+        </p>
 
         <p className="ak-lede mx-auto mt-7 max-w-[40ch]" style={{ color: "rgba(237,233,224,0.86)" }}>
           A Vermont studio designing and engineering the websites, platforms, and internal systems

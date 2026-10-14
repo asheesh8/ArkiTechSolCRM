@@ -7,6 +7,11 @@ import { ContactButton } from "@/components/marketing/site/contact-context";
 import { Closing } from "@/components/marketing/site/closing";
 import { PLATES, SERVICE_PLATE } from "@/lib/marketing/art";
 import { getPost, services } from "@/lib/services-content";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
+import { AUTHOR, breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketing/seo";
+
+const longDate = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 export function generateStaticParams() {
   return services.map((s) => ({ slug: s.post.slug }));
@@ -16,7 +21,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const found = getPost(slug);
   if (!found) return {};
-  return { title: `${found.post.title} | ArkiTech Solutions`, description: found.post.excerpt };
+  return pageMetadata({
+    title: `${found.post.title} | ArkiTech`,
+    description: found.post.description,
+    path: `/blog/${found.post.slug}`,
+    type: "article",
+  });
 }
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -25,20 +35,30 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   if (!found) notFound();
   const { service, post } = found;
   const plate = SERVICE_PLATE[service.slug];
-  const others = services.filter((s) => s.post.slug !== post.slug).slice(0, 3);
+  const others = services.filter((s) => s.post.slug !== post.slug);
 
-  const jsonLd = {
+  const path = `/blog/${post.slug}`;
+  const article = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
-    description: post.excerpt,
-    author: { "@type": "Organization", name: "ArkiTech Solutions" },
-    publisher: { "@type": "Organization", name: "ArkiTech Solutions" },
+    description: post.description,
+    datePublished: post.published,
+    dateModified: post.updated,
+    author: AUTHOR,
+    publisher: { "@id": ORG_ID },
+    image: `${SITE_URL}/media/burlington-night.jpg`,
+    mainEntityOfPage: `${SITE_URL}${path}`,
+    about: { "@type": "Service", name: service.name, url: `${SITE_URL}/services/${service.slug}` },
   };
+  const crumbs = breadcrumbJsonLd([
+    { name: "Blog", path: "/blog" },
+    { name: post.title, path },
+  ]);
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={[article, crumbs]} />
       <article className="band pb-20 pt-[calc(var(--nav-h)+3.5rem)] sm:pt-[calc(var(--nav-h)+5rem)]">
         <div className="shell max-w-[46rem]">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-[var(--dim)] hover:text-[var(--fg)]">
@@ -49,6 +69,19 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </p>
           <h1 className="ak-display h-xl mt-3">{post.title}</h1>
           <p className="ak-lede mt-6">{post.excerpt}</p>
+          <p className="mt-6 text-sm text-[var(--dim)]">
+            By{" "}
+            <Link href="/about" className="text-link text-[var(--fg-2)]">
+              Ashish Subedi
+            </Link>
+            , who builds every ArkiTech site · <time dateTime={post.published}>{longDate(post.published)}</time>
+            {post.updated !== post.published ? (
+              <>
+                {" "}
+                · Updated <time dateTime={post.updated}>{longDate(post.updated)}</time>
+              </>
+            ) : null}
+          </p>
         </div>
 
         <figure className="shell mt-12 max-w-[60rem]">

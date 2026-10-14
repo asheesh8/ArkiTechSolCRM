@@ -15,6 +15,8 @@ import { SERVICE_PLATE } from "@/lib/marketing/art";
 import { GROUPS, loadPlans } from "@/lib/marketing/plans";
 import { plansIn, startingPrice, type GroupKey } from "@/lib/marketing/plan-display";
 import { getService, services } from "@/lib/services-content";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
+import { breadcrumbJsonLd, pageMetadata, serviceJsonLd } from "@/lib/marketing/seo";
 
 /** Which pricing group each service's plans live in. */
 const SERVICE_GROUP: Record<string, GroupKey> = {
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const s = getService(slug);
   if (!s) return {};
-  return { title: `${s.name} | ArkiTech Solutions`, description: s.summary };
+  return pageMetadata({ title: s.seo.title, description: s.seo.description, path: `/services/${s.slug}` });
 }
 
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -52,10 +54,27 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
   const plans = plansIn(plansAll, group);
   const others = services.filter((s) => s.slug !== service.slug);
 
+  const path = `/services/${service.slug}`;
+
   return (
     <>
+      <JsonLd
+        data={[
+          serviceJsonLd({
+            name: service.name,
+            description: service.summary,
+            path,
+            price: price.amount ? `${price.lead} ${price.amount} ${price.tail ?? ""}`.trim() : undefined,
+          }),
+          breadcrumbJsonLd([
+            { name: "Services", path: "/services" },
+            { name: service.name, path },
+          ]),
+        ]}
+      />
       <PageHeader
         back={{ href: "/services", label: "All services" }}
+        kicker={service.seo.h1}
         title={service.name}
         lede={
           <>
@@ -76,6 +95,11 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           ) : null}
           <span aria-hidden="true"> →</span>
         </Link>
+        {service.slug === "ai-receptionist" ? (
+          <Link href="/videodemo" className="text-sm text-[var(--dim)] hover:text-[var(--fg)]">
+            Watch the 30-second film <span aria-hidden="true">→</span>
+          </Link>
+        ) : null}
       </PageHeader>
 
       <section className="band pb-20 sm:pb-28">

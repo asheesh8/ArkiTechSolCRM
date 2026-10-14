@@ -1,7 +1,9 @@
 /**
  * Public-domain plates, each the nineteenth-century ancestor of the thing a
  * service builds. Cut to masks by research/scripts/cut-art.py; sources and
- * licences in research/sources/CREDITS.json.
+ * licences in research/sources/CREDITS.json. The three large ones are resized
+ * to about twice their largest display width: the footer chart loads on every
+ * page, and a 2,000px mask behind 13% opacity is weight nobody sees.
  */
 export type PlateKey =
   | "elevation"
@@ -16,8 +18,8 @@ export type PlateKey =
 export const PLATES: Record<PlateKey, { src: string; w: number; h: number; caption: string }> = {
   elevation: {
     src: "/art/elevation.webp",
-    w: 1800,
-    h: 1085,
+    w: 1200,
+    h: 723,
     caption: "Elevation of a salon, Palais Royal. Diderot's Encyclopédie, 1762.",
   },
   "difference-engine": {
@@ -52,14 +54,14 @@ export const PLATES: Record<PlateKey, { src: string; w: number; h: number; capti
   },
   "chart-burlington": {
     src: "/art/chart-burlington.webp",
-    w: 2200,
-    h: 2106,
+    w: 1200,
+    h: 1149,
     caption: "Burlington Bay, U.S. Coast Survey chart of Lake Champlain, 1874.",
   },
   "chart-lake": {
     src: "/art/chart-lake.webp",
-    w: 1800,
-    h: 2449,
+    w: 1100,
+    h: 1497,
     caption: "Lake Champlain, Cumberland Head to Ligonier Point. U.S. Coast Survey, 1874.",
   },
 };

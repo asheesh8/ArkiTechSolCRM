@@ -12,6 +12,10 @@ import { GOOGLE_TAG_BOOTSTRAP, GOOGLE_TAG_SRC, updateGoogleConsent } from "@/lib
  * next/script keys the bootstrap by id, so moving between pages that each
  * mount this never runs `config` twice. Client-side navigations are counted
  * by GA4's own history listener (enhanced measurement), not from here.
+ *
+ * gtag.js itself (~175 KB) waits for the browser to go idle so it never
+ * competes with first paint. The bootstrap still runs early, so anything
+ * reported before then sits in the dataLayer and is sent once it loads.
  */
 export function GoogleTag() {
   useEffect(
@@ -27,7 +31,7 @@ export function GoogleTag() {
       <Script id="google-tag" strategy="afterInteractive">
         {GOOGLE_TAG_BOOTSTRAP}
       </Script>
-      <Script src={GOOGLE_TAG_SRC} strategy="afterInteractive" />
+      <Script src={GOOGLE_TAG_SRC} strategy="lazyOnload" />
     </>
   );
 }

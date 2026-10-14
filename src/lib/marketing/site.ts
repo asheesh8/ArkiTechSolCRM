@@ -10,10 +10,11 @@ export const SITE = {
 } as const;
 
 export const ABOUT_LINKS = [
-  { href: "/#studio", label: "The studio" },
-  { href: "/#work", label: "Our work" },
-  { href: "/#team", label: "The team" },
+  { href: "/about", label: "The studio" },
+  { href: "/work", label: "Our work" },
+  { href: "/about#team", label: "The team" },
   { href: "/service-areas", label: "Service areas" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 export const COMPANY_LINKS = [
@@ -22,6 +23,7 @@ export const COMPANY_LINKS = [
   { href: "/faq", label: "FAQ" },
   { href: "/service-areas", label: "Service areas" },
   { href: "/blog", label: "Blog" },
-  { href: "/#work", label: "Work" },
-  { href: "/#team", label: "Team" },
+  { href: "/work", label: "Work" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ] as const;

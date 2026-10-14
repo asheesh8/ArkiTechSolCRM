@@ -9,6 +9,14 @@ import { Team } from "@/components/marketing/home/team";
 import { ServiceAreas } from "@/components/marketing/home/service-areas";
 import { Closing } from "@/components/marketing/site/closing";
 import { PageView } from "@/components/marketing/site/page-view";
+import { pageMetadata } from "@/lib/marketing/seo";
+
+export const metadata = pageMetadata({
+  title: "Web Design & AI Receptionists in Burlington, VT | ArkiTech",
+  description:
+    "Hand-built websites, AI receptionists, automations and local SEO for Vermont businesses. Two people in Burlington, prices published, no lock-in.",
+  path: "/",
+});
 
 // The pricing band and service prices read the database.
 export const revalidate = 300;

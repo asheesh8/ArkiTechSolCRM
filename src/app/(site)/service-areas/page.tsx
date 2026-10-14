@@ -1,20 +1,22 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/marketing/site/page-header";
 import { ServiceAreas } from "@/components/marketing/home/service-areas";
 import { Closing } from "@/components/marketing/site/closing";
 import { Plate } from "@/components/marketing/art/plate";
 import { SITE } from "@/lib/marketing/site";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Service Areas | Website Design & Local SEO Across Vermont",
   description:
     "Hand-built websites, AI reception, and local SEO for businesses in Burlington, Essex, Stowe, Winooski, Williston, Colchester, and South Burlington.",
-};
+  path: "/service-areas",
+});
 
 export default function ServiceAreasPage() {
   return (
     <>
       <PageHeader
+        kicker="Website design and local SEO across Vermont"
         title="Vermont, and Burlington especially."
         lede="Burlington and Essex are home. We work across the state and we'll take work anywhere in the US, but the towns below are the ones we actually know, and it shows in the work."
         plate="chart-burlington"

@@ -9,9 +9,13 @@ import { PLATES } from "@/lib/marketing/art";
  * The top of every inner page: title, one paragraph, optional actions, and
  * optionally the engraving that belongs to the page, set like a plate in a
  * book with its caption.
+ *
+ * `kicker` is a small line above the title for the words people search. When
+ * it is set it becomes the page's H1 and the display title keeps the voice.
  */
 export function PageHeader({
   title,
+  kicker,
   lede,
   back,
   plate,
@@ -19,6 +23,7 @@ export function PageHeader({
   wide = false,
 }: {
   title: React.ReactNode;
+  kicker?: string;
   lede?: React.ReactNode;
   back?: { href: string; label: string };
   plate?: PlateKey;
@@ -35,7 +40,14 @@ export function PageHeader({
               {back.label}
             </Link>
           ) : null}
-          <h1 className={clsx("ak-display h-hero", back && "mt-8", wide ? "max-w-[18ch]" : "max-w-[14ch]")}>{title}</h1>
+          {kicker ? (
+            <>
+              <h1 className={clsx("meta uppercase tracking-[0.16em]", back && "mt-8")}>{kicker}</h1>
+              <p className={clsx("ak-display h-hero mt-4", wide ? "max-w-[18ch]" : "max-w-[14ch]")}>{title}</p>
+            </>
+          ) : (
+            <h1 className={clsx("ak-display h-hero", back && "mt-8", wide ? "max-w-[18ch]" : "max-w-[14ch]")}>{title}</h1>
+          )}
           {lede ? <div className="ak-lede mt-7 max-w-[56ch]">{lede}</div> : null}
           {children ? <div className="mt-9 flex flex-wrap items-center gap-3">{children}</div> : null}
         </div>

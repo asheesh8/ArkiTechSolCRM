@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
 import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, Section, Subhead } from "@/components/marketing/legal/prose";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "SMS Terms | ArkiTech Solutions",
   description:
     "How ArkiTech Solutions uses text messaging: what you consent to, how to opt out, message frequency, and carrier rates.",
-};
+  path: "/legal/sms",
+});
 
 // The page an A2P 10DLC reviewer is sent to.
 //

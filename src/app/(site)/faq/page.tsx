@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/marketing/site/page-header";
 import { FaqItem } from "@/components/marketing/faq/faq-item";
@@ -7,12 +6,14 @@ import { loadPlans } from "@/lib/marketing/plans";
 import { cheapest, money, planNamed, plansIn, startingPrice, type Plan } from "@/lib/marketing/plan-display";
 import { SPEED_FLOOR } from "@/lib/pagespeed-audit";
 import { SITE } from "@/lib/marketing/site";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
-  title: "FAQ | ArkiTech Solutions",
+export const metadata = pageMetadata({
+  title: "Website Design FAQ: Cost, Ownership, Timelines | ArkiTech",
   description:
-    "What a website costs, who owns it, how long a build takes, how the AI receptionist works, and what happens if you want to leave.",
-};
+    "What a website costs, who owns it, how long a build takes, how the AI receptionist works, and what happens if you want to leave. Straight answers.",
+  path: "/faq",
+});
 
 
 type Faq = { q: string; a: string; link?: { href: string; label: string } };
@@ -128,6 +129,7 @@ export default async function FaqPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <PageHeader
+        kicker="Website design FAQ"
         title="The questions we always get."
         lede={
           <>

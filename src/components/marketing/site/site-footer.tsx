@@ -43,7 +43,7 @@ export function SiteFooter() {
           </FooterColumn>
 
           <div>
-            <h2 className="text-sm text-[var(--dim)]">Get in touch</h2>
+            <p className="text-sm text-[var(--dim)]">Get in touch</p>
             <dl className="mt-4 grid gap-4 border-t border-[var(--rule)] pt-5">
               <Row term="Telephone">
                 <a href={SITE.phoneHref} className="figure hover:text-[var(--lamp)]">
@@ -55,7 +55,11 @@ export function SiteFooter() {
                   {SITE.email}
                 </a>
               </Row>
-              <Row term="Studio">{SITE.studio}</Row>
+              <Row term="Studio">
+                <Link href="/contact" className="hover:text-[var(--lamp)]">
+                  {SITE.studio}
+                </Link>
+              </Row>
               <Row term="Hours">{SITE.hours}</Row>
             </dl>
           </div>
@@ -83,7 +87,7 @@ export function SiteFooter() {
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="text-sm text-[var(--dim)]">{title}</h2>
+      <p className="text-sm text-[var(--dim)]">{title}</p>
       <ul className="mt-4 grid gap-2.5 border-t border-[var(--rule)] pt-5">{children}</ul>
     </div>
   );

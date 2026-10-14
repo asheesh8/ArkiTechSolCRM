@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
 import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, Section, Subhead } from "@/components/marketing/legal/prose";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Privacy Policy | ArkiTech Solutions",
   description:
     "How ArkiTech Solutions collects, uses, discloses, and protects personal information when you visit our site or contact us.",
-};
+  path: "/legal/privacy",
+});
 
 export default function PrivacyPolicyPage() {
   return (

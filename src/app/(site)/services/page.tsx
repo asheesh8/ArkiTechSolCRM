@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight, Check } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/marketing/site/page-header";
@@ -9,11 +8,14 @@ import { SERVICE_PLATE } from "@/lib/marketing/art";
 import { services } from "@/lib/services-content";
 import { loadPlans } from "@/lib/marketing/plans";
 import { startingPrice } from "@/lib/marketing/plan-display";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
-  title: "Services | ArkiTech Solutions",
-  description: "Websites, automations, AI reception, CRM, and local SEO for Vermont businesses.",
-};
+export const metadata = pageMetadata({
+  title: "Web Design, Automation & Local SEO Services | ArkiTech",
+  description:
+    "Websites, AI receptionists, automations, custom CRMs and local SEO for Vermont businesses. Pick the one piece you need; every price is published.",
+  path: "/services",
+});
 
 // Prices are read from the database, so this page revalidates like /pricing.
 export const revalidate = 300;
@@ -23,6 +25,7 @@ export default async function ServicesIndex() {
   return (
     <>
       <PageHeader
+        kicker="Web design, automation & local SEO services"
         title="Five things, done properly."
         lede="We don't sell a package and retrofit your business into it. Pick the piece you actually need. Most people start with one and add the next when it earns its place."
       />

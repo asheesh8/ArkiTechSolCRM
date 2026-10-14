@@ -299,7 +299,7 @@ export default function VideoDemoPage() {
             generic script.
           </p>
           <div className={styles.studioLinks}>
-            <Link href="/#about">Meet the team</Link>
+            <Link href="/about">Meet the team</Link>
             <Link href="/">Explore ArkiTech Solutions</Link>
           </div>
         </div>

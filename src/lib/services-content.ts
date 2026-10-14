@@ -10,6 +10,11 @@ export type DemoPost = {
   slug: string;
   title: string;
   excerpt: string;
+  /** The search-result snippet: 140-160 characters, the topic named outright. */
+  description: string;
+  /** ISO dates. `updated` moves only when the body changes. */
+  published: string;
+  updated: string;
   readingTime: string;
   body: string[];
 };
@@ -17,6 +22,8 @@ export type DemoPost = {
 export type Service = {
   slug: string;
   name: string;
+  /** What people search for this, as the page title, H1 and snippet carry it. */
+  seo: { title: string; h1: string; description: string };
   tagline: string;
   summary: string;
   includes: string[];
@@ -27,6 +34,12 @@ export const services: Service[] = [
   {
     slug: "websites",
     name: "Websites & ReviewRetainer",
+    seo: {
+      title: "Small Business Website Design in Vermont | ArkiTech",
+      h1: "Small business website design in Vermont",
+      description:
+        "Hand-built small business websites for Vermont: fast on a phone, every lead in one admin, and a Google review requested after each finished job.",
+    },
     tagline: "A site that sells, and reviews that keep coming",
     summary:
       "A hand-built site for the way people actually find a local business: on a phone, in a hurry, comparing you against two competitors. Behind it, an admin side showing every lead that comes in, and ReviewRetainer quietly asking your real customers for the Google review that wins you the next one.",
@@ -44,6 +57,10 @@ export const services: Service[] = [
       title: "Speed is a sales number, not a tech number",
       excerpt:
         "A second of load time is not an engineering statistic. It's the gap between a customer calling you and calling the next result.",
+      description:
+        "Why page speed is a sales number for a local business: a slow site on a phone loses the caller to the next search result before they read a word.",
+      published: "2026-08-19",
+      updated: "2026-09-22",
       readingTime: "4 min read",
       body: [
         "Most small business owners get handed a performance score and told it matters, without anyone explaining why. So it goes in the same mental folder as the tyre pressure light: probably important, definitely someone else's job.",
@@ -57,6 +74,12 @@ export const services: Service[] = [
   {
     slug: "automations",
     name: "Automations",
+    seo: {
+      title: "Small Business Automation & Integrations | ArkiTech",
+      h1: "Small business automation and integrations",
+      description:
+        "Follow-ups that always go out, and the scheduling, calendar, CRM, invoicing and email tools you already pay for, connected through their APIs.",
+    },
     tagline: "Your stack, wired to work as one",
     summary:
       "Two jobs. The follow-up that always happens, and the tools you already pay for finally talking to each other: scheduling, calendar, CRM, invoicing, email, all connected through their APIs instead of copy-pasted between tabs.",
@@ -73,6 +96,10 @@ export const services: Service[] = [
       title: "The day-three problem",
       excerpt:
         "Nobody forgets to send the quote. They forget the message after it, and that's the one that closes.",
+      description:
+        "Most small businesses send the quote and forget the follow-up that actually closes the job. How automated follow-up fixes the day-three problem.",
+      published: "2026-08-19",
+      updated: "2026-09-22",
       readingTime: "4 min read",
       body: [
         "Ask any contractor where their leads leak and they will say pricing. Look at the actual record and it is almost never pricing. It is silence.",
@@ -86,6 +113,12 @@ export const services: Service[] = [
   {
     slug: "ai-receptionist",
     name: "AI Receptionist",
+    seo: {
+      title: "AI Phone Receptionist for Local Businesses | ArkiTech",
+      h1: "AI phone receptionist for local businesses",
+      description:
+        "An AI receptionist that answers every call, takes the details, books into your calendar and files a transcript against the lead. Set up in Vermont.",
+    },
     tagline: "Nobody reaches a voicemail",
     summary:
       "A voice agent that answers when you're up a ladder, takes the details properly, and books straight into the calendar. Every call transcribed and filed against the lead.",
@@ -100,6 +133,10 @@ export const services: Service[] = [
       slug: "what-a-missed-call-costs",
       title: "What a missed call actually costs",
       excerpt: "The caller who hits voicemail does not leave a message. They dial the next number.",
+      description:
+        "Callers who reach voicemail rarely leave a message; they dial the next business. What missed calls cost a local service business, and the fix.",
+      published: "2026-08-19",
+      updated: "2026-09-22",
       readingTime: "5 min read",
       body: [
         "There is a quiet assumption behind every voicemail greeting: that the person calling will wait. For a local trade, they mostly do not. They are working down a list of three numbers, and they stop at whoever picks up.",
@@ -115,6 +152,12 @@ export const services: Service[] = [
   {
     slug: "crm-portals",
     name: "CRM & Client Portals",
+    seo: {
+      title: "Custom CRM & Client Portal Development | ArkiTech",
+      h1: "Custom CRM and client portal development",
+      description:
+        "A CRM built around your own stages, fields and handoffs, with a client portal on the front. For Vermont businesses that have outgrown spreadsheets.",
+    },
     tagline: "Built around how you already work",
     summary:
       "Not a CRM you bend your business into. One built to your actual workflow (your stages, your fields, your handoffs) with a client portal on the front, and room to keep working the same way when you're three times the size.",
@@ -130,6 +173,10 @@ export const services: Service[] = [
       slug: "your-crm-is-a-notebook",
       title: "Your CRM is a notebook and that's the problem",
       excerpt: "Nothing wrong with a notebook. The problem is it only exists in one van.",
+      description:
+        "When the customer list lives in one notebook in one van, leads get lost. Why small businesses outgrow paper, and what a simple CRM changes.",
+      published: "2026-08-19",
+      updated: "2026-09-22",
       readingTime: "4 min read",
       body: [
         "Most local businesses run a perfectly good system. It is just distributed across a notebook in the van, a phone's call history, and one person's recall. It works right up until two people need the same answer at once.",
@@ -144,6 +191,12 @@ export const services: Service[] = [
   {
     slug: "brand-seo",
     name: "Brand & Local SEO",
+    seo: {
+      title: "Local SEO & Google Business Profile Help | ArkiTech",
+      h1: "Local SEO and Google Business Profile management",
+      description:
+        "Google Business Profile management, review requests and local SEO for Vermont businesses, with PageSpeed scores for you and competitors on record.",
+    },
     tagline: "Found first, then trusted",
     summary:
       "Google Business Profile, reviews, and a brand that looks like the quality of your actual work, measured rather than asserted. We run PageSpeed Insights against your site and your competitors', and the scores go on the record.",
@@ -160,6 +213,10 @@ export const services: Service[] = [
       title: "Reviews are the storefront now",
       excerpt:
         "Customers walk past your business in the search results. What they see there is your window display.",
+      description:
+        "Google reviews are the first thing a local customer sees. How review count and recency decide who gets the call, and how to ask every customer.",
+      published: "2026-08-19",
+      updated: "2026-09-22",
       readingTime: "4 min read",
       body: [
         "A high street business knows what its window looks like. A local trade often has no idea what its equivalent is, because the window is a search result and nobody stands in front of it.",

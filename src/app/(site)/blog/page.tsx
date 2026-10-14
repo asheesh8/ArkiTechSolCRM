@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/marketing/site/page-header";
@@ -7,17 +6,20 @@ import { Reveal } from "@/components/marketing/site/reveal";
 import { Closing } from "@/components/marketing/site/closing";
 import { SERVICE_PLATE } from "@/lib/marketing/art";
 import { services } from "@/lib/services-content";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
-  title: "Blog | ArkiTech Solutions",
-  description: "Plain writing about websites, follow-up, reviews, and the systems behind a local business.",
-};
+export const metadata = pageMetadata({
+  title: "Local Business Website & Marketing Blog | ArkiTech",
+  description:
+    "Plain writing about websites, page speed, follow-up, missed calls, Google reviews and the systems behind a local business, from a Burlington studio.",
+  path: "/blog",
+});
 
 export default function BlogIndex() {
   const [lead, ...rest] = services;
   return (
     <>
-      <PageHeader title="Things we keep having to explain." lede="Plain writing about websites, follow-up, reviews, and the systems behind a local business." />
+      <PageHeader kicker="Local business website & marketing blog" title="Things we keep having to explain." lede="Plain writing about websites, follow-up, reviews, and the systems behind a local business." />
 
       <section className="band pb-24 sm:pb-32">
         <div className="shell">

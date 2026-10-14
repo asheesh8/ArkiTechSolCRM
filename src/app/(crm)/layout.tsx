@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/crm/app-shell";
 import { StaleShiftGate } from "@/components/crm/stale-shift-gate";
@@ -11,6 +12,9 @@ import { prisma } from "@/lib/prisma";
  * stop trusting the running timer and make them say when they actually stopped.
  */
 const STALE_SHIFT_HOURS = 8;
+
+// Staff-only. Kept out of search even if a URL leaks.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 // Reading the clock lives out here rather than in the component body. This is a
 // server component so it runs once per request either way, but the purity lint

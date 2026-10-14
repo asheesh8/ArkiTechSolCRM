@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { DownloadSimple } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/marketing/site/page-header";
@@ -7,12 +6,14 @@ import { Reveal } from "@/components/marketing/site/reveal";
 import { Closing } from "@/components/marketing/site/closing";
 import { ContactButton } from "@/components/marketing/site/contact-context";
 import { GROUPS, loadPlans } from "@/lib/marketing/plans";
+import { pageMetadata } from "@/lib/marketing/seo";
 
-export const metadata: Metadata = {
-  title: "Pricing | ArkiTech Solutions",
+export const metadata = pageMetadata({
+  title: "Website & AI Receptionist Pricing | ArkiTech",
   description:
-    "What our websites, AI reception, systems work, brand and local SEO cost. Websites from $99 a month. Month to month, no hidden fees.",
-};
+    "What our websites, AI reception, systems work, brand and local SEO cost, published in full. Month to month, no hidden fees, quoted in writing.",
+  path: "/pricing",
+});
 
 const ALWAYS: [string, string][] = [
   ["Month to month", "No lock-in on any recurring plan. Cancel and you keep the domain, the code, and the content."],
@@ -30,6 +31,7 @@ export default async function PricingPage() {
   return (
     <>
       <PageHeader
+        kicker="Website and AI receptionist pricing"
         title="What it costs."
         lede="Published, because making people ask is a tactic and we'd rather not use it. Recurring plans are month to month. Project work is quoted in writing before anything starts."
       >
