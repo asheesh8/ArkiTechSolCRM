@@ -219,7 +219,7 @@ function portalWelcomeHtml(opts: { to: string; name: string; businessName: strin
 <p>Your agreement for <strong>${opts.businessName}</strong> is signed and we're ready to get to work. Click below to create your password and access your portal — you'll be able to track your project, submit requests, and pay invoices all in one place.</p>
 <a class="btn" href="${opts.setupUrl}">Create my password →</a>
 <div class="info">
-  <p><strong>Your portal:</strong> arkitech-sol.com/portal/login</p>
+  <p><strong>Your portal:</strong> sol-arkitech.com/portal/login</p>
   <p style="margin-top:8px"><strong>Email:</strong> ${opts.to}</p>
 </div>
 <p style="font-size:13px;color:#a1a1aa">This setup link expires in 72 hours. If you have trouble, just reply to this email.</p>

@@ -10,7 +10,7 @@ import { SERVICE_AREAS } from "@/lib/service-areas";
  */
 
 /** The one origin every canonical, Open Graph URL, sitemap entry and schema id hangs off. */
-export const SITE_URL = "https://arkitech-sol.com";
+export const SITE_URL = "https://sol-arkitech.com";
 
 /**
  * The Google Business Profile, by its stable CID link. Listed in `sameAs` so

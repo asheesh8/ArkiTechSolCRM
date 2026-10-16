@@ -15,7 +15,7 @@ export default function TermsOfServicePage() {
 
       <P>
         These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of the ArkiTech Solutions website located at{" "}
-        <InlineLink href="https://arkitech-sol.com/">https://arkitech-sol.com/</InlineLink> and any related pages, forms, content, or online materials we
+        <InlineLink href="https://sol-arkitech.com/">https://sol-arkitech.com/</InlineLink> and any related pages, forms, content, or online materials we
         make available through the website (collectively, the &ldquo;Site&rdquo;).
       </P>
       <P>

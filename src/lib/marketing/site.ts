@@ -4,7 +4,7 @@ export const SITE = {
   legalName: "ArkiTech Solutions LLC",
   phone: "(802) 557-8828",
   phoneHref: "tel:+18025578828",
-  email: "studio@arkitech-sol.com",
+  email: "studio@sol-arkitech.com",
   studio: "Burlington, Vermont",
   hours: "Mon-Fri, 8am-5pm",
   founded: "July 2026",

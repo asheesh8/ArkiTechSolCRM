@@ -199,7 +199,7 @@ export async function POST(req: Request) {
   // as a failed submission to the person who just filled the form.
   try {
     await sendContactEmail({
-      fromEmail: data.email || "no-reply@arkitech-sol.com",
+      fromEmail: data.email || "no-reply@sol-arkitech.com",
       subject: data.formIntent === "gate" ? `CleaningBook qualified lead: ${data.name}` : `Ad lead: ${businessName}`,
       message: note,
     });

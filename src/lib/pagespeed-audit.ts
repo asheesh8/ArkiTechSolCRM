@@ -8,13 +8,13 @@
  * that you don't have to take our word for it, which is worth nothing the
  * moment the numbers become aspirational. To refresh:
  *
- *   1. Run a fresh analysis at https://pagespeed.web.dev for arkitech-sol.com
+ *   1. Run a fresh analysis at https://pagespeed.web.dev for sol-arkitech.com
  *   2. Put the permalink in `report`
  *   3. node scripts/capture-pagespeed.mjs public/pagespeed-arkitech-mobile.png
  *   4. Update the scores and `measuredOn` here
  */
 export const AUDIT = {
-  url: "arkitech-sol.com",
+  url: "sol-arkitech.com",
   strategy: "Mobile",
   measuredOn: "21 August 2026",
   report: "https://pagespeed.web.dev/analysis/https-arkitech-sol-com/76dri7u07s?form_factor=mobile",

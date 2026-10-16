@@ -18,7 +18,7 @@
  *
  * RUN
  *   BASE_URL=http://localhost:3000 node capture-ad-shots.mjs
- *   (defaults to https://arkitech-sol.com if BASE_URL is not set)
+ *   (defaults to https://sol-arkitech.com if BASE_URL is not set)
  *
  * OUTPUT
  *   ./captures/01-hero-open.webm
@@ -36,7 +36,7 @@ import { chromium } from "playwright";
 import { mkdir, readdir, rename } from "node:fs/promises";
 import path from "node:path";
 
-const BASE_URL = process.env.BASE_URL || "https://arkitech-sol.com";
+const BASE_URL = process.env.BASE_URL || "https://sol-arkitech.com";
 const VIEWPORT = { width: 1920, height: 1080 };
 const OUT_DIR = path.resolve("./captures");
 

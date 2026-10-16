@@ -4,7 +4,7 @@
  * The page claims we re-run the audit after every build, so this exists to make
  * that cheap to actually do:
  *
- *   1. Run a fresh analysis at https://pagespeed.web.dev for arkitech-sol.com
+ *   1. Run a fresh analysis at https://pagespeed.web.dev for sol-arkitech.com
  *   2. Put its permalink in URL below
  *   3. node scripts/capture-pagespeed.mjs public/pagespeed-arkitech-mobile.png
  *   4. Update AUDIT in src/components/landing/pagespeed-scores.tsx to match

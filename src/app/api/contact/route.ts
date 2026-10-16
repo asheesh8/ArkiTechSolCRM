@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
   const phone = data.phone ? checkPhone(data.phone) : null;
   const note = [
-    "— Free call request from arkitech-sol.com —",
+    "— Free call request from sol-arkitech.com —",
     `Contact: ${data.name}`,
     `Email: ${data.email}`,
     data.phone ? `Phone: ${phone?.national ?? data.phone}` : null,

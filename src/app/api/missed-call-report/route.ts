@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   const yearly = monthly * 12;
 
   const note = [
-    "— Missed-call calculator, arkitech-sol.com —",
+    "— Missed-call calculator, sol-arkitech.com —",
     `Contact: ${data.name}`,
     `Email: ${data.email}`,
     data.business ? `Business: ${data.business}` : null,

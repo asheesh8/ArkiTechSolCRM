@@ -20,17 +20,17 @@ export const metadata: Metadata = {
   description:
     "Watch ArkiTech Solutions turn a missed cleaning call into a booked job with an AI receptionist built for local service businesses.",
   alternates: {
-    canonical: "https://arkitech-sol.com/videodemo",
+    canonical: "https://sol-arkitech.com/videodemo",
   },
   openGraph: {
     title: "A missed call becomes a booked job | ArkiTech Solutions",
     description:
       "A 30-second campaign film showing an urgent request answered, qualified, and booked while the owner stays focused on the work.",
     type: "website",
-    url: "https://arkitech-sol.com/videodemo",
+    url: "https://sol-arkitech.com/videodemo",
     images: [
       {
-        url: "https://arkitech-sol.com/videodemo/arkitech-cleaning-ad-v5-poster.webp",
+        url: "https://sol-arkitech.com/videodemo/arkitech-cleaning-ad-v5-poster.webp",
         width: 1080,
         height: 1920,
         alt: "ArkiTech AI receptionist campaign film",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "A missed call becomes a booked job | ArkiTech Solutions",
     description: "Watch the current ArkiTech AI receptionist campaign cut.",
-    images: ["https://arkitech-sol.com/videodemo/arkitech-cleaning-ad-v5-poster.webp"],
+    images: ["https://sol-arkitech.com/videodemo/arkitech-cleaning-ad-v5-poster.webp"],
   },
 };
 
