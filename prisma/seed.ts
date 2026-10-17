@@ -3,8 +3,16 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// The staff accounts' first password comes from the environment so no real
+// password lives in this public repo. It is applied only when an account is
+// created: re-running the seed must never reset a password someone changed.
+const seedPassword = process.env.SEED_ADMIN_PASSWORD;
+if (!seedPassword || seedPassword.length < 12) {
+  throw new Error("Set SEED_ADMIN_PASSWORD (12+ characters) before seeding.");
+}
+
 async function main() {
-  const passwordHash = await bcrypt.hash("ARKITECH", 10);
+  const passwordHash = await bcrypt.hash(seedPassword, 10);
 
   await prisma.user.deleteMany({
     where: { email: { in: ["ashish@locallead.test", "terri@locallead.test"] } },
@@ -14,7 +22,6 @@ async function main() {
     where: { email: "ashish@arkitech.com" },
     update: {
       name: "Ashish",
-      passwordHash,
       role: "OWNER",
     },
     create: {
@@ -30,7 +37,6 @@ async function main() {
     where: { email: "terri@arkitech.com" },
     update: {
       name: "Terri",
-      passwordHash,
       role: "OWNER",
     },
     create: {
@@ -45,7 +51,6 @@ async function main() {
     where: { email: "krish@arkitech.com" },
     update: {
       name: "Krish",
-      passwordHash,
       role: "DEV",
     },
     create: {
@@ -62,7 +67,6 @@ async function main() {
     where: { email: "tio@arkitech.com" },
     update: {
       name: "Tio",
-      passwordHash,
       role: "MEMBER",
     },
     create: {

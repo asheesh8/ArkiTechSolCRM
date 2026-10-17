@@ -33,6 +33,7 @@ GOOGLE_PLACES_API_KEY="..."
 GOOGLE_PAGESPEED_API_KEY="..."
 NEXTAUTH_SECRET="replace-me-with-a-long-random-string"
 NEXTAUTH_URL="http://localhost:3000"
+SEED_ADMIN_PASSWORD="choose-a-strong-password"
 ```
 
 4. Run migrations and seed demo users/leads:
@@ -50,12 +51,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Seed login credentials:
-
-- `ashish@arkitech.com` / `ARKITECH`
-- `terri@arkitech.com` / `ARKITECH`
-- `krish@arkitech.com` / `ARKITECH`
-- `tio@arkitech.com` / `ARKITECH`
+The seed creates the staff accounts (`ashish@`, `terri@`, `krish@` and
+`tio@arkitech.com`) with the password in `SEED_ADMIN_PASSWORD`. It is only
+applied when an account is first created, so re-running the seed never resets a
+password that has since been changed.
 
 ## Main Routes
 
