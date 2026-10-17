@@ -2,6 +2,10 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
 
+// Client portal auth, kept separate from staff auth (src/lib/auth.ts) on purpose:
+// a different cookie and a different table, so a client session can never be
+// mistaken for a staff one. Each client holds a single session — the token lives
+// on the Client row, so logging in on a new device ends the previous session.
 const COOKIE = "portal_session";
 const SESSION_DAYS = 30;
 
@@ -41,6 +45,7 @@ export async function clearPortalCookie() {
   jar.delete(COOKIE);
 }
 
+// One-time link emailed to a new client so they can choose their own password.
 export async function createSetupToken(clientId: string) {
   const token = randomBytes(32).toString("hex");
   const expiry = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours

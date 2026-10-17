@@ -4,9 +4,13 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
+// The cookie name predates the rebrand from "LocalLead"; renaming it would sign
+// everyone out, so it stays.
 export const STAFF_SESSION_COOKIE = "locallead_user";
 export const STAFF_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
+// Only the hash of a session token is stored. The raw token lives solely in the
+// browser cookie, so a leaked database dump cannot be replayed as a login.
 function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
@@ -15,6 +19,7 @@ export async function createStaffSession(userId: string) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + STAFF_SESSION_MAX_AGE_SECONDS * 1_000);
 
+  // Sweep expired rows on each login instead of running a cron job.
   await prisma.$transaction([
     prisma.staffSession.deleteMany({ where: { expiresAt: { lte: new Date() } } }),
     prisma.staffSession.create({
@@ -69,15 +74,15 @@ export function isManager(user: { role?: string | null } | null | undefined) {
   return user?.role === "OWNER";
 }
 
-// Owners are the only role that can manage the team, share note cabinets, and
-// create/assign work. Currently identical to isManager, kept as its own name so
-// intent reads clearly at call sites that gate ownership rather than lead access.
 // Demo builds are the developers' room. Owners are in it too, because they
 // review and ship what lands there — but a MEMBER has no business here.
 export function canBuildDemos(user: { role?: string | null } | null | undefined) {
   return user?.role === "DEV" || user?.role === "OWNER";
 }
 
+// Owners are the only role that can manage the team, share note cabinets, and
+// create/assign work. Currently identical to isManager, kept as its own name so
+// intent reads clearly at call sites that gate ownership rather than lead access.
 export function isOwner(user: { role?: string | null } | null | undefined) {
   return user?.role === "OWNER";
 }
