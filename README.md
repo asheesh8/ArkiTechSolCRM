@@ -1,82 +1,92 @@
-# LocalLead CRM
+# ArkiTech Solutions — Website & CRM
 
-A full-stack local-business CRM for Ashish and Terri to find prospects, audit websites, track calls, add notes, and book meetings.
+One Next.js app that serves two audiences:
 
-## Stack
+- **The public marketing site** for ArkiTech Solutions, a Burlington, Vermont web and AI studio — services, pricing, service areas, blog, and the `/cleaningbook` ad-campaign landing page.
+- **The internal CRM** the team uses to find local-business leads, cold-call and text them, run AI voice agents, manage clients and contracts, and bill through a client portal.
 
-- Next.js App Router with TypeScript
-- Tailwind CSS with shadcn/ui-style local components
-- Prisma ORM and PostgreSQL
-- Simple email/password auth using hashed passwords and an HTTP-only cookie
-- Google Places API via official Text Search
-- Google PageSpeed Insights API
+**Live:** https://sol-arkitech.com (Vercel project: `arki-tech-sol-crm.vercel.app`)
 
-## Local Setup
+## Tech stack
 
-1. Install dependencies:
+| Area | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router) + React 19 + TypeScript |
+| Styling | Tailwind CSS 4, local shadcn-style components (`src/components/ui`) |
+| Data | PostgreSQL via Prisma 6 |
+| Auth | Email + bcrypt password; opaque session token in an HTTP-only cookie, only its SHA-256 hash stored in `StaffSession` |
+| Telephony | Twilio Voice SDK (browser dialling), Twilio + Blooio for SMS/iMessage |
+| AI | OpenAI Realtime + Whisper, ElevenLabs agents, Base44 FAQ agent |
+| Payments / email / files | Stripe, Resend, Cloudflare R2 (S3 API) |
+| Lead data | Google Places Text Search, Google PageSpeed Insights |
+| Hosting | Vercel |
 
-```bash
-npm install
+## Project layout
+
+```
+src/app/(site)/     Public marketing pages (shared layout in (site)/layout.tsx)
+src/app/(crm)/      Staff CRM — every page is behind the login check in (crm)/layout.tsx
+src/app/portal/     Client portal (separate cookie and login from staff)
+src/app/sign/       Public e-signature page reached by a one-time token
+src/app/cleaningbook, demo, videodemo   Standalone campaign / demo pages
+src/app/api/        Route handlers, grouped by feature
+src/components/     UI, grouped by area (crm, marketing, notes, portal, ...)
+src/lib/            Server-side logic: auth, integrations, pricing, schemas
+prisma/             Schema, migrations, seed script
+scripts/            Build-time migration runner and one-off maintenance scripts
+docs/               Hand-off notes for design and asset work
 ```
 
-2. Create your environment file:
+### Roles
+
+Staff users have one of three roles, enforced server-side by `requireRoles()` in `src/lib/route-guard.ts` (the sidebar only hides links; the guard is what protects the page):
+
+- **OWNER** — everything, including team management, analytics, campaigns and voice agents.
+- **MEMBER** — sales work: leads, cold calls, clients, accountability.
+- **DEV** — work requests and the Build Studio (`/demos`).
+
+## Local setup
+
+Requires Node 20+, pnpm, and a PostgreSQL database.
 
 ```bash
-cp .env.example .env
+pnpm install              # also runs `prisma generate`
+cp .env.example .env      # then fill in the values you need (see below)
+pnpm prisma migrate dev   # create the schema
+pnpm prisma:seed          # create the staff accounts and demo leads
+pnpm dev                  # http://localhost:3000
 ```
 
-3. Update `.env` with PostgreSQL and Google API keys:
+The seed creates the staff accounts with the password in `SEED_ADMIN_PASSWORD`. Never commit real passwords to this repo.
 
-```bash
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/locallead_crm?schema=public"
-GOOGLE_PLACES_API_KEY="..."
-GOOGLE_PAGESPEED_API_KEY="..."
-NEXTAUTH_SECRET="replace-me-with-a-long-random-string"
-NEXTAUTH_URL="http://localhost:3000"
-```
+If PostgreSQL or the Google keys are missing, read-only screens fall back to demo data so the UI is still explorable. Anything that writes needs a database.
 
-4. Run migrations and seed demo users/leads:
+## Environment variables
 
-```bash
-npx prisma migrate dev
-npm run prisma:seed
-```
+`.env.example` documents each variable in detail. Names only here — never commit values.
 
-5. Start the app:
+| Group | Variables |
+|---|---|
+| Core | `DATABASE_URL`, `NEXT_PUBLIC_APP_URL`, `SEED_ADMIN_PASSWORD` |
+| Google | `GOOGLE_PLACES_API_KEY`, `GOOGLE_PAGESPEED_API_KEY`, `GOOGLE_CALENDAR_ID`, `GOOGLE_CALENDAR_IDS`, `GOOGLE_CALENDAR_EMBED_URL`, `GOOGLE_CALENDAR_API_KEY`, `GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_CALENDAR_PRIVATE_KEY`, `GOOGLE_CALENDAR_SUBJECT` |
+| AI agents | `OPENAI_API_KEY`, `OPENAI_REALTIME_MODEL`, `OPENAI_TRANSCRIBE_MODEL`, `OPENAI_SUMMARY_MODEL`, `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `ELEVENLABS_WEBHOOK_SECRET`, `BASE44_API_KEY`, `BASE44_AGENT_ID`, `BASE44_CONVERSATION_ID`, `DEMO_IP_SALT` |
+| Twilio | `TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY_SID`, `TWILIO_API_KEY_SECRET`, `TWILIO_AUTH_TOKEN`, `TWILIO_TWIML_APP_SID`, `TWILIO_CALLER_ID`, `TWILIO_VOICE_WEBHOOK_URL`, `TWILIO_RECORD_CALLS`, `TWILIO_CONSENT_ANNOUNCEMENT`, `CREDENTIAL_ENCRYPTION_KEY` |
+| Blooio | `BLOOIO_API_KEY`, `BLOOIO_FROM_NUMBER`, `BLOOIO_API_BASE` |
+| Billing / email / files | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL` |
+| Analytics / campaign | `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_BOOKING_URL` |
+| Build Studio deploys | `GITHUB_TOKEN`, `GITHUB_ORG`, `GITHUB_REFERENCE_OWNER`, `VERCEL_TOKEN`, `VERCEL_TEAM_ID` |
 
-```bash
-npm run dev
-```
+Only `NEXT_PUBLIC_*` variables reach the browser; everything else must stay server-side. `NEXTAUTH_SECRET` / `NEXTAUTH_URL` in `.env.example` are left over from an earlier version — the app no longer reads them.
 
-Open [http://localhost:3000](http://localhost:3000).
+> **Call recording is off by default.** Read the notes on `TWILIO_RECORD_CALLS` in `.env.example` before enabling it — several states require every party's consent.
 
-Seed login credentials:
+## Deploying
 
-- `ashish@arkitech.com` / `ARKITECH`
-- `terri@arkitech.com` / `ARKITECH`
-- `krish@arkitech.com` / `ARKITECH`
-- `tio@arkitech.com` / `ARKITECH`
+- Pushing to `main` deploys to production on Vercel; other branches get preview deployments.
+- `pnpm build` runs `scripts/migrate-on-build.mjs` first, which applies pending Prisma migrations when `DATABASE_URL` is set and skips (with a loud log line) when it is not. Add schema changes as a new migration in `prisma/migrations/`; never edit one that has already shipped.
+- Stripe and ElevenLabs webhooks point at `/api/webhooks/stripe` and `/api/webhooks/elevenlabs`. The Twilio TwiML app's Voice URL must be `<public URL>/api/calls/voice`.
 
-## Main Routes
+## Notes for contributors
 
-- `/dashboard` - total leads, calls today, meetings, follow-ups, close rate, and pipeline cards
-- `/leads` - Google Places lead finder with official API usage and save-to-CRM actions
-- `/clients` - searchable CRM table with quick status updates
-- `/clients/[id]` - business profile, notes timeline, call outcomes, follow-up dates, audit history
-- `/audits` - standalone Google PageSpeed Insights audit view
-- `/settings` - environment configuration checklist
-
-## API Routes
-
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `POST /api/leads/search`
-- `GET /api/leads`
-- `POST /api/leads`
-- `GET /api/leads/[id]`
-- `PATCH /api/leads/[id]`
-- `POST /api/leads/[id]/notes`
-- `POST /api/pagespeed`
-- `GET /api/dashboard/stats`
-
-If Google keys or PostgreSQL are not configured, read-only screens use demo fallback data so the interface remains explorable locally. Mutations require a configured database.
+- This project pins a recent Next.js with breaking changes from older versions — see `AGENTS.md` and check `node_modules/next/dist/docs/` before relying on older patterns.
+- Server-only modules start with `import "server-only"`; keep secrets and Prisma calls behind that line.
