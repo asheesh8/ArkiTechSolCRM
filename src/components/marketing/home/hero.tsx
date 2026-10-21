@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Mark } from "@/components/marketing/brand/mark";
 import { useContact } from "@/components/marketing/site/contact-context";
+import { CTA_LABEL } from "@/lib/marketing/site";
 
-const WORDS = ["websites.", "platforms.", "automations.", "portals.", "stores.", "systems."];
+const WORDS = ["websites.", "dashboards.", "AI visibility."];
 
 /**
  * Burlington from the hill, sunset into night.
@@ -112,7 +113,7 @@ export function Hero() {
         {/* The H1 says what search needs to read; the display line below
             keeps the voice. */}
         <h1 className="meta mt-8 uppercase tracking-[0.18em]" style={{ color: "rgba(237,233,224,0.72)" }}>
-          Website design &amp; AI receptionists
+          Custom websites, dashboards &amp; AI search
           <span className="hidden sm:inline"> · </span>
           <span className="block sm:inline">Burlington, Vermont</span>
         </h1>
@@ -137,13 +138,13 @@ export function Hero() {
         </p>
 
         <p className="ak-lede mx-auto mt-7 max-w-[40ch]" style={{ color: "rgba(237,233,224,0.86)" }}>
-          A Vermont studio designing and engineering the websites, platforms, and internal systems
-          that growing teams actually run on.
+          A Burlington, Vermont studio building websites that bring in leads, the dashboards to
+          run them, and pages that get you recommended by AI. For businesses anywhere.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <button type="button" onClick={open} className="ak-btn ak-btn-primary">
-            Book a free call
+            {CTA_LABEL}
           </button>
           <a href="#work" className="ak-btn ak-btn-ghost">
             See the work

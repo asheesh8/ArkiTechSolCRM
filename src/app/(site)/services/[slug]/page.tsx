@@ -9,23 +9,13 @@ import { Reveal } from "@/components/marketing/site/reveal";
 import { Closing } from "@/components/marketing/site/closing";
 import { PlanCard } from "@/components/marketing/pricing/plan-card";
 import { SpeedProof } from "@/components/marketing/proof/speed-proof";
-import { MissedCallCalculator } from "@/components/marketing/proof/missed-call-calculator";
-import { IntegrationsFloat } from "@/components/marketing/home/integrations-float";
+import { DashboardAddons } from "@/components/marketing/pricing/dashboard-addons";
 import { SERVICE_PLATE } from "@/lib/marketing/art";
-import { GROUPS, loadPlans } from "@/lib/marketing/plans";
-import { plansIn, startingPrice, type GroupKey } from "@/lib/marketing/plan-display";
+import { loadPlans } from "@/lib/marketing/plans";
+import { money, planFor, plansIn, startingPrice } from "@/lib/marketing/plan-display";
 import { getService, services } from "@/lib/services-content";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { breadcrumbJsonLd, pageMetadata, serviceJsonLd } from "@/lib/marketing/seo";
-
-/** Which pricing group each service's plans live in. */
-const SERVICE_GROUP: Record<string, GroupKey> = {
-  websites: "websites",
-  automations: "systems",
-  "ai-receptionist": "receptionist",
-  "crm-portals": "systems",
-  "brand-seo": "growth",
-};
 
 // Prices are read from the database. Saving pricing in CRM settings also
 // revalidates these paths directly (api/settings/pricing).
@@ -49,10 +39,13 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
 
   const plansAll = await loadPlans();
   const price = startingPrice(service.slug, plansAll);
-  const group = SERVICE_GROUP[service.slug];
-  const groupLabel = GROUPS.find((g) => g.key === group)?.label ?? "Pricing";
-  const plans = plansIn(plansAll, group);
+  // Each service quotes only itself. The partnership that bundles the website
+  // and dashboards gets one line pointing at /pricing, not a comparison table.
+  const own = planFor(service.slug, plansAll);
+  const partnership = plansIn(plansAll, "plans").find((p) => p.slug === "growth-partnership");
+  const bundled = partnership && service.slug !== "ai-search";
   const others = services.filter((s) => s.slug !== service.slug);
+  const post = service.post;
 
   const path = `/services/${service.slug}`;
 
@@ -85,7 +78,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         plate={SERVICE_PLATE[service.slug]}
       >
         <ContactButton />
-        <Link href={`/pricing#${group}`} className="text-sm text-[var(--dim)] hover:text-[var(--fg)]">
+        <a href="#cost" className="text-sm text-[var(--dim)] hover:text-[var(--fg)]">
           {price.lead}
           {price.amount ? (
             <>
@@ -93,13 +86,8 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
               <span className="price text-[1.45rem] text-[var(--fg)]">{price.amount}</span> {price.tail}
             </>
           ) : null}
-          <span aria-hidden="true"> →</span>
-        </Link>
-        {service.slug === "ai-receptionist" ? (
-          <Link href="/videodemo" className="text-sm text-[var(--dim)] hover:text-[var(--fg)]">
-            Watch the 30-second film <span aria-hidden="true">→</span>
-          </Link>
-        ) : null}
+          <span aria-hidden="true"> ↓</span>
+        </a>
       </PageHeader>
 
       <section className="band pb-20 sm:pb-28">
@@ -117,50 +105,59 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       </section>
 
       {service.slug === "websites" ? <SpeedProof /> : null}
-      {service.slug === "brand-seo" ? <SpeedProof showShot /> : null}
-      {service.slug === "automations" ? <IntegrationsFloat /> : null}
-      {service.slug === "ai-receptionist" ? <MissedCallCalculator /> : null}
 
-      <section className="band section">
+      <section id="cost" className="band section scroll-mt-24">
         <div className="shell">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <h2 className="ak-display h-lg max-w-[18ch]">What it costs</h2>
-            <Link href={`/pricing#${group}`} className="ak-arrow-link">
-              {groupLabel} on the pricing page <span aria-hidden="true">→</span>
+          <h2 className="ak-display h-lg max-w-[18ch]">What it costs</h2>
+          {service.slug === "dashboards" ? (
+            <div className="mt-10">
+              <DashboardAddons plans={plansAll} />
+            </div>
+          ) : own ? (
+            <div className="mt-10 max-w-[30rem]">
+              <PlanCard plan={own} />
+            </div>
+          ) : null}
+          {bundled && partnership.monthlyCents != null ? (
+            <p className="mt-8 max-w-[60ch] text-[var(--fg-2)]">
+              {service.slug === "websites"
+                ? "Want the website, the dashboards and your Google Business Profile looked after together? The "
+                : "The Overview and CRM dashboards also come with the "}
+              <Link href="/pricing" className="text-link text-[var(--fg)]">
+                {partnership.name}
+              </Link>
+              {service.slug === "websites"
+                ? ` bundles them for ${money(partnership.monthlyCents)} a month.`
+                : `, at ${money(partnership.monthlyCents)} a month.`}
+            </p>
+          ) : null}
+        </div>
+      </section>
+
+      {post ? (
+        <section className="band-2 section-tight">
+          <div className="shell">
+            <Link
+              href={`/blog/${post.slug}`}
+              className="group grid gap-8 border border-[var(--rule)] bg-[var(--bg)] p-8 transition-colors hover:border-[var(--rule-strong)] sm:p-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+            >
+              <div>
+                <p className="text-sm text-[var(--dim)]">From the blog, {post.readingTime}</p>
+                <h2 className="ak-display h-lg mt-3 max-w-[20ch]">{post.title}</h2>
+                <p className="mt-5 max-w-[58ch] text-[var(--fg-2)]">{post.excerpt}</p>
+              </div>
+              <span className="ak-arrow-link w-fit">
+                Read it <ArrowUpRight size={15} aria-hidden="true" />
+              </span>
             </Link>
           </div>
-          <div
-            className={`mt-10 grid gap-4 ${plans.length >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : plans.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2 lg:max-w-[60rem]"}`}
-          >
-            {plans.map((p) => (
-              <PlanCard key={p.slug} plan={p} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="band-2 section-tight">
-        <div className="shell">
-          <Link
-            href={`/blog/${service.post.slug}`}
-            className="group grid gap-8 border border-[var(--rule)] bg-[var(--bg)] p-8 transition-colors hover:border-[var(--rule-strong)] sm:p-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
-          >
-            <div>
-              <p className="text-sm text-[var(--dim)]">From the blog, {service.post.readingTime}</p>
-              <h2 className="ak-display h-lg mt-3 max-w-[20ch]">{service.post.title}</h2>
-              <p className="mt-5 max-w-[58ch] text-[var(--fg-2)]">{service.post.excerpt}</p>
-            </div>
-            <span className="ak-arrow-link w-fit">
-              Read it <ArrowUpRight size={15} aria-hidden="true" />
-            </span>
-          </Link>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       <section className="band section-tight">
         <div className="shell">
           <h2 className="ak-display h-md">Other services</h2>
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
             {others.map((o) => (
               <li key={o.slug}>
                 <Link

@@ -28,312 +28,144 @@ export type PricingPlan = {
 
 export const PRICING_GROUPS = [
   {
-    key: "websites",
-    label: "Websites",
+    key: "plans",
+    label: "Plans",
     blurb:
-      "Choose the level that fits: own the build outright and host it yourself, or let us host, maintain, and grow it for you.",
+      "Three ways to work with us: a year-long growth partnership, a custom website on its own, or a build for AI search.",
   },
   {
-    key: "receptionist",
-    label: "AI Receptionist",
+    key: "addons",
+    label: "Dashboard add-ons",
     blurb:
-      "A voice agent that answers, qualifies, and books — so the phone stops costing you jobs. Every plan includes monitoring, routine tuning, call-routing improvements, and business-day support.",
-  },
-  {
-    key: "systems",
-    label: "Systems & Automation",
-    blurb:
-      "Scoped work. The range depends on how many tools have to talk to each other and how much of your process is bespoke.",
-  },
-  {
-    key: "growth",
-    label: "Brand, Local SEO & Growth",
-    blurb:
-      "Being findable and being credible, measured rather than asserted. Ad spend is billed separately and is not included in management fees.",
-  },
-  {
-    key: "advisory",
-    label: "Advisory",
-    blurb:
-      "Work out what is worth building before anything gets built. Start with the free consultation.",
+      "The Overview and CRM dashboards come with the Growth Partnership and with the Custom Website's monthly plan. Add any of these on top.",
   },
 ] as const;
 
 export const DEFAULT_PLANS: PricingPlan[] = [
-  // ---------------------------------------------------------------- Websites
+  // ------------------------------------------------------------------- Plans
   {
-    slug: "website-build",
-    group: "websites",
-    name: "Website Outright",
-    blurb: "A complete 10-page website build. You receive the full codebase and host it wherever you choose.",
-    monthlyCents: null,
-    onceCents: 100000,
-    priceNote: null,
-    features: [
-      "Up to 10 custom, mobile-first pages",
-      "Google PageSpeed performance guarantee",
-      "Your complete website codebase",
-      "Private admin dashboard with website analytics",
-      "You own the domain, code, and content",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 10,
-  },
-  {
-    slug: "website-care",
-    group: "websites",
-    name: "Managed Website",
-    blurb: "A fast, professionally managed website with hosting, maintenance, and limited content updates included.",
-    monthlyCents: 9900,
+    slug: "growth-partnership",
+    group: "plans",
+    name: "Growth Partnership",
+    blurb:
+      "A year-long partnership. We build your website, manage your Google Business Profile, and send 30 review requests a month.",
+    monthlyCents: 30000,
     onceCents: null,
-    priceNote: null,
+    priceNote: "12-month partnership",
     features: [
-      "Up to 10 custom, mobile-first pages",
-      "Google PageSpeed performance guarantee",
-      "Private admin dashboard with website analytics",
-      "Secure hosting, maintenance, and updates",
-      "Limited monthly content edits",
-    ],
-    featured: true,
-    active: true,
-    sortOrder: 20,
-  },
-  {
-    slug: "website-care-growth",
-    group: "websites",
-    name: "Growth Website",
-    blurb: "Everything in the managed plan, plus ongoing content and local reputation work to help the business grow.",
-    monthlyCents: 25000,
-    onceCents: null,
-    priceNote: null,
-    features: [
-      "Everything in Managed Website",
-      "Unlimited monthly content edits",
-      "Review management",
+      "Your website, designed and built by us",
       "Google Business Profile management",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 20,
-  },
-  {
-    slug: "website-custom",
-    group: "websites",
-    name: "Complete Brand + Website",
-    blurb: "A complete brand and digital presence built together, with the scope shaped around the business.",
-    monthlyCents: null,
-    onceCents: null,
-    priceNote: "Custom proposal",
-    features: [
-      "Everything in Growth Website",
-      "Brand strategy and positioning",
-      "Logo and visual identity",
-      "Website copy and messaging",
-      "Custom website design and build",
-      "Launch and growth foundation",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 40,
-  },
-
-  // ---------------------------------------------------------- AI Receptionist
-  {
-    slug: "receptionist-basic",
-    group: "receptionist",
-    name: "AI Receptionist Basic",
-    blurb: "A realistic voice answering your inbound calls, with one system wired in behind it.",
-    monthlyCents: 20000,
-    onceCents: null,
-    priceNote: null,
-    features: [
-      "Realistic AI voice",
-      "500 included inbound call minutes a month",
-      "One integration",
-      "Additional usage at $0.35/min",
-      "Usage notice at 80% of your included minutes",
-      "Maintenance and business-day support",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 10,
-  },
-  {
-    slug: "receptionist-pro",
-    group: "receptionist",
-    name: "AI Receptionist Pro",
-    blurb: "Everything in Basic, upgraded for higher call volume and more connected business systems.",
-    monthlyCents: 35000,
-    onceCents: null,
-    priceNote: null,
-    features: [
-      "Everything in AI Receptionist Basic",
-      "Ultra-realistic AI voice",
-      "Natural interruption handling",
-      "800 included inbound call minutes a month",
-      "Up to five integrations",
+      "30 review requests a month",
+      "Overview and CRM dashboards included",
+      "Analytics, Finance, AI Assistant and Scheduling: $50/month each",
     ],
     featured: true,
     active: true,
+    sortOrder: 10,
+  },
+  {
+    slug: "custom-website",
+    group: "plans",
+    name: "Custom Website",
+    blurb:
+      "A custom website for a one-time fee. Google Business Profile management and review requests are not included.",
+    monthlyCents: 15000,
+    onceCents: 100000,
+    priceNote: "Monthly plan optional, cancel anytime",
+    features: [
+      "Custom website design and build",
+      "Optional $150/month plan, cancel anytime",
+      "Monthly plan includes the Overview and CRM dashboards",
+      "More dashboards: $50/month each, on the monthly plan",
+    ],
+    featured: false,
+    active: true,
     sortOrder: 20,
   },
   {
-    slug: "receptionist-enterprise",
-    group: "receptionist",
-    name: "AI Receptionist Enterprise",
-    blurb: "Everything in Pro, expanded for a custom knowledge base, advanced routing, and unlimited integrations.",
+    slug: "ai-search",
+    group: "plans",
+    name: "AI Search Optimization",
+    blurb:
+      "200 unique, keyword-driven pages that help your business get recommended by ChatGPT, Claude and other AI answer engines.",
     monthlyCents: null,
-    onceCents: null,
+    onceCents: 300000,
     priceNote: null,
     features: [
-      "Everything in AI Receptionist Pro",
-      "Advanced voice design",
-      "Custom knowledge base",
-      "MCP connections",
-      "Unlimited integrations",
-      "Tailored support",
+      "200 unique keyword-driven pages",
+      "Written to be recommended by AI answer engines",
+      "One-time build",
     ],
     featured: false,
     active: true,
     sortOrder: 30,
   },
 
-  // ------------------------------------------------------ Systems & Automation
+  // ---------------------------------------------------------- Dashboard add-ons
   {
-    slug: "ai-automation",
-    group: "systems",
-    name: "Custom AI Build & Automation",
-    blurb: "Custom AI agents and automations for the parts of the work that currently happen by hand.",
-    monthlyCents: null,
+    slug: "dashboard-analytics",
+    group: "addons",
+    name: "Analytics",
+    blurb: "Google Analytics, Meta and your other social accounts, connected in one view.",
+    monthlyCents: 5000,
     onceCents: null,
     priceNote: null,
-    features: [
-      "Custom AI agents",
-      "Workflow and operations automation",
-      "Follow-up automation",
-      "Business systems integration",
-    ],
+    features: [],
     featured: false,
     active: true,
     sortOrder: 10,
   },
   {
-    slug: "crm-portal",
-    group: "systems",
-    name: "Custom CRM & Client Portal",
-    blurb: "A CRM shaped around how you actually work, and a portal your clients can be given access to.",
-    monthlyCents: null,
+    slug: "dashboard-finance",
+    group: "addons",
+    name: "Finance",
+    blurb: "Quote generation, and the money coming in and going out.",
+    monthlyCents: 5000,
     onceCents: null,
     priceNote: null,
-    features: [
-      "Purpose-built CRM systems",
-      "Client portals",
-      "Integrations",
-      "Workflows and automation",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 20,
-  },
-
-  // ------------------------------------------- Brand, Local SEO & Growth
-  {
-    slug: "ads-management",
-    group: "growth",
-    name: "Google Ads or Meta Ads Management",
-    blurb: "Ongoing campaign management with no setup fee. Billed per active platform; ad spend is separate.",
-    monthlyCents: 30000,
-    onceCents: null,
-    priceNote: null,
-    features: [
-      "Ongoing campaign management",
-      "No setup fee",
-      "Billed per active platform",
-      "Ad spend billed separately",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 10,
-  },
-  {
-    slug: "funnel-build",
-    group: "growth",
-    name: "Custom Funnel Build & Management",
-    blurb: "A lead funnel built once, then run for you — the landing-page journey and everything behind it.",
-    monthlyCents: 30000,
-    onceCents: 50000,
-    priceNote: null,
-    features: [
-      "Custom lead funnel",
-      "Landing-page journey",
-      "Ongoing management",
-    ],
+    features: [],
     featured: false,
     active: true,
     sortOrder: 20,
   },
   {
-    slug: "ai-search-boost",
-    group: "growth",
-    name: "AI Search Visibility Page Boost",
-    blurb: "A page built or rebuilt to be quotable by AI search, not just indexable by Google.",
-    monthlyCents: null,
-    onceCents: 120000,
+    slug: "dashboard-ai-assistant",
+    group: "addons",
+    name: "AI Assistant",
+    blurb: "Reads all your centralized data and gives you clear answers about your business.",
+    monthlyCents: 5000,
+    onceCents: null,
     priceNote: null,
-    features: [
-      "AEO/GEO-focused page build or upgrade",
-    ],
+    features: [],
     featured: false,
     active: true,
     sortOrder: 30,
   },
   {
-    slug: "review-engine",
-    group: "growth",
-    name: "Review Engine",
-    blurb: "Automated follow-up after each job, so the profile keeps moving instead of going stale.",
-    monthlyCents: 20000,
+    slug: "dashboard-scheduling",
+    group: "addons",
+    name: "Scheduling",
+    blurb: "Every calendar you use, synced into one.",
+    monthlyCents: 5000,
     onceCents: null,
     priceNote: null,
-    features: [
-      "Automated review follow-up",
-      "Review management",
-      "Reputation support",
-    ],
+    features: [],
     featured: false,
     active: true,
     sortOrder: 40,
-  },
-
-  // ---------------------------------------------------------------- Advisory
-  {
-    slug: "consultation",
-    group: "advisory",
-    name: "Free Build Consultation",
-    blurb: "What to build, what it should do for you, and roughly what it costs. No charge and no obligation.",
-    monthlyCents: null,
-    onceCents: null,
-    priceNote: "Free",
-    features: [
-      "Identify what to build",
-      "The expected impact",
-      "A realistic investment range",
-    ],
-    featured: false,
-    active: true,
-    sortOrder: 10,
   },
 ];
 
-/** Which plan a service page quotes in its "from" line. */
-export const SERVICE_PLAN: Record<string, string> = {
-  websites: "website-build",
-  automations: "ai-automation",
-  "ai-receptionist": "receptionist-basic",
-  "crm-portals": "crm-portal",
-  "brand-seo": "review-engine",
-};
+/**
+ * Whether saved rows belong to the current offer lineup. The table can still
+ * hold an older lineup (websites, receptionist, systems, growth, advisory
+ * tabs); showing it would put retired offers back on the site, so until an
+ * owner saves the new plans from settings the defaults win.
+ */
+export function isCurrentLineup(plans: { group: string }[]) {
+  const groups: readonly string[] = PRICING_GROUPS.map((g) => g.key);
+  return plans.length > 0 && plans.every((p) => groups.includes(p.group));
+}
 
 export function formatMoney(cents: number) {
   const dollars = cents / 100;
@@ -374,31 +206,10 @@ export async function getPricingPlans(): Promise<PricingPlan[]> {
       sortOrder: row.sortOrder,
     }));
 
-    // Older databases split websites into a build card and separate care
-    // cards. Keep those installs aligned with the new, fully disclosed offers
-    // until an owner saves the replacement plans from pricing settings.
-    const legacyWebsiteBuild = plans.find((plan) => plan.slug === "website-build");
-    const legacyWebsiteCare = plans.find((plan) => plan.slug === "website-care");
-    if (
-      legacyWebsiteBuild?.name === "Standard Website Build" ||
-      legacyWebsiteCare?.monthlyCents === 10000
-    ) {
-      return [
-        ...DEFAULT_PLANS.filter((plan) => plan.group === "websites"),
-        ...plans.filter((plan) => plan.group !== "websites"),
-      ];
-    }
+    if (!isCurrentLineup(plans)) return DEFAULT_PLANS;
 
     return plans;
   } catch {
     return DEFAULT_PLANS;
   }
-}
-
-/** The headline price for one service, used by the service-page anchor. */
-export async function getServicePrice(serviceSlug: string) {
-  const planSlug = SERVICE_PLAN[serviceSlug];
-  if (!planSlug) return null;
-  const plans = await getPricingPlans();
-  return plans.find((p) => p.slug === planSlug) ?? null;
 }

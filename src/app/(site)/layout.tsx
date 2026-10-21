@@ -6,10 +6,10 @@ import { organizationJsonLd, SITE_URL, websiteJsonLd } from "@/lib/marketing/seo
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   description:
-    "Websites, platforms, automations, and digital systems for growing teams and established organizations. Built by hand in Burlington, Vermont.",
+    "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Burlington, Vermont.",
   openGraph: {
     title: "ArkiTech Solutions",
-    description: "Websites, automations, and the systems behind them. Built by hand in Burlington, Vermont.",
+    description: "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Burlington, Vermont.",
     siteName: "ArkiTech Solutions",
     images: ["/media/burlington-night.jpg"],
   },

@@ -1,22 +1,22 @@
 import { PageHeader } from "@/components/marketing/site/page-header";
 import { ContactButton } from "@/components/marketing/site/contact-context";
-import { Studio } from "@/components/marketing/home/studio";
 import { Team } from "@/components/marketing/home/team";
+import { BusinessInfo } from "@/components/marketing/site/business-info";
 import { Closing } from "@/components/marketing/site/closing";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketing/seo";
+import { SITE } from "@/lib/marketing/site";
 
 export const metadata = pageMetadata({
   title: "About ArkiTech Solutions | Burlington, VT Web Studio",
-  description:
-    "ArkiTech Solutions is Ashish Subedi and Teibiroa Ambo, a two-person web and software studio in Burlington, Vermont. Who we are and how we work.",
+  description: `ArkiTech Solutions is Ashish Subedi and Terri Ambo, a web studio in Burlington, Vermont working remotely with businesses anywhere. Call ${SITE.phone}, ${SITE.hours}.`,
   path: "/about",
 });
 
 /**
- * Who is behind the name. Search and AI both need a page that says this
- * outright: other firms share most of "ArkiTech Solutions", and this is the
- * one in Burlington.
+ * Who we are, the team, and how to reach us, on one page. Search and AI both
+ * need a page that says this outright: other firms share most of "ArkiTech
+ * Solutions", and this is the one in Burlington.
  */
 export default function AboutPage() {
   return (
@@ -34,26 +34,25 @@ export default function AboutPage() {
       />
       <PageHeader
         kicker="About ArkiTech Solutions · Burlington, Vermont"
-        title="Two people, both of them here."
+        title="Two people, start to finish."
         wide
         lede={
           <div className="grid gap-4">
             <p>
-              ArkiTech Solutions is Ashish Subedi and Teibiroa Ambo. Ashish studied at Champlain College in Burlington and
-              writes every line of what we ship: no agency layer, no junior handed the project after you sign. Teibiroa
-              handles the relationship, which in practice means you get a person on the phone rather than a ticket number.
+              ArkiTech Solutions is Ashish Subedi and Terri Ambo. Ashish designs and builds everything we ship: no agency
+              layer, no junior handed the project after you sign. Terri looks after every client, so you get a person on the
+              phone rather than a ticket number.
             </p>
             <p>
-              We both live here. If something breaks we are a phone call away in the same time zone, not a support queue in
-              another one.
+              The studio is in Burlington, Vermont, and we work remotely with businesses anywhere in the US.
             </p>
           </div>
         }
       >
         <ContactButton />
       </PageHeader>
-      <Studio />
       <Team />
+      <BusinessInfo />
       <Closing />
     </>
   );

@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/marketing/seo";
 import { services } from "@/lib/services-content";
-import { SERVICE_AREAS } from "@/lib/service-areas";
 
 /**
  * Every indexable public page. A new public page goes here too, or Google
@@ -15,11 +14,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/pricing",
     "/work",
     "/about",
-    "/contact",
     "/faq",
     "/blog",
-    "/service-areas",
-    "/videodemo",
     "/legal/privacy",
     "/legal/terms",
     "/legal/sms",
@@ -28,7 +24,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...pages.map((path) => ({ url: `${SITE_URL}${path}` })),
     ...services.map((s) => ({ url: `${SITE_URL}/services/${s.slug}` })),
-    ...services.map((s) => ({ url: `${SITE_URL}/blog/${s.post.slug}`, lastModified: s.post.updated })),
-    ...SERVICE_AREAS.map((a) => ({ url: `${SITE_URL}/service-areas/${a.slug}` })),
+    ...services.flatMap((s) => (s.post ? [{ url: `${SITE_URL}/blog/${s.post.slug}`, lastModified: s.post.updated }] : [])),
   ];
 }

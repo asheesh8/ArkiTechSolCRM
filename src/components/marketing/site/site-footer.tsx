@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FooterLogo } from "@/components/marketing/site/footer-logo";
 import { Plate } from "@/components/marketing/art/plate";
 import { services } from "@/lib/services-content";
-import { COMPANY_LINKS, SITE } from "@/lib/marketing/site";
+import { PAGE_LINKS, SITE } from "@/lib/marketing/site";
 
 /**
  * Night band. The 1874 Coast Survey chart of the lake sits behind the
@@ -22,7 +22,7 @@ export function SiteFooter() {
           <div>
             <FooterLogo />
             <p className="mt-7 max-w-[32ch] text-[var(--dim)]">
-              Websites, automations, and the systems behind them. Built by hand in Burlington, Vermont.
+              Custom websites, dashboards and AI search pages. Built in Burlington, Vermont, for businesses anywhere.
             </p>
           </div>
 
@@ -35,7 +35,7 @@ export function SiteFooter() {
           </FooterColumn>
 
           <FooterColumn title="Company">
-            {COMPANY_LINKS.map((l) => (
+            {PAGE_LINKS.map((l) => (
               <FooterLink key={l.href + l.label} href={l.href}>
                 {l.label}
               </FooterLink>
@@ -55,11 +55,8 @@ export function SiteFooter() {
                   {SITE.email}
                 </a>
               </Row>
-              <Row term="Studio">
-                <Link href="/contact" className="hover:text-[var(--lamp)]">
-                  {SITE.studio}
-                </Link>
-              </Row>
+              <Row term="Studio">{SITE.studio}</Row>
+              <Row term="Clients">{SITE.reach}</Row>
               <Row term="Hours">{SITE.hours}</Row>
             </dl>
           </div>

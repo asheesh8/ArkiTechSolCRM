@@ -5,6 +5,7 @@ import { Check } from "@phosphor-icons/react";
 import { useContact } from "@/components/marketing/site/contact-context";
 import { PlanPrice } from "@/components/marketing/pricing/plan-price";
 import { tidy, type Plan } from "@/lib/marketing/plan-display";
+import { CTA_LABEL } from "@/lib/marketing/site";
 
 export function PlanCard({ plan }: { plan: Plan }) {
   const { open } = useContact();
@@ -41,7 +42,7 @@ export function PlanCard({ plan }: { plan: Plan }) {
 
       <div className="min-h-8 flex-1" />
       <button type="button" onClick={open} className={clsx("ak-btn w-full", plan.featured ? "ak-btn-primary" : "ak-btn-ghost")}>
-        Book a free call
+        {CTA_LABEL}
       </button>
     </article>
   );

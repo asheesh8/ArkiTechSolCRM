@@ -2,15 +2,15 @@
 
 import { Phone } from "@phosphor-icons/react";
 import { useContact } from "@/components/marketing/site/contact-context";
-import { SITE } from "@/lib/marketing/site";
+import { CTA_LABEL, SITE } from "@/lib/marketing/site";
 
 /**
  * The bookend to the hero: the same view of Burlington, now with every light
  * on. The page opens at dusk and closes at night.
  */
 export function Closing({
-  title = "Let's build what's next.",
-  body = "Bring us the business challenge, the half-formed idea, or the system that has stopped keeping up. We'll help shape the clearest way forward.",
+  title = "Ready when you are.",
+  body = "Answer a few quick questions and pick a time that suits you. We'll come to the call with ideas for your business.",
 }: {
   title?: string;
   body?: string;
@@ -36,7 +36,7 @@ export function Closing({
         <p className="ak-lede mt-7 max-w-[46ch]">{body}</p>
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <button type="button" onClick={open} className="ak-btn ak-btn-primary">
-            Book a free call
+            {CTA_LABEL}
           </button>
           <a href={SITE.phoneHref} className="ak-btn ak-btn-ghost">
             <Phone size={16} aria-hidden="true" />
@@ -44,7 +44,7 @@ export function Closing({
           </a>
         </div>
         <p className="mt-5 text-sm text-[var(--dim)]">
-          No obligation. Twenty minutes. We&apos;ll tell you if we&apos;re not the right fit.
+          No obligation. Takes about a minute.
         </p>
       </div>
     </section>

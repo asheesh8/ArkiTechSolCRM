@@ -1,24 +1,19 @@
 import { Hero } from "@/components/marketing/home/hero";
 import { WorkShowcase } from "@/components/marketing/home/work-showcase";
 import { ServicesGrid } from "@/components/marketing/home/services-grid";
-import { IntegrationsFloat } from "@/components/marketing/home/integrations-float";
-import { PricingBand } from "@/components/marketing/home/pricing-band";
-import { Studio } from "@/components/marketing/home/studio";
-import { Capabilities } from "@/components/marketing/home/capabilities";
-import { Team } from "@/components/marketing/home/team";
-import { ServiceAreas } from "@/components/marketing/home/service-areas";
 import { Closing } from "@/components/marketing/site/closing";
+import { BusinessInfo } from "@/components/marketing/site/business-info";
 import { PageView } from "@/components/marketing/site/page-view";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
-  title: "Web Design & AI Receptionists in Burlington, VT | ArkiTech",
+  title: "Custom Websites, Dashboards & AI Search | ArkiTech",
   description:
-    "Hand-built websites, AI receptionists, automations and local SEO for Vermont businesses. Two people in Burlington, prices published, no lock-in.",
+    "Custom websites, business dashboards and CRM, and AI search optimization. A Burlington, Vermont studio working with businesses anywhere in the US.",
   path: "/",
 });
 
-// The pricing band and service prices read the database.
+// The service prices read the database.
 export const revalidate = 300;
 
 export default function Home() {
@@ -28,13 +23,8 @@ export default function Home() {
       <Hero />
       <WorkShowcase />
       <ServicesGrid />
-      <IntegrationsFloat />
-      <PricingBand />
-      <Studio />
-      <Capabilities />
-      <Team />
-      <ServiceAreas />
       <Closing />
+      <BusinessInfo />
     </>
   );
 }

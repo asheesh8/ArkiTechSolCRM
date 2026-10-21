@@ -7,7 +7,7 @@ import type { PricingPlan } from "@/lib/pricing";
  */
 
 export type Plan = PricingPlan;
-export type GroupKey = "websites" | "receptionist" | "systems" | "growth" | "advisory";
+export type GroupKey = "plans" | "addons";
 export type Group = { key: GroupKey; label: string; blurb: string };
 
 /** Same output as formatMoney in @/lib/pricing: $195, never $195.00, real cents kept. */
@@ -34,37 +34,28 @@ export function plansIn(plans: Plan[], group: GroupKey) {
   return plans.filter((p) => p.group === group && p.active !== false);
 }
 
-export function cheapest(plans: Plan[], key: "monthlyCents" | "onceCents") {
-  return plans
-    .filter((p) => p[key] != null)
-    .sort((a, b) => (a[key] as number) - (b[key] as number))[0];
-}
+/** Which plan each service page quotes and shows first. */
+export const SERVICE_PLAN: Record<string, string> = {
+  websites: "custom-website",
+  "ai-search": "ai-search",
+  dashboards: "dashboard-analytics",
+};
 
-export function planNamed(plans: Plan[], name: string) {
-  return plans.find((p) => p.name.toLowerCase() === name.toLowerCase());
+export function planFor(serviceSlug: string, plans: Plan[]) {
+  const slug = SERVICE_PLAN[serviceSlug];
+  return plans.find((p) => p.slug === slug && p.active !== false);
 }
 
 /** The "from" line a service quotes, derived from whatever plans are live. */
 export function startingPrice(serviceSlug: string, plans: Plan[]): { lead: string; amount?: string; tail?: string } {
-  switch (serviceSlug) {
-    case "websites": {
-      const p = cheapest(plansIn(plans, "websites"), "monthlyCents");
-      return p ? { lead: "From", amount: money(p.monthlyCents!), tail: "a month" } : { lead: "See pricing" };
-    }
-    case "ai-receptionist": {
-      const group = plansIn(plans, "receptionist");
-      const p = cheapest(group, "onceCents") ?? cheapest(group, "monthlyCents");
-      if (!p) return { lead: "See pricing" };
-      if (p.onceCents != null && p.monthlyCents != null) {
-        return { lead: "From", amount: money(p.onceCents), tail: `then ${money(p.monthlyCents)} a month` };
-      }
-      return { lead: "From", amount: money((p.onceCents ?? p.monthlyCents)!), tail: p.monthlyCents != null ? "a month" : "one time" };
-    }
-    case "brand-seo": {
-      const p = cheapest(plansIn(plans, "growth"), "onceCents");
-      return p ? { lead: p.name, amount: money(p.onceCents!), tail: "one time" } : { lead: "See pricing" };
-    }
-    default:
-      return { lead: "Built to scope, quoted in writing" };
+  const p = planFor(serviceSlug, plans);
+  if (!p) return { lead: "See pricing" };
+  if (p.group === "addons" && p.monthlyCents != null) {
+    return { lead: "Overview and CRM included, add-ons", amount: money(p.monthlyCents), tail: "a month each" };
   }
+  if (p.onceCents != null) {
+    return { lead: "", amount: money(p.onceCents), tail: p.monthlyCents != null ? "one time, monthly plan optional" : "one time" };
+  }
+  if (p.monthlyCents != null) return { lead: "", amount: money(p.monthlyCents), tail: "a month" };
+  return { lead: p.priceNote ? tidy(p.priceNote) : "See pricing" };
 }

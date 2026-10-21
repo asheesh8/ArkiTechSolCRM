@@ -6,7 +6,7 @@ import { Plate } from "@/components/marketing/art/plate";
 import { ContactButton } from "@/components/marketing/site/contact-context";
 import { Closing } from "@/components/marketing/site/closing";
 import { PLATES, SERVICE_PLATE } from "@/lib/marketing/art";
-import { getPost, services } from "@/lib/services-content";
+import { getPost, servicesWithPosts } from "@/lib/services-content";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { AUTHOR, breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketing/seo";
 
@@ -14,7 +14,7 @@ const longDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 export function generateStaticParams() {
-  return services.map((s) => ({ slug: s.post.slug }));
+  return servicesWithPosts.map((s) => ({ slug: s.post.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -35,7 +35,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   if (!found) notFound();
   const { service, post } = found;
   const plate = SERVICE_PLATE[service.slug];
-  const others = services.filter((s) => s.post.slug !== post.slug);
+  const others = servicesWithPosts.filter((s) => s.post.slug !== post.slug);
 
   const path = `/blog/${post.slug}`;
   const article = {

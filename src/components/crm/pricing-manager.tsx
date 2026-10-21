@@ -29,7 +29,7 @@ type Draft = PricingPlan & {
 
 const BLANK: Draft = {
   slug: "",
-  group: "websites",
+  group: "plans",
   name: "",
   blurb: "",
   monthlyCents: null,

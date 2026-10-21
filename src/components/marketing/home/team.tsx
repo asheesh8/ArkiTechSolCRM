@@ -8,7 +8,7 @@ const TEAM: {
   initials: string;
   country: Country;
   tags: string[];
-  /** Direct line. The site's main number (SITE.phone) is Tei's. */
+  /** Direct line. The site's main number (SITE.phone) is Terri's. */
   phone: string;
   phoneHref: string;
 }[] = [
@@ -23,9 +23,9 @@ const TEAM: {
     phoneHref: "tel:+18023103749",
   },
   {
-    name: "Teibiroa Ambo",
+    name: "Terri Ambo",
     role: "CEO & Director of Client Relations",
-    bio: "Tei is the voice of ArkiTech: building trust with every call, nurturing long-term client relationships, and making sure every business we work with feels like a priority.",
+    bio: "Terri is the voice of ArkiTech: building trust with every call, nurturing long-term client relationships, and making sure every business we work with feels like a priority.",
     initials: "TA",
     country: "kiribati",
     tags: ["Client Success", "Sales", "Relations", "Consultant"],
@@ -40,9 +40,9 @@ export function Team() {
     <section id="team" className="band section">
       <div className="shell">
         <div className="max-w-3xl">
-          <h2 className="ak-display h-xl">Built by people who actually give a dang.</h2>
+          <h2 className="ak-display h-xl">The team</h2>
           <p className="ak-lede mt-6 max-w-[48ch]">
-            A focused leadership team with a network built to scale around each engagement.
+            You work directly with the two of us, from the first call to launch and after.
           </p>
         </div>
 

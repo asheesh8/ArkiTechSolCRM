@@ -11,7 +11,7 @@ import { useContact } from "@/components/marketing/site/contact-context";
 import { ThemeToggle } from "@/components/marketing/site/theme-toggle";
 import { services } from "@/lib/services-content";
 import { SERVICE_PLATE } from "@/lib/marketing/art";
-import { ABOUT_LINKS, SITE } from "@/lib/marketing/site";
+import { CTA_LABEL, PAGE_LINKS, SITE } from "@/lib/marketing/site";
 
 /**
  * Transparent over the Burlington footage on the home page, solid paper
@@ -26,7 +26,7 @@ export function SiteNav() {
   const navRef = useRef<HTMLElement>(null);
   const lastY = useRef(0);
 
-  const [menu, setMenu] = useState<"services" | "about" | null>(null);
+  const [menu, setMenu] = useState<"services" | null>(null);
   const [mobile, setMobile] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [overHero, setOverHero] = useState(pathname === "/");
@@ -121,38 +121,13 @@ export function SiteNav() {
                 </li>
               ))}
             </ul>
-            <Link
-              href="/services"
-              onClick={() => setMenu(null)}
-              className="mt-2 flex items-center justify-between border-t border-[var(--rule)] px-3 pt-3 text-sm font-medium text-[var(--fg)] hover:text-[var(--accent-text)]"
-            >
-              All services <span aria-hidden="true">→</span>
-            </Link>
           </Dropdown>
 
-          <Dropdown
-            label="About"
-            open={menu === "about"}
-            onToggle={() => setMenu((m) => (m === "about" ? null : "about"))}
-          >
-            <ul className="grid">
-              {ABOUT_LINKS.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    onClick={() => setMenu(null)}
-                    className="block px-3 py-2.5 text-[var(--fg)] transition-colors duration-150 hover:bg-[var(--bg-2)]"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Dropdown>
-
-          <NavLink href="/pricing" active={pathname === "/pricing"}>Pricing</NavLink>
-          <NavLink href="/faq" active={pathname === "/faq"}>FAQ</NavLink>
-          <NavLink href="/blog" active={pathname.startsWith("/blog")}>Blog</NavLink>
+          {PAGE_LINKS.map((l) => (
+            <NavLink key={l.href} href={l.href} active={pathname === l.href || pathname.startsWith(`${l.href}/`)}>
+              {l.label}
+            </NavLink>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2.5">
@@ -165,7 +140,7 @@ export function SiteNav() {
           </a>
           <ThemeToggle />
           <button type="button" onClick={openContact} className="ak-btn ak-btn-primary ak-btn-sm hidden sm:inline-flex">
-            Book a free call
+            {CTA_LABEL}
           </button>
           <button
             type="button"
@@ -201,7 +176,7 @@ export function SiteNav() {
               ))}
             </ul>
             <ul className="mt-6 grid grid-cols-2 gap-x-6">
-              {[...ABOUT_LINKS, { href: "/pricing", label: "Pricing" }, { href: "/faq", label: "FAQ" }, { href: "/blog", label: "Blog" }, { href: "/services", label: "All services" }].map((l) => (
+              {PAGE_LINKS.map((l) => (
                 <li key={l.href + l.label} className="border-b border-[var(--rule)]">
                   <Link href={l.href} onClick={() => setMobile(false)} className="block py-3 text-[1.02rem]">
                     {l.label}
@@ -218,7 +193,7 @@ export function SiteNav() {
                 }}
                 className="ak-btn ak-btn-primary w-full"
               >
-                Book a free call
+                {CTA_LABEL}
               </button>
               <a href={SITE.phoneHref} className="ak-btn ak-btn-ghost w-full">
                 <Phone size={16} aria-hidden="true" /> Call {SITE.phone}

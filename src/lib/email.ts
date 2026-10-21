@@ -43,19 +43,21 @@ function esc(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** "Book a free call": the questionnaire answers, to the studio inbox. */
+/** The get-started form: the questionnaire answers, to the studio inbox. */
 export async function sendBookingRequest(opts: {
   name: string;
   email: string;
   phone?: string;
   business?: string;
   services: string[];
+  currentSite?: string;
   timeline: string;
   budget: string;
   message?: string;
 }) {
   const rows: Array<[string, string | undefined]> = [
     ["Looking for", opts.services.join(", ")],
+    ["Website today", opts.currentSite],
     ["Timeline", opts.timeline],
     ["Budget", opts.budget],
     ["Business", opts.business],
@@ -66,10 +68,10 @@ export async function sendBookingRequest(opts: {
     from: FROM,
     to: STUDIO_INBOX,
     replyTo: opts.email,
-    subject: `[ArkiTech] Free call: ${opts.name} (${opts.services.join(", ")}, ${opts.timeline.toLowerCase()})`,
+    subject: `[ArkiTech] New lead: ${opts.name} (${opts.services.join(", ")}, ${opts.timeline.toLowerCase()})`,
     html: base(`
-<h1>Free call request</h1>
-<p>${esc(opts.name)} answered the booking questions on the site. If a calendar invite follows, it comes from the booking page; reply here to reach them directly.</p>
+<h1>New lead from the website</h1>
+<p>${esc(opts.name)} answered the get-started questions on the site and agreed to be contacted. If a calendar invite follows, it comes from the booking page; reply here to reach them directly.</p>
 <div class="info">
 ${rows.filter(([, v]) => v).map(([k, v], i) => `  <p${i ? ' style="margin-top:8px"' : ""}><strong>${k}:</strong> ${esc(v!)}</p>`).join("\n")}
 </div>

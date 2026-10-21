@@ -9,36 +9,27 @@ import { loadPlans } from "@/lib/marketing/plans";
 import { startingPrice } from "@/lib/marketing/plan-display";
 
 /**
- * Five services, five cells, each carrying the nineteenth-century machine it
- * descends from. The grid is shaped to the plates: the wide elevation gets the
- * wide cell, the tall engine the tall one, and the lighthouse stands in the
- * one night cell.
+ * Three cells, each carrying the nineteenth-century machine it descends from.
+ * The grid is shaped to the plates: the wide elevation gets the wide cell and
+ * the tall engine the tall one, whatever order the services are listed in.
  */
-const LAYOUT: Record<string, { cell: string; art: string; tone: "paper" | "raised" | "night" }> = {
+const LAYOUT: Record<string, { cell: string; art: string; tone: "paper" | "raised" | "night"; wideCopy?: boolean }> = {
   websites: {
-    cell: "lg:col-span-4",
+    cell: "lg:order-1 lg:col-span-4",
     art: "h-44 lg:absolute lg:inset-y-7 lg:right-7 lg:h-auto lg:w-[46%]",
     tone: "raised",
+    wideCopy: true,
   },
-  automations: {
-    cell: "lg:col-span-2 lg:row-span-2",
+  "ai-search": {
+    cell: "lg:order-2 lg:col-span-2 lg:row-span-2",
     art: "h-56 lg:h-auto lg:min-h-[16rem] lg:flex-1",
-    tone: "paper",
-  },
-  "ai-receptionist": {
-    cell: "lg:col-span-2",
-    art: "h-28 lg:h-32",
-    tone: "paper",
-  },
-  "crm-portals": {
-    cell: "lg:col-span-2",
-    art: "h-40 lg:h-44",
-    tone: "raised",
-  },
-  "brand-seo": {
-    cell: "lg:col-span-6 lg:min-h-[22rem]",
-    art: "h-56 lg:absolute lg:inset-y-5 lg:right-16 lg:h-auto lg:w-[24%]",
     tone: "night",
+  },
+  dashboards: {
+    cell: "sm:col-span-2 lg:order-3 lg:col-span-4",
+    art: "h-40 lg:absolute lg:inset-y-7 lg:right-7 lg:h-auto lg:w-[40%]",
+    tone: "paper",
+    wideCopy: true,
   },
 };
 
@@ -48,10 +39,10 @@ export async function ServicesGrid() {
     <section id="services" className="band section">
       <div className="shell">
         <div className="max-w-3xl">
-          <h2 className="ak-display h-xl">Five things, done properly.</h2>
+          <h2 className="ak-display h-xl">What we build.</h2>
           <p className="ak-lede mt-6 max-w-[52ch]">
-            We don&apos;t sell a package and retrofit your business into it. Pick the piece you need. Most
-            people start with one and add the next when it earns its place.
+            A website that brings in leads, the dashboards to keep track of them, and pages that get
+            your business recommended by AI.
           </p>
         </div>
 
@@ -60,7 +51,7 @@ export async function ServicesGrid() {
             const l = LAYOUT[s.slug];
             const price = startingPrice(s.slug, plans);
             return (
-              <Reveal as="li" key={s.slug} delay={i * 70} className={clsx(l.cell, s.slug === "brand-seo" && "sm:col-span-2")}>
+              <Reveal as="li" key={s.slug} delay={i * 70} className={l.cell}>
                 <Link
                   href={`/services/${s.slug}`}
                   className={clsx(
@@ -70,7 +61,7 @@ export async function ServicesGrid() {
                     l.tone === "night" && "band-night border-transparent",
                   )}
                 >
-                  <div className={clsx("relative z-10 max-w-[30rem]", (s.slug === "websites" || s.slug === "brand-seo") && "lg:max-w-[48%]")}>
+                  <div className={clsx("relative z-10 max-w-[30rem]", l.wideCopy && "lg:max-w-[48%]")}>
                     <h3 className="ak-display h-md">{s.name}</h3>
                     <p className="mt-3 text-[var(--fg-2)]">{s.tagline}.</p>
                   </div>

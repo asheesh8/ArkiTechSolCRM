@@ -69,8 +69,6 @@ export const PLATES: Record<PlateKey, { src: string; w: number; h: number; capti
 /** Which plate stands for which service. */
 export const SERVICE_PLATE: Record<string, PlateKey> = {
   websites: "elevation",
-  automations: "difference-engine",
-  "ai-receptionist": "bell-telephone",
-  "crm-portals": "hollerith",
-  "brand-seo": "lighthouse",
+  "ai-search": "difference-engine",
+  dashboards: "hollerith",
 };

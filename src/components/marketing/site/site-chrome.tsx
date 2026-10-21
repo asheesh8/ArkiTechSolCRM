@@ -2,7 +2,6 @@ import { ContactProvider } from "@/components/marketing/site/contact-context";
 import { SiteNav } from "@/components/marketing/site/site-nav";
 import { SiteFooter } from "@/components/marketing/site/site-footer";
 import { ContactDialog } from "@/components/marketing/site/contact-dialog";
-import { CallbackWidget } from "@/components/marketing/site/callback-widget";
 import { CookieNotice } from "@/components/marketing/site/cookie-notice";
 
 /**
@@ -21,7 +20,6 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
       <main id="main">{children}</main>
       <SiteFooter />
       <ContactDialog />
-      <CallbackWidget />
       <CookieNotice />
     </ContactProvider>
   );

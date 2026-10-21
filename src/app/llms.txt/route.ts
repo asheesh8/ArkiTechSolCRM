@@ -3,8 +3,7 @@ import { money, plansIn, tidy, type Plan } from "@/lib/marketing/plan-display";
 import { SITE_URL } from "@/lib/marketing/seo";
 import { SITE } from "@/lib/marketing/site";
 import { WORK } from "@/lib/marketing/work";
-import { services } from "@/lib/services-content";
-import { SERVICE_AREAS } from "@/lib/service-areas";
+import { services, servicesWithPosts } from "@/lib/services-content";
 
 /**
  * /llms.txt (llmstxt.org): the site in plain Markdown for AI assistants, so a
@@ -17,10 +16,11 @@ import { SERVICE_AREAS } from "@/lib/service-areas";
 export const revalidate = 300;
 
 function price(p: Plan) {
-  if (p.onceCents != null && p.monthlyCents != null) return `${money(p.onceCents)} to build, then ${money(p.monthlyCents)} a month`;
-  if (p.monthlyCents != null) return `${money(p.monthlyCents)} a month`;
-  if (p.onceCents != null) return `${money(p.onceCents)} one time`;
-  return p.priceNote ? tidy(p.priceNote) : "Quoted in writing to scope";
+  const note = p.priceNote ? ` (${tidy(p.priceNote)})` : "";
+  if (p.onceCents != null && p.monthlyCents != null) return `${money(p.onceCents)} to build, plus ${money(p.monthlyCents)} a month${note}`;
+  if (p.monthlyCents != null) return `${money(p.monthlyCents)} a month${note}`;
+  if (p.onceCents != null) return `${money(p.onceCents)} one time${note}`;
+  return p.priceNote ? tidy(p.priceNote) : "See the pricing page";
 }
 
 export async function GET() {
@@ -30,13 +30,14 @@ export async function GET() {
   const lines = [
     `# ${SITE.name}`,
     "",
-    `> ${SITE.name} is a two-person web and software studio in ${SITE.studio}. We build websites, AI phone receptionists, automations, custom CRMs and client portals, and run local SEO for small and growing businesses, mostly in Vermont.`,
+    `> ${SITE.name} is a two-person web and software studio in ${SITE.studio}. We build custom websites, business dashboards and CRM, and AI search optimization, and offer a year-long Growth Partnership (website, Google Business Profile management and 30 review requests a month). We work remotely with businesses anywhere in the US.`,
     "",
     `- Phone: ${SITE.phone}`,
     `- Email: ${SITE.email}`,
     `- Hours: ${SITE.hours}`,
-    "- People: Ashish Subedi (CEO & Fullstack Designer, builds every site) and Teibiroa Ambo (CEO & Director of Client Relations)",
-    "- Recurring plans are month to month. Project work is quoted in writing before it starts. Clients own their domain, code and content.",
+    `- Clients: ${SITE.reach} (the studio is in ${SITE.studio}; the work is remote)`,
+    "- People: Ashish Subedi (CEO & Fullstack Designer, builds every site) and Terri Ambo (CEO & Director of Client Relations)",
+    "- The Growth Partnership is a 12-month partnership. The Custom Website is a one-time fee; its monthly plan is optional and can be cancelled anytime. AI Search Optimization is a one-time build.",
     "",
     "## Services",
     "",
@@ -51,20 +52,15 @@ export async function GET() {
       if (rows.length === 0) return [];
       return [`### ${g.label}`, "", ...rows.map((p) => `- ${p.name}: ${price(p)}`), ""];
     }),
-    "## Service areas",
-    "",
-    ...SERVICE_AREAS.map((a) => `- [${a.town}, Vermont](${url(`/service-areas/${a.slug}`)}): ${a.short}`),
-    "",
     "## Client work",
     "",
     ...WORK.filter((w) => w.kind === "client").map((w) => `- [${w.name}](${w.url}): ${w.what}${w.where ? `, ${w.where}` : ""}`),
     "",
     "## More",
     "",
-    `- [About](${url("/about")})`,
-    `- [Contact](${url("/contact")})`,
+    `- [About and contact](${url("/about")})`,
     `- [FAQ](${url("/faq")})`,
-    ...services.map((s) => `- [${s.post.title}](${url(`/blog/${s.post.slug}`)}): ${s.post.excerpt}`),
+    ...servicesWithPosts.map((s) => `- [${s.post.title}](${url(`/blog/${s.post.slug}`)}): ${s.post.excerpt}`),
     "",
   ];
 

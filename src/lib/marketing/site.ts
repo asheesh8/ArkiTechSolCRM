@@ -6,25 +6,20 @@ export const SITE = {
   phoneHref: "tel:+18025578828",
   email: "studio@sol-arkitech.com",
   studio: "Burlington, Vermont",
-  hours: "Mon-Fri, 8am-5pm",
+  hours: "Mon-Fri, 8am-7pm",
+  /** Where clients can be. The studio is in Burlington; the work is remote. */
+  reach: "Remote, anywhere in the US",
   founded: "July 2026",
 } as const;
 
-export const ABOUT_LINKS = [
-  { href: "/about", label: "The studio" },
-  { href: "/work", label: "Our work" },
-  { href: "/about#team", label: "The team" },
-  { href: "/service-areas", label: "Service areas" },
-  { href: "/contact", label: "Contact" },
+/** Pages every visitor might want, beyond the three services. Nav and footer share it. */
+export const PAGE_LINKS = [
+  { href: "/work", label: "Work" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/blog", label: "Blog" },
 ] as const;
 
-export const COMPANY_LINKS = [
-  { href: "/services", label: "All services" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/service-areas", label: "Service areas" },
-  { href: "/blog", label: "Blog" },
-  { href: "/work", label: "Work" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-] as const;
+/** The label on every button that opens the get-started form. */
+export const CTA_LABEL = "Get started";

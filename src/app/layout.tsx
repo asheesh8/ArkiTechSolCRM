@@ -41,7 +41,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "ArkiTech Solutions",
-  description: "Websites, platforms, automations, and digital systems for growing teams and established organizations.",
+  description: "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Burlington, Vermont.",
 };
 
 // viewport-fit=cover lets the CRM shell paint under the notch and home

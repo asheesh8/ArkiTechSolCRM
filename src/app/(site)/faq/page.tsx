@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/marketing/site/page-header";
 import { FaqItem } from "@/components/marketing/faq/faq-item";
 import { Closing } from "@/components/marketing/site/closing";
 import { loadPlans } from "@/lib/marketing/plans";
-import { cheapest, money, planNamed, plansIn, startingPrice, type Plan } from "@/lib/marketing/plan-display";
+import { money, plansIn, type Plan } from "@/lib/marketing/plan-display";
 import { SPEED_FLOOR } from "@/lib/pagespeed-audit";
 import { SITE } from "@/lib/marketing/site";
 import { pageMetadata } from "@/lib/marketing/seo";
@@ -11,7 +11,7 @@ import { pageMetadata } from "@/lib/marketing/seo";
 export const metadata = pageMetadata({
   title: "Website Design FAQ: Cost, Ownership, Timelines | ArkiTech",
   description:
-    "What a website costs, who owns it, how long a build takes, how the AI receptionist works, and what happens if you want to leave. Straight answers.",
+    "What the Growth Partnership and a custom website cost, how long a build takes, what the dashboards do, and how AI search optimization works. Straight answers.",
   path: "/faq",
 });
 
@@ -21,45 +21,53 @@ type Faq = { q: string; a: string; link?: { href: string; label: string } };
 // Prices are read from the same rows as the pricing page, so the FAQ can
 // never quote a different number again (the old page said $195 and $4,500
 // long after the plans changed).
-function websiteAnswer(plans: Plan[]) {
-  const web = plansIn(plans, "websites");
-  const basic = planNamed(web, "HostBasic") ?? cheapest(web, "monthlyCents");
-  const pro = planNamed(web, "HostPro");
-  const own = cheapest(web, "onceCents");
+function priceOf(plans: Plan[], slug: string) {
+  return plans.find((p) => p.slug === slug && p.active !== false);
+}
+
+function costAnswer(plans: Plan[]) {
+  const partner = priceOf(plans, "growth-partnership");
+  const site = priceOf(plans, "custom-website");
+  const search = priceOf(plans, "ai-search");
   return [
-    basic?.monthlyCents != null ? `${basic.name} is ${money(basic.monthlyCents)} a month and covers hosting and limited edits.` : "",
-    pro?.monthlyCents != null
-      ? `${pro.name}, at ${money(pro.monthlyCents)}, adds unlimited edits turned around in 24 hours and Google Business Profile management.`
+    partner?.monthlyCents != null
+      ? `The ${partner.name} is ${money(partner.monthlyCents)} a month for 12 months: your website, Google Business Profile management, review requests, and the Overview and CRM dashboards.`
       : "",
-    own?.onceCents != null ? `If you'd rather own it outright, a custom build is ${money(own.onceCents)} once.` : "",
+    site?.onceCents != null
+      ? `A ${site.name} is ${money(site.onceCents)} once${site.monthlyCents != null ? `, with an optional ${money(site.monthlyCents)} a month plan that adds the Overview and CRM dashboards` : ""}.`
+      : "",
+    search?.onceCents != null ? `${search.name} is a ${money(search.onceCents)} one-time build.` : "",
     "Everything is on the pricing page; we don't make you ask.",
   ]
     .filter(Boolean)
     .join(" ");
 }
 
+function addonAnswer(plans: Plan[]) {
+  const addons = plansIn(plans, "addons");
+  const each = addons.find((p) => p.monthlyCents != null)?.monthlyCents;
+  const names = addons.map((p) => p.name);
+  const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names.join("");
+  return `Nothing hidden. Every price is printed on the pricing page. The only extras are the dashboard add-ons${list ? ` (${list})` : ""}${each != null ? `, at ${money(each)} a month each` : ""}, and you choose whether to add them.`;
+}
+
 function sections(plans: Plan[]): { heading: string; items: Faq[] }[] {
-  const reception = startingPrice("ai-receptionist", plans);
   return [
   {
     heading: "Money",
     items: [
       {
-        q: "What does a website cost?",
-        a: websiteAnswer(plans),
+        q: "What does it cost?",
+        a: costAnswer(plans),
         link: { href: "/pricing", label: "See every plan" },
       },
       {
         q: "Is there a contract or a lock-in?",
-        a: "No. Every recurring plan is month to month. Cancel whenever and you keep the domain, the code, and the content. We hand over the repository and point the domain wherever you want it.",
+        a: "The Growth Partnership is a 12-month partnership. The Custom Website is paid once, and its monthly plan is optional: cancel it whenever you like. AI Search Optimization is a one-time build.",
       },
       {
         q: "Are there setup fees or hidden costs?",
-        a: `Nothing hidden. Website plans have no setup fee and hosting is inside the monthly price. The AI receptionist has a one-time build fee${reception.amount ? `, from ${reception.amount}` : ""}, printed next to its monthly price. Anything else billed on top is printed next to the plan, like metered minutes if your receptionist goes past what's included.`,
-      },
-      {
-        q: "Why is some work built to scope?",
-        a: "Because an honest number needs a scope. Automations and CRM builds vary by an order of magnitude depending on how many tools have to talk and how bespoke your process is. You get a fixed written quote after the call, before anything starts.",
+        a: addonAnswer(plans),
       },
     ],
   },
@@ -78,30 +86,28 @@ function sections(plans: Plan[]): { heading: string; items: Faq[] }[] {
         q: "How long does a build take?",
         a: "Two to four weeks for a standard site, from the first call to launch. The variable is almost never us. It's how quickly we get your photos, your service list, and your feedback on the first draft.",
       },
-      {
-        q: "How do edits work after launch?",
-        a: "On HostPro and HostSOL they're unlimited and turned around within 24 hours; HostBasic includes limited edits. Email or text us what needs changing. There's no ticket system and no per-change fee.",
-      },
-      {
-        q: "Can you work with the site I already have?",
-        a: "Sometimes. ReviewRetainer, the AI receptionist, and most automations sit alongside whatever you're running now. A rebuild is usually the honest answer if the existing site is on a builder and the speed is the problem. We'll tell you which case you're in on the call.",
-      },
     ],
   },
   {
     heading: "How it runs",
     items: [
       {
-        q: "Does the AI receptionist sound like a robot?",
-        a: "It sounds like a competent receptionist reading from your notes, and it says it's an assistant if asked. It knows your services, pricing, and service area, books into your calendar, and hands off to a real number on request. It is not trying to pass as a person.",
+        q: "What are the dashboards?",
+        a: "The Overview and CRM dashboards come with the Growth Partnership and with the Custom Website's monthly plan: every lead and client in one place, and the state of the business at a glance. You can add Analytics (Google Analytics, Meta and your social media), Finance (quotes, money in and out), an AI Assistant that answers questions from all your data, and Scheduling, which syncs your calendars into one.",
+        link: { href: "/services/dashboards", label: "More on the dashboards" },
+      },
+      {
+        q: "What is AI search optimization?",
+        a: "More people now ask ChatGPT, Claude and other AI assistants who to hire. We build 200 unique, keyword-driven pages so those answer engines have something specific to recommend your business for.",
+        link: { href: "/services/ai-search", label: "More on AI search" },
       },
       {
         q: "Who actually does the work?",
-        a: "Ashish builds it. Teibiroa handles the relationship. Nothing is outsourced and nothing is passed to a junior after you sign. The person on the call is the person writing the code.",
+        a: "Ashish builds it. Terri handles the relationship. Nothing is outsourced and nothing is passed to a junior after you sign. The person on the call is the person writing the code.",
       },
       {
         q: "Do you only work with Vermont businesses?",
-        a: "We're in Burlington and most of our work is in Vermont, which matters for local SEO because we know the towns. But the websites, automations, and receptionist work fine anywhere in the US.",
+        a: "No. The studio is in Burlington, Vermont, but we work remotely with businesses anywhere in the US. Calls, reviews and launches all happen online.",
       },
       {
         q: "What happens on the first call?",
@@ -112,7 +118,7 @@ function sections(plans: Plan[]): { heading: string; items: Faq[] }[] {
   ];
 }
 
-// The website and receptionist answers quote live prices.
+// The money answers quote live prices.
 export const revalidate = 300;
 
 export default async function FaqPage() {

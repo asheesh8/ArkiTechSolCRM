@@ -6,17 +6,26 @@ import { ArrowLeft, ArrowRight, ArrowSquareOut, Check, CheckCircle, Phone, X } f
 import { Mark } from "@/components/marketing/brand/mark";
 import { useContact } from "@/components/marketing/site/contact-context";
 import { trackGoogleEvent } from "@/lib/google-tag";
-import { BOOKING_BUDGETS, BOOKING_SERVICES, BOOKING_TIMELINES, BOOKING_URL, bookingEmbedUrl } from "@/lib/marketing/booking";
-import { SITE } from "@/lib/marketing/site";
+import {
+  BOOKING_BUDGETS,
+  BOOKING_CURRENT_SITE,
+  BOOKING_SERVICES,
+  BOOKING_TIMELINES,
+  BOOKING_URL,
+  bookingEmbedUrl,
+  CONTACT_CONSENT_TEXT,
+} from "@/lib/marketing/booking";
+import { CTA_LABEL, SITE } from "@/lib/marketing/site";
 
-type Step = "service" | "timeline" | "budget" | "details" | "calendar" | "sent";
+type Step = "service" | "site" | "timeline" | "budget" | "details" | "calendar" | "sent";
 type Status = "idle" | "sending" | "error";
 
-const QUESTIONS: Step[] = ["service", "timeline", "budget", "details"];
+const QUESTIONS: Step[] = ["service", "site", "timeline", "budget", "details"];
 const NOT_SURE = "Not sure yet";
 
 const EMPTY = {
   services: [] as string[],
+  currentSite: "",
   timeline: "",
   budget: "",
   name: "",
@@ -24,14 +33,16 @@ const EMPTY = {
   phone: "",
   business: "",
   message: "",
+  consent: false,
   website: "", // honeypot
 };
 
 /**
- * "Book a free call". Three quick questions (what, how soon, what budget),
- * then who they are, then the calendar. The answers post to /api/contact,
- * which emails the studio inbox and files a lead, before the calendar opens,
- * so a visitor who never picks a time still reaches us.
+ * The get-started form. Four quick questions (what, their site today, how
+ * soon, what budget), then who they are and their consent to be contacted,
+ * then the calendar. The answers post to /api/contact, which emails the
+ * studio inbox and files the lead in the Command Center, before the calendar
+ * opens, so a visitor who never picks a time still reaches us.
  */
 export function ContactDialog() {
   const { isOpen, close } = useContact();
@@ -82,7 +93,7 @@ export function ContactDialog() {
   }
 
   // Single-answer questions move on by themselves, after a beat to see the tick.
-  function choose(key: "timeline" | "budget", value: string, next: Step) {
+  function choose(key: "currentSite" | "timeline" | "budget", value: string, next: Step) {
     set(key, value);
     window.clearTimeout(advance.current);
     advance.current = window.setTimeout(() => setStep(next), reduce ? 0 : 240);
@@ -107,13 +118,16 @@ export function ContactDialog() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           services: form.services,
+          currentSite: form.currentSite,
           timeline: form.timeline,
           budget: form.budget,
           name: form.name.trim(),
           email: form.email.trim(),
-          phone: form.phone.trim() || undefined,
+          phone: form.phone.trim(),
           business: form.business.trim() || undefined,
           message: form.message.trim() || undefined,
+          consent: form.consent,
+          consentText: CONTACT_CONSENT_TEXT,
           website: form.website,
         }),
       });
@@ -172,9 +186,9 @@ export function ContactDialog() {
                   <Mark className="h-8 w-8" />
                   <div>
                     <h2 id="contact-title" className="ak-display text-[1.7rem] leading-none">
-                      Book a free call
+                      {CTA_LABEL}
                     </h2>
-                    <p className="mt-1.5 text-sm text-[var(--dim)]">Twenty minutes, no obligation.</p>
+                    <p className="mt-1.5 text-sm text-[var(--dim)]">A few quick questions, then pick a time to talk.</p>
                   </div>
                 </div>
                 <button
@@ -213,14 +227,14 @@ export function ContactDialog() {
             ) : step === "calendar" ? (
               <div className="px-4 pb-6 pt-6 sm:px-8">
                 <h3 ref={heading} tabIndex={-1} className="ak-display text-[1.55rem] leading-tight outline-none">
-                  Thanks, {firstName}. Now pick a time.
+                  Thanks, {firstName}. Now pick a time to talk.
                 </h3>
                 <p className="mt-1.5 text-sm text-[var(--dim)]">
                   Your answers are already with us. Choose any open slot and the confirmation lands in your inbox.
                 </p>
                 <iframe
                   src={bookingEmbedUrl(BOOKING_URL)}
-                  title="Pick a time for your free call"
+                  title="Pick a time to talk"
                   className="mt-5 h-[min(640px,62dvh)] w-full border border-[var(--rule)] bg-white"
                 />
                 <p className="mt-4 text-sm text-[var(--dim)]">
@@ -244,7 +258,23 @@ export function ContactDialog() {
                           <Option key={s} label={s} multi selected={form.services.includes(s)} onClick={() => toggleService(s)} />
                         ))}
                       </div>
-                      <Nav next={() => go("timeline")} nextDisabled={!form.services.length} />
+                      <Nav next={() => go("site")} nextDisabled={!form.services.length} />
+                    </>
+                  ) : step === "site" ? (
+                    <>
+                      <Question heading={heading} title="Do you have a website today?" />
+                      <div role="group" aria-label="Current website" className="mt-5 grid gap-2">
+                        {BOOKING_CURRENT_SITE.map((c) => (
+                          <Option
+                            key={c.value}
+                            label={c.value}
+                            hint={c.hint}
+                            selected={form.currentSite === c.value}
+                            onClick={() => choose("currentSite", c.value, "timeline")}
+                          />
+                        ))}
+                      </div>
+                      <Nav back={() => go("service")} next={() => go("timeline")} nextDisabled={!form.currentSite} />
                     </>
                   ) : step === "timeline" ? (
                     <>
@@ -260,7 +290,7 @@ export function ContactDialog() {
                           />
                         ))}
                       </div>
-                      <Nav back={() => go("service")} next={() => go("budget")} nextDisabled={!form.timeline} />
+                      <Nav back={() => go("site")} next={() => go("budget")} nextDisabled={!form.timeline} />
                     </>
                   ) : step === "budget" ? (
                     <>
@@ -282,7 +312,7 @@ export function ContactDialog() {
                     <form onSubmit={submit}>
                       <Question heading={heading} title="Who should we talk to?" />
                       <p className="meta mt-2">
-                        {form.services.join(", ")} · {form.timeline} · {form.budget}
+                        {form.services.join(", ")} · {form.currentSite} · {form.timeline} · {form.budget}
                       </p>
                       <div className="mt-5 grid gap-5">
                         <div>
@@ -303,10 +333,17 @@ export function ContactDialog() {
                         </div>
                         <div className="grid gap-5 sm:grid-cols-2">
                           <div>
-                            <label htmlFor="c-phone" className="field-label">
-                              Phone <span className="font-normal text-[var(--dim)]">(optional)</span>
-                            </label>
-                            <input id="c-phone" type="tel" className="field" autoComplete="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+                            <label htmlFor="c-phone" className="field-label">Phone</label>
+                            <input
+                              id="c-phone"
+                              type="tel"
+                              className="field"
+                              autoComplete="tel"
+                              required
+                              minLength={7}
+                              value={form.phone}
+                              onChange={(e) => set("phone", e.target.value)}
+                            />
                           </div>
                           <div>
                             <label htmlFor="c-business" className="field-label">
@@ -333,6 +370,20 @@ export function ContactDialog() {
                             onChange={(e) => set("message", e.target.value)}
                           />
                         </div>
+                        <label className="flex items-start gap-3 text-sm leading-relaxed text-[var(--fg-2)]">
+                          <input
+                            type="checkbox"
+                            required
+                            checked={form.consent}
+                            onChange={(e) => set("consent", e.target.checked)}
+                            className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+                          />
+                          <span>
+                            {CONTACT_CONSENT_TEXT} See our{" "}
+                            <a href="/legal/privacy" target="_blank" className="text-link text-[var(--fg)]">Privacy Policy</a> and{" "}
+                            <a href="/legal/sms" target="_blank" className="text-link text-[var(--fg)]">SMS terms</a>.
+                          </span>
+                        </label>
                         <input
                           type="text"
                           name="website"
@@ -353,7 +404,7 @@ export function ContactDialog() {
                       <Nav
                         back={() => go("budget")}
                         submit
-                        nextDisabled={status === "sending"}
+                        nextDisabled={status === "sending" || !form.consent}
                         nextLabel={status === "sending" ? "Sending" : BOOKING_URL ? "Pick a time" : "Send it over"}
                       />
                     </form>
@@ -371,7 +422,7 @@ export function ContactDialog() {
                   </a>
                   <p className="mt-1 text-sm text-[var(--dim)]">{SITE.hours}</p>
                   <p className="mt-6 text-sm leading-relaxed text-[var(--dim)]">
-                    You&apos;ll speak with Ashish or Tei, the people who&apos;ll actually do the work. If
+                    You&apos;ll speak with Ashish or Terri, the people who&apos;ll actually do the work. If
                     we&apos;re not the right fit we&apos;ll say so on the call.
                   </p>
                 </aside>

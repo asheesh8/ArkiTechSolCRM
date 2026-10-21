@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser, isOwner } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { pricingPlansSchema } from "@/lib/schemas";
-import { DEFAULT_PLANS, SERVICE_PLAN } from "@/lib/pricing";
+import { DEFAULT_PLANS, isCurrentLineup } from "@/lib/pricing";
+import { SERVICE_PLAN } from "@/lib/marketing/plan-display";
 
 // The public pricing table, editable by owners.
 //
@@ -63,9 +64,11 @@ export async function GET() {
     );
   }
 
-  // Nobody has saved yet, so hand back the same defaults the site is showing
-  // rather than an empty editor that looks like the prices vanished.
-  return noStore(NextResponse.json({ plans: rows.length ? rows : DEFAULT_PLANS, seeded: rows.length > 0 }));
+  // Nobody has saved the current lineup yet, so hand back the same defaults the
+  // site is showing rather than an empty editor (or retired plans) that look
+  // like the prices changed. Saving replaces whatever older rows are there.
+  const current = isCurrentLineup(rows);
+  return noStore(NextResponse.json({ plans: current ? rows : DEFAULT_PLANS, seeded: current }));
 }
 
 export async function PUT(request: Request) {

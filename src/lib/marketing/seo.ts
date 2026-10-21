@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { SITE } from "@/lib/marketing/site";
-import { SERVICE_AREAS } from "@/lib/service-areas";
 
 /**
  * Search and AI-facing facts for the public site: canonical URLs, social
@@ -71,25 +70,23 @@ export function organizationJsonLd() {
     logo: `${SITE_URL}/icon.png`,
     image: `${SITE_URL}${DEFAULT_IMAGE}`,
     description:
-      "Burlington, Vermont studio building websites, AI receptionists, automations, CRMs and local SEO for small and growing businesses.",
+      "Burlington, Vermont studio building custom websites, business dashboards and CRM, and AI search optimization for businesses anywhere in the US.",
     telephone: "+1-802-557-8828",
     email: SITE.email,
     address: { "@type": "PostalAddress", addressLocality: "Burlington", addressRegion: "VT", addressCountry: "US" },
-    areaServed: [
-      ...SERVICE_AREAS.map((a) => ({ "@type": "City", name: `${a.town}, Vermont` })),
-      { "@type": "State", name: "Vermont" },
-    ],
+    // The studio is in Burlington; the work is remote, so the area is the country.
+    areaServed: { "@type": "Country", name: "United States" },
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
       dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
       opens: "08:00",
-      closes: "17:00",
+      closes: "19:00",
     },
     founder: [
       { "@type": "Person", name: "Ashish Subedi", jobTitle: "CEO & Fullstack Designer" },
-      { "@type": "Person", name: "Teibiroa Ambo", jobTitle: "CEO & Director of Client Relations" },
+      { "@type": "Person", name: "Terri Ambo", jobTitle: "CEO & Director of Client Relations" },
     ],
-    knowsAbout: ["Web design", "AI receptionists", "Business automation", "CRM development", "Local SEO"],
+    knowsAbout: ["Web design", "Business dashboards", "CRM", "AI search optimization", "Google Business Profile management"],
     sameAs: SAME_AS,
   };
 }
@@ -126,15 +123,12 @@ export function serviceJsonLd({
   description,
   path,
   price,
-  area,
 }: {
   name: string;
   description: string;
   path: string;
   /** The page's own "from" line, e.g. "From $99 a month". */
   price?: string;
-  /** Narrow the area to one town; defaults to every town we serve. */
-  area?: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -143,9 +137,7 @@ export function serviceJsonLd({
     description,
     url: `${SITE_URL}${path}`,
     provider: { "@id": ORG_ID },
-    areaServed: area
-      ? { "@type": "City", name: `${area}, Vermont` }
-      : SERVICE_AREAS.map((a) => ({ "@type": "City", name: `${a.town}, Vermont` })),
+    areaServed: { "@type": "Country", name: "United States" },
     ...(price ? { offers: { "@type": "Offer", priceCurrency: "USD", description: price, url: `${SITE_URL}/pricing` } } : {}),
   };
 }

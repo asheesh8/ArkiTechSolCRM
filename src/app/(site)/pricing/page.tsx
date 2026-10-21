@@ -1,24 +1,25 @@
 import Link from "next/link";
-import { DownloadSimple } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/marketing/site/page-header";
-import { PricingTabs } from "@/components/marketing/pricing/pricing-tabs";
+import { PlanCard } from "@/components/marketing/pricing/plan-card";
+import { DashboardAddons } from "@/components/marketing/pricing/dashboard-addons";
 import { Reveal } from "@/components/marketing/site/reveal";
 import { Closing } from "@/components/marketing/site/closing";
 import { ContactButton } from "@/components/marketing/site/contact-context";
 import { GROUPS, loadPlans } from "@/lib/marketing/plans";
+import { plansIn } from "@/lib/marketing/plan-display";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
-  title: "Website & AI Receptionist Pricing | ArkiTech",
+  title: "Website, Google Reviews & AI Search Pricing | ArkiTech",
   description:
-    "What our websites, AI reception, systems work, brand and local SEO cost, published in full. Month to month, no hidden fees, quoted in writing.",
+    "What the Growth Partnership, a custom website, AI search optimization and each business dashboard cost, published in full. No hidden fees.",
   path: "/pricing",
 });
 
 const ALWAYS: [string, string][] = [
-  ["Month to month", "No lock-in on any recurring plan. Cancel and you keep the domain, the code, and the content."],
-  ["No hidden fees", "Your initial build fee and ongoing monthly price are shown separately and clearly."],
-  ["Scoped before it starts", "Anything built to scope is quoted in writing after the call, before work begins."],
+  ["Published in full", "Every price is on this page. Nothing is added on top that isn't printed here."],
+  ["Clear terms", "The Growth Partnership runs for 12 months. The Custom Website's monthly plan is optional and you can cancel it anytime."],
+  ["Dashboards as you need them", "Overview and CRM come included with the monthly plans. Add the others one at a time."],
   ["Real people", "Burlington, Vermont. You talk to whoever is building it."],
 ];
 
@@ -27,24 +28,38 @@ const ALWAYS: [string, string][] = [
 export const revalidate = 300;
 
 export default async function PricingPage() {
-  const plans = await loadPlans();
+  const all = await loadPlans();
+  const plans = plansIn(all, "plans");
+  const [planGroup, addonGroup] = GROUPS;
   return (
     <>
       <PageHeader
-        kicker="Website and AI receptionist pricing"
+        kicker="Website, reviews and AI search pricing"
         title="What it costs."
-        lede="Published, because making people ask is a tactic and we'd rather not use it. Recurring plans are month to month. Project work is quoted in writing before anything starts."
+        lede="Published, because making people ask is a tactic and we'd rather not use it. Three plans, and dashboards you add when you need them."
       >
         <ContactButton />
-        <a href="/ArkiTech-Solutions-Pricing-Guide.pdf" download className="ak-btn ak-btn-ghost">
-          <DownloadSimple size={17} aria-hidden="true" />
-          Pricing guide (PDF)
-        </a>
       </PageHeader>
 
-      <section className="band pb-24 sm:pb-32">
+      <section className="band pb-20 sm:pb-28">
         <div className="shell">
-          <PricingTabs plans={plans} groups={GROUPS} />
+          <h2 className="sr-only">{planGroup.label}</h2>
+          <p className="ak-lede max-w-[62ch]">{planGroup.blurb}</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {plans.map((p) => (
+              <PlanCard key={p.slug} plan={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboards" className="band pb-24 sm:pb-32">
+        <div className="shell">
+          <h2 className="ak-display h-lg">{addonGroup.label}</h2>
+          <p className="ak-lede mt-6 max-w-[62ch]">{addonGroup.blurb}</p>
+          <div className="mt-10">
+            <DashboardAddons plans={all} />
+          </div>
         </div>
       </section>
 
@@ -70,7 +85,7 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <Closing title="Not sure which plan?" body="Tell us what's costing you time or jobs. We'll say which plan fits, or whether you need one at all." />
+      <Closing title="Not sure which plan?" body="Tell us where your business is now. We'll say which plan fits, or whether you need one at all." />
     </>
   );
 }

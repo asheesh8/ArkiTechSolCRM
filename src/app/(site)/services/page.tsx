@@ -11,9 +11,9 @@ import { startingPrice } from "@/lib/marketing/plan-display";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
-  title: "Web Design, Automation & Local SEO Services | ArkiTech",
+  title: "Custom Websites, Dashboards & AI Search Services | ArkiTech",
   description:
-    "Websites, AI receptionists, automations, custom CRMs and local SEO for Vermont businesses. Pick the one piece you need; every price is published.",
+    "Custom websites, business dashboards and CRM, and AI search optimization, for businesses anywhere in the US. Every price is published.",
   path: "/services",
 });
 
@@ -25,9 +25,9 @@ export default async function ServicesIndex() {
   return (
     <>
       <PageHeader
-        kicker="Web design, automation & local SEO services"
-        title="Five things, done properly."
-        lede="We don't sell a package and retrofit your business into it. Pick the piece you actually need. Most people start with one and add the next when it earns its place."
+        kicker="Custom websites, dashboards & AI search"
+        title="What we build."
+        lede="Three services, each on its own page. Take one, or bundle the website and dashboards with Google Business Profile management in the Growth Partnership."
       />
 
       <section className="band pb-24 sm:pb-32">
