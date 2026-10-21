@@ -30,7 +30,7 @@ export const revalidate = 300;
 export default async function PricingPage() {
   const all = await loadPlans();
   const plans = plansIn(all, "plans");
-  const [planGroup, addonGroup] = GROUPS;
+  const [planGroup] = GROUPS;
   return (
     <>
       <PageHeader
@@ -41,7 +41,7 @@ export default async function PricingPage() {
         <ContactButton />
       </PageHeader>
 
-      <section className="band pb-20 sm:pb-28">
+      <section className="band pb-24 sm:pb-32">
         <div className="shell">
           <h2 className="sr-only">{planGroup.label}</h2>
           <p className="ak-lede max-w-[62ch]">{planGroup.blurb}</p>
@@ -50,14 +50,7 @@ export default async function PricingPage() {
               <PlanCard key={p.slug} plan={p} />
             ))}
           </div>
-        </div>
-      </section>
-
-      <section id="dashboards" className="band pb-24 sm:pb-32">
-        <div className="shell">
-          <h2 className="ak-display h-lg">{addonGroup.label}</h2>
-          <p className="ak-lede mt-6 max-w-[62ch]">{addonGroup.blurb}</p>
-          <div className="mt-10">
+          <div id="dashboards" className="mt-4 scroll-mt-28">
             <DashboardAddons plans={all} />
           </div>
         </div>

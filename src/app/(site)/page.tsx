@@ -2,7 +2,6 @@ import { Hero } from "@/components/marketing/home/hero";
 import { WorkShowcase } from "@/components/marketing/home/work-showcase";
 import { ServicesGrid } from "@/components/marketing/home/services-grid";
 import { Closing } from "@/components/marketing/site/closing";
-import { BusinessInfo } from "@/components/marketing/site/business-info";
 import { PageView } from "@/components/marketing/site/page-view";
 import { pageMetadata } from "@/lib/marketing/seo";
 
@@ -24,7 +23,6 @@ export default function Home() {
       <WorkShowcase />
       <ServicesGrid />
       <Closing />
-      <BusinessInfo />
     </>
   );
 }

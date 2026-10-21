@@ -1,7 +1,6 @@
 import { PageHeader } from "@/components/marketing/site/page-header";
 import { ContactButton } from "@/components/marketing/site/contact-context";
 import { Team } from "@/components/marketing/home/team";
-import { BusinessInfo } from "@/components/marketing/site/business-info";
 import { Closing } from "@/components/marketing/site/closing";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketing/seo";
@@ -52,7 +51,6 @@ export default function AboutPage() {
         <ContactButton />
       </PageHeader>
       <Team />
-      <BusinessInfo />
       <Closing />
     </>
   );

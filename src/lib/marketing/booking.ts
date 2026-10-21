@@ -24,7 +24,7 @@ export const BOOKING_BUDGETS = [
   { value: "Under $1,000", hint: null },
   { value: "$1,000 to $3,000", hint: null },
   { value: "$3,000 or more", hint: null },
-  { value: "A monthly plan", hint: "$150 to $300 a month" },
+  { value: "A monthly plan", hint: "Starting at $300 a month" },
   { value: "Not sure yet", hint: "Help us figure it out" },
 ] as const;
 

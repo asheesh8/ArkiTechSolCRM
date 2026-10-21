@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
       { source: "/blog/what-a-missed-call-costs", destination: "/blog", permanent: true },
       { source: "/ArkiTech-Solutions-Pricing-Guide.pdf", destination: "/pricing", permanent: true },
       // Pages folded into others or deleted outright.
-      { source: "/contact", destination: "/about#contact", permanent: true },
+      { source: "/contact", destination: "/about", permanent: true },
       { source: "/service-areas", destination: "/about", permanent: true },
       { source: "/service-areas/:slug", destination: "/about", permanent: true },
       { source: "/cleaningbook", destination: "/", permanent: true },
