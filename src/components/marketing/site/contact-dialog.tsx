@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, ArrowSquareOut, Check, CheckCircle, Phone, X } f
 import { Mark } from "@/components/marketing/brand/mark";
 import { useContact } from "@/components/marketing/site/contact-context";
 import { trackGoogleEvent } from "@/lib/google-tag";
+import { trackMetaEvent } from "@/lib/meta-pixel";
 import {
   BOOKING_BUDGETS,
   BOOKING_CURRENT_SITE,
@@ -141,6 +142,7 @@ export function ContactDialog() {
         timeline: form.timeline,
         budget: form.budget,
       });
+      trackMetaEvent("Lead", { content_name: form.services.join(", ") });
       setStatus("idle");
       go(BOOKING_URL ? "calendar" : "sent");
     } catch {

@@ -18,7 +18,9 @@ declare global {
   }
 }
 
-const DEFAULT_META_PIXEL_ID = "2090867258498539";
+// The "ArkiTech CRM" dataset in the ArkiTech Solutions portfolio, the same one the
+// Command Center sends lead stages to through the Conversions API.
+const DEFAULT_META_PIXEL_ID = "1043649925361719";
 
 export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || DEFAULT_META_PIXEL_ID;
 
