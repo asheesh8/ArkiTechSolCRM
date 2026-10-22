@@ -8,7 +8,7 @@ import { SITE } from "@/lib/marketing/site";
 
 export const metadata = pageMetadata({
   title: "About ArkiTech Solutions | Burlington, VT Web Studio",
-  description: `ArkiTech Solutions is Ashish Subedi and Terri Ambo, a web studio in Burlington, Vermont working remotely with businesses anywhere. Call ${SITE.phone}, ${SITE.hours}.`,
+  description: `ArkiTech Solutions is Ashish Subedi (from Nepal) and Terri Ambo (from Kiribati), a web studio in Burlington, Vermont working remotely with businesses anywhere. Call ${SITE.phone}.`,
   path: "/about",
 });
 
@@ -33,18 +33,16 @@ export default function AboutPage() {
       />
       <PageHeader
         kicker="About ArkiTech Solutions · Burlington, Vermont"
-        title="Two people, start to finish."
+        title="From Nepal and Kiribati to Burlington."
         wide
+        backdrop
         lede={
           <div className="grid gap-4">
             <p>
-              ArkiTech Solutions is Ashish Subedi and Terri Ambo. Ashish designs and builds everything we ship: no agency
-              layer, no junior handed the project after you sign. Terri looks after every client, so you get a person on the
-              phone rather than a ticket number.
+              ArkiTech Solutions is two founders who came to Vermont from opposite sides of the world. Ashish builds
+              everything we ship. Terri looks after every client. Nobody else sits between you and the people doing the work.
             </p>
-            <p>
-              The studio is in Burlington, Vermont, and we work remotely with businesses anywhere in the US.
-            </p>
+            <p>The studio is in Burlington, and we work remotely with businesses anywhere in the US.</p>
           </div>
         }
       >

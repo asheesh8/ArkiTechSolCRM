@@ -12,6 +12,9 @@ import { PLATES } from "@/lib/marketing/art";
  *
  * `kicker` is a small line above the title for the words people search. When
  * it is set it becomes the page's H1 and the display title keeps the voice.
+ *
+ * `backdrop` sets the 1874 Lake Champlain charts faintly behind the header, so
+ * a page that opens on text alone isn't a bare dark field.
  */
 export function PageHeader({
   title,
@@ -21,6 +24,7 @@ export function PageHeader({
   plate,
   children,
   wide = false,
+  backdrop = false,
 }: {
   title: React.ReactNode;
   kicker?: string;
@@ -29,9 +33,23 @@ export function PageHeader({
   plate?: PlateKey;
   children?: React.ReactNode;
   wide?: boolean;
+  backdrop?: boolean;
 }) {
   return (
-    <section className="band relative overflow-hidden pb-16 pt-[calc(var(--nav-h)+3.5rem)] sm:pb-20 sm:pt-[calc(var(--nav-h)+5rem)]">
+    <section className="band relative isolate overflow-hidden pb-16 pt-[calc(var(--nav-h)+3.5rem)] sm:pb-20 sm:pt-[calc(var(--nav-h)+5rem)]">
+      {backdrop ? (
+        <>
+          <Plate
+            name="chart-burlington"
+            className="absolute -right-40 -top-10 -z-10 w-[62rem] max-w-none opacity-[0.12] sm:-right-16 lg:right-0"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10"
+            style={{ background: "radial-gradient(ellipse at 70% 20%, transparent 0%, var(--bg) 75%)" }}
+          />
+        </>
+      ) : null}
       <div className={clsx("shell grid gap-12", plate && "lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] lg:items-end lg:gap-16")}>
         <div>
           {back ? (

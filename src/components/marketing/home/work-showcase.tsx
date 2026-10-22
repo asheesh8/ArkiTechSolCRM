@@ -13,6 +13,7 @@ import {
   LockSimple,
   Plus,
 } from "@phosphor-icons/react";
+import { Plate } from "@/components/marketing/art/plate";
 import { WORK, workImage, type Work } from "@/lib/marketing/work";
 
 type View = "desktop" | "phone";
@@ -29,13 +30,18 @@ const PHONE = { w: 390, h: 844 };
  *
  * These are captures of the live sites, not mockups, and each row says
  * whether it is a client or a build we made to show the craft.
+ *
+ * As the top of /work (`page`), it shows client sites only, carries the
+ * page's H1, and sets the 1874 Burlington chart behind it so the dark field
+ * around the heading isn't bare.
  */
-export function WorkShowcase() {
+export function WorkShowcase({ page = false }: { page?: boolean }) {
+  const items = page ? WORK.filter((w) => w.kind === "client") : WORK;
   const [index, setIndex] = useState(0);
   const [view, setView] = useState<View>("desktop");
   const [play, setPlay] = useState(0);
   const frameRef = useRef<HTMLDivElement>(null);
-  const work = WORK[index];
+  const work = items[index];
 
   function bringScreenIntoView() {
     // On a phone the list sits under the screen; bring the screen back into
@@ -59,16 +65,53 @@ export function WorkShowcase() {
   }
 
   return (
-    <section id="work" className="band section overflow-hidden">
+    <section
+      id="work"
+      className={
+        page
+          ? "band relative isolate overflow-hidden pb-24 pt-[calc(var(--nav-h)+3.5rem)] sm:pb-32 sm:pt-[calc(var(--nav-h)+5rem)]"
+          : "band section overflow-hidden"
+      }
+    >
       {/* The old site anchored this section as #showcase; keep those links working. */}
       <span id="showcase" aria-hidden="true" className="block scroll-mt-24" />
+      {page ? (
+        <>
+          <Plate
+            name="chart-burlington"
+            className="absolute -right-40 -top-10 -z-10 w-[62rem] max-w-none opacity-[0.12] sm:-right-16 lg:right-0"
+          />
+          <Plate
+            name="chart-lake"
+            className="absolute -bottom-40 -left-56 -z-10 hidden w-[44rem] max-w-none opacity-[0.07] lg:block"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10"
+            style={{ background: "radial-gradient(ellipse at 70% 20%, transparent 0%, var(--bg) 75%)" }}
+          />
+        </>
+      ) : null}
       <div className="shell">
         <div className="max-w-3xl">
-          <h2 className="ak-display h-xl">Every pixel, built here.</h2>
-          <p className="ak-lede mt-6 max-w-[54ch]">
-            Six client sites that are live today, and two builds we made so you can judge the work before you ever
-            book a call. Pick one to scroll through it.
-          </p>
+          {page ? (
+            <>
+              <h1 className="meta uppercase tracking-[0.16em]">Website design portfolio</h1>
+              <p className="ak-display h-hero mt-4 max-w-[14ch]">Every pixel, built here.</p>
+              <p className="ak-lede mt-7 max-w-[54ch]">
+                Live client sites, captured as they look today, each one hand-built by the two of us. Pick one to
+                scroll through it.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="ak-display h-xl">Every pixel, built here.</h2>
+              <p className="ak-lede mt-6 max-w-[54ch]">
+                Six client sites that are live today, and two builds we made so you can judge the work before you ever
+                book a call. Pick one to scroll through it.
+              </p>
+            </>
+          )}
         </div>
 
         <div className="mt-14 grid grid-cols-[minmax(0,1fr)] gap-10 lg:mt-16 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-14 xl:grid-cols-[minmax(0,1fr)_23rem]">
@@ -85,7 +128,7 @@ export function WorkShowcase() {
 
           <div className="flex min-w-0 flex-col">
             <ol className="border-t border-[var(--rule)]">
-              {WORK.map((w, i) => {
+              {items.map((w, i) => {
                 const active = i === index;
                 return (
                   <li key={w.slug} className="border-b border-[var(--rule)]">
