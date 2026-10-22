@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
   const submittedAt = new Date(now).toISOString();
   const note = [
-    "— Callback request from the sol-arkitech.com widget —",
+    "— Callback request from the arkitech-sol.com widget —",
     `Contact: ${data.name}`,
     `Phone: ${phone.national}`,
     data.message ? `\nWhat they said:\n${data.message}` : null,

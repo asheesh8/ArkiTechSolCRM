@@ -37,7 +37,7 @@ export async function sendToCommandCenter(lead: CommandCenterLead): Promise<Comm
   const res = await fetch(`${base}/leads`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ ...lead, stage: "new", source: "Website (sol-arkitech.com)" }),
+    body: JSON.stringify({ ...lead, stage: "new", source: "Website (arkitech-sol.com)" }),
     signal: AbortSignal.timeout(8000),
   });
   const body = (await res.json().catch(() => null)) as {

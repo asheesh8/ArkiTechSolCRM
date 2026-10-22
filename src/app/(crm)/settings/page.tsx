@@ -40,7 +40,7 @@ export default async function SettingsPage() {
             <CardHeader>
               <CardTitle>Public pricing</CardTitle>
               <p className="mt-1 text-sm text-zinc-500">
-                What visitors see on sol-arkitech.com/pricing. Saving here updates the site immediately —
+                What visitors see on arkitech-sol.com/pricing. Saving here updates the site immediately —
                 no deploy needed.
               </p>
             </CardHeader>

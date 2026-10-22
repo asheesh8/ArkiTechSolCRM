@@ -5,7 +5,7 @@ One Next.js app that serves two audiences:
 - **The public marketing site** for ArkiTech Solutions, a Burlington, Vermont web and AI studio — services, pricing, service areas, blog, and the `/cleaningbook` ad-campaign landing page.
 - **The internal CRM** the team uses to find local-business leads, cold-call and text them, run AI voice agents, manage clients and contracts, and bill through a client portal.
 
-**Live:** https://sol-arkitech.com (Vercel project: `arki-tech-sol-crm.vercel.app`)
+**Live:** https://arkitech-sol.com (Vercel project: `arki-tech-sol-crm.vercel.app`)
 
 ## Tech stack
 

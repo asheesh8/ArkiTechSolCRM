@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SiteFrame } from "@/components/marketing/site/site-frame";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
-import { organizationJsonLd, SITE_URL, websiteJsonLd } from "@/lib/marketing/seo";
+import { organizationJsonLd, SHARE_IMAGE, SITE_URL, websiteJsonLd } from "@/lib/marketing/seo";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: "ArkiTech Solutions",
     description: "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Burlington, Vermont.",
     siteName: "ArkiTech Solutions",
-    images: ["/media/burlington-night.jpg"],
+    images: [SHARE_IMAGE],
   },
 };
 

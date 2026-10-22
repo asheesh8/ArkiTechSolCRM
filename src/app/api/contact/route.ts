@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   const phone = checkPhone(data.phone);
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const note = [
-    "Get-started form on sol-arkitech.com",
+    "Get-started form on arkitech-sol.com",
     `Contact: ${data.name}`,
     `Email: ${data.email}`,
     `Phone: ${phone?.national ?? data.phone}`,

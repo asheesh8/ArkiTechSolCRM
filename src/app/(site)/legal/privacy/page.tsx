@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
       <P>
         This Privacy Policy explains how ArkiTech Solutions LLC, operating as ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects,
         uses, discloses, and protects personal information when you visit{" "}
-        <InlineLink href="https://sol-arkitech.com/">https://sol-arkitech.com/</InlineLink>, contact us, submit a project inquiry, request information, or
+        <InlineLink href="https://arkitech-sol.com/">https://arkitech-sol.com/</InlineLink>, contact us, submit a project inquiry, request information, or
         otherwise interact with us online or in connection with our business.
       </P>
       <P>

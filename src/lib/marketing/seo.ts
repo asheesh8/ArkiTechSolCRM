@@ -9,7 +9,7 @@ import { SITE } from "@/lib/marketing/site";
  */
 
 /** The one origin every canonical, Open Graph URL, sitemap entry and schema id hangs off. */
-export const SITE_URL = "https://sol-arkitech.com";
+export const SITE_URL = "https://arkitech-sol.com";
 
 /**
  * The Google Business Profile, by its stable CID link. Listed in `sameAs` so
@@ -18,7 +18,18 @@ export const SITE_URL = "https://sol-arkitech.com";
  */
 export const SAME_AS = ["https://maps.google.com/?cid=16353977033327328632"];
 
-const DEFAULT_IMAGE = "/media/burlington-night.jpg";
+/**
+ * The 1200x630 share card: lockup and headline over Burlington at night.
+ * Stating the size lets iMessage, Slack and the rest draw a wide card at once
+ * instead of falling back to a screenshot of the page.
+ */
+const DEFAULT_IMAGE = "/og.jpg";
+export const SHARE_IMAGE = {
+  url: DEFAULT_IMAGE,
+  width: 1200,
+  height: 630,
+  alt: "ArkiTech Solutions: custom websites, dashboards and AI search. Burlington, Vermont.",
+};
 
 /**
  * Title, description, canonical and social preview for one public page. Next
@@ -39,12 +50,13 @@ export function pageMetadata({
   image?: string;
   type?: "website" | "article";
 }): Metadata {
+  const images = [image === DEFAULT_IMAGE ? SHARE_IMAGE : image];
   return {
     title,
     description,
     alternates: { canonical: path },
-    openGraph: { title, description, url: path, siteName: SITE.name, locale: "en_US", type, images: [image] },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
+    openGraph: { title, description, url: path, siteName: SITE.name, locale: "en_US", type, images },
+    twitter: { card: "summary_large_image", title, description, images },
   };
 }
 
