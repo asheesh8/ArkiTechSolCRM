@@ -79,9 +79,13 @@ export function Callout({ children }: { children: React.ReactNode }) {
 export function ContactBlock() {
   return (
     <address className="mt-6 not-italic text-[1rem] leading-[1.75] text-[var(--fg-2)]">
-      {SITE.legalName}
+      {SITE.legalName}, operating as {SITE.name}
       <br />
       Burlington, Vermont
+      <br />
+      <a href={SITE.phoneHref} className="text-link text-[var(--fg)]">
+        {SITE.phone}
+      </a>
       <br />
       <a href={`mailto:${SITE.email}`} className="text-link text-[var(--fg)]">
         {SITE.email}

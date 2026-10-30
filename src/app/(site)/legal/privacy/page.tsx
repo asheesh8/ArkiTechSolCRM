@@ -1,5 +1,6 @@
 import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, StudioEmail, Section, Subhead } from "@/components/marketing/legal/prose";
 import { pageMetadata } from "@/lib/marketing/seo";
+import { SMS_PROGRAM, SMS_SENDER } from "@/lib/sms-program";
 
 export const metadata = pageMetadata({
   title: "Privacy Policy | ArkiTech Solutions",
@@ -11,10 +12,10 @@ export const metadata = pageMetadata({
 export default function PrivacyPolicyPage() {
   return (
     <article>
-      <DocHeader title="Privacy Policy" updated="October 14, 2026" active="privacy" />
+      <DocHeader title="Privacy Policy" updated="October 30, 2026" active="privacy" />
 
       <P>
-        This Privacy Policy explains how ArkiTech Solutions LLC, operating as ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects,
+        This Privacy Policy explains how {SMS_SENDER}{" "}(&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects,
         uses, discloses, and protects personal information when you visit{" "}
         <InlineLink href="https://arkitech-sol.com/">https://arkitech-sol.com/</InlineLink>, contact us, submit a project inquiry, request information, or
         otherwise interact with us online or in connection with our business.
@@ -146,27 +147,25 @@ export default function PrivacyPolicyPage() {
             them, and "the above categories" has to have something above it. */}
         <Subhead>Mobile and text messaging information</Subhead>
         <P>
-          ArkiTech may use text messaging (SMS) to reply to inquiries, confirm appointments and calls, and share updates on active work. You consent to
-          receive those messages by giving us your mobile number and agreeing to be contacted - on a booking or inquiry form, during onboarding, or in
-          writing. Message frequency varies with your activity, message and data rates may apply, and you can stop at any time by replying STOP.
-        </P>
-        <P>
-          Internal team notifications (Command Center). ArkiTech team members may opt in to SMS notifications in Command Center under Settings &rarr; Text
-          notifications. Messages include internal new-lead notifications, company announcements and system alerts. New-lead notification frequency varies
+          {SMS_SENDER} runs one text message program, {SMS_PROGRAM}. It sends internal new-lead notifications, company announcements, and system
+          alerts to ArkiTech team members who opt in under Settings &rarr; Text notifications in Command Center. New-lead notification frequency varies
           as leads arrive; company announcements and system alerts total no more than 3 messages per week. Enrollment is optional and not required to use
-          Command Center. Reply STOP to opt out or HELP for help. Message and data rates may apply.
+          Command Center. Message and data rates may apply. Reply STOP to opt out or HELP for help. Our{" "}
+          <InlineLink href="/legal/sms">SMS Terms</InlineLink> describe the program in full, including the exact automatic replies.
         </P>
         <P>
-          Our <InlineLink href="/legal/sms">SMS Terms</InlineLink> cover both programs in full.
+          The program sends no marketing texts and does not text customers or website visitors. If you give us your number on our website and agree to
+          be contacted, a member of our team may call or text you personally about your request, and will stop if you reply STOP or ask us to.
         </P>
         <P>
-          Mobile numbers are used only to send the messages described above. We share them with the vendor that delivers the messages - our telephony
-          provider, Twilio - solely so a message reaches you, and with nobody else.
+          Mobile numbers and SMS opt-in data are used only to send the messages described above. The only party that receives them is our messaging
+          provider, Twilio, solely to deliver those messages.
         </P>
-        <P>
-          No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. All of the above categories exclude
-          text messaging originator opt-in data and consent; this information will not be shared with any third parties.
-        </P>
+        <Callout>
+          We do not sell, rent, or share mobile numbers or SMS opt-in data. No mobile information will be shared with third parties or affiliates for
+          marketing or promotional purposes. All of the above categories exclude text messaging originator opt-in data and consent; this information will
+          not be shared with any third parties.
+        </Callout>
 
         <P>
           Some privacy laws define &ldquo;sale&rdquo; or &ldquo;sharing&rdquo; broadly to include certain advertising, analytics, or tracking activities. If
