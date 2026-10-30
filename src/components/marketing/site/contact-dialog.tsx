@@ -235,7 +235,7 @@ export function ContactDialog() {
                   Your answers are already with us. Choose any open slot and the confirmation lands in your inbox.
                 </p>
                 <iframe
-                  src={bookingEmbedUrl(BOOKING_URL)}
+                  src={bookingEmbedUrl(BOOKING_URL, { name: form.name.trim(), email: form.email.trim() })}
                   title="Pick a time to talk"
                   className="mt-5 h-[min(640px,62dvh)] w-full border border-[var(--rule)] bg-white"
                 />

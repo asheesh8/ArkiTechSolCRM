@@ -37,19 +37,31 @@ export const CONTACT_CONSENT_TEXT =
   "I agree that ArkiTech Solutions can contact me by phone, text message and email about this request. Message frequency varies, message and data rates may apply, and I can reply STOP at any time.";
 
 /**
- * Where people pick a time once they've answered: the Google Calendar
- * appointment schedule on studio@. NEXT_PUBLIC_BOOKING_URL overrides it.
- * This is the page calendar.app.google/xPTeVayL6CR5RNXR6 redirects to; the
- * short link itself can't be framed.
+ * Where people pick a time once they've answered: the 30-minute meeting on
+ * the studio's Calendly (calendly.com/arkitechsolutions). Linking the event
+ * rather than the profile opens straight on the date picker. If the event is
+ * renamed in Calendly, its link changes here too. NEXT_PUBLIC_BOOKING_URL
+ * overrides it.
  */
 export const BOOKING_URL =
-  process.env.NEXT_PUBLIC_BOOKING_URL?.trim() ||
-  "https://calendar.google.com/appointments/schedules/AcZssZ2yl-bbbD07s8Kbn522_sWFr-n5I9-OCS-z79A7pwQdfwHUHaSsvgva_RGnkvMS2oKe5JiaaMrF";
+  process.env.NEXT_PUBLIC_BOOKING_URL?.trim() || "https://calendly.com/arkitechsolutions/30min";
 
-/** Google's booking pages need ?gv=true to render inside an iframe. */
-export function bookingEmbedUrl(url: string) {
+/**
+ * The booking page as it goes in the iframe. Calendly takes the visitor's
+ * name and email so they don't type them twice, and the embed flags that drop
+ * its cookie banner and fit it to the frame. Google's appointment pages need
+ * ?gv=true instead.
+ */
+export function bookingEmbedUrl(url: string, who?: { name?: string; email?: string }) {
   try {
     const u = new URL(url);
+    if (u.hostname.endsWith("calendly.com")) {
+      u.searchParams.set("embed_type", "Inline");
+      u.searchParams.set("embed_domain", window.location.hostname);
+      u.searchParams.set("hide_gdpr_banner", "1");
+      if (who?.name) u.searchParams.set("name", who.name);
+      if (who?.email) u.searchParams.set("email", who.email);
+    }
     if (u.hostname === "calendar.google.com" && u.pathname.includes("/appointments/")) u.searchParams.set("gv", "true");
     return u.toString();
   } catch {

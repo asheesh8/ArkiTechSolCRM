@@ -9,6 +9,9 @@ import "server-only";
  * The Command Center skips a lead it already has (same phone, website, or
  * name and town). When that happens the new request is added to that lead as
  * a note, so a returning visitor's answers aren't lost.
+ *
+ * Both calls send speed_to_lead, which fires the Command Center's
+ * Speed-to-lead automation for this inbound lead (when it is switched on).
  */
 
 const DEFAULT_URL = "https://bnmntlqjoiqrskjkfzsv.supabase.co/functions/v1/leads-api";
@@ -37,7 +40,7 @@ export async function sendToCommandCenter(lead: CommandCenterLead): Promise<Comm
   const res = await fetch(`${base}/leads`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ ...lead, stage: "new", source: "Website (arkitech-sol.com)" }),
+    body: JSON.stringify({ ...lead, stage: "new", source: "Website (arkitech-sol.com)", speed_to_lead: true }),
     signal: AbortSignal.timeout(8000),
   });
   const body = (await res.json().catch(() => null)) as {
@@ -52,7 +55,7 @@ export async function sendToCommandCenter(lead: CommandCenterLead): Promise<Comm
     const patch = await fetch(`${base}/leads/${encodeURIComponent(result.id)}`, {
       method: "PATCH",
       headers,
-      body: JSON.stringify({ note: lead.notes, ...(lead.priority === "Priority" ? { priority: "Priority" } : {}) }),
+      body: JSON.stringify({ note: lead.notes, speed_to_lead: true, ...(lead.priority === "Priority" ? { priority: "Priority" } : {}) }),
       signal: AbortSignal.timeout(8000),
     });
     if (!patch.ok) throw new Error(`leads-api PATCH ${patch.status}`);
