@@ -17,14 +17,12 @@ export async function OverviewPage({ tenant }: { tenant: TenantContext }) {
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
   const [requests, waiting, leads, reviews, snapshot, events, recent] = await Promise.all([
-    supabase.from("requests").select("id", { count: "exact", head: true }).eq("workspace_id", ws).in("status", ["open", "in_progress", "review"]),
-    supabase.from("requests").select("id, number, title, updated_at").eq("workspace_id", ws).eq("status", "waiting_on_client").order("updated_at", { ascending: false }).limit(3),
+    supabase.from("requests").select("id", { count: "exact", head: true }).eq("workspace_id", ws).in("status", ["submitted", "in_review", "in_progress", "awaiting_client", "delivered"]),
+    supabase.from("requests").select("id, number, title, updated_at").eq("workspace_id", ws).eq("status", "awaiting_client").order("updated_at", { ascending: false }).limit(3),
     supabase.from("contacts").select("id", { count: "exact", head: true }).eq("workspace_id", ws).gte("created_at", since30),
     supabase.from("reviews").select("rating", { count: "exact" }).eq("workspace_id", ws).gte("posted_at", since30),
     supabase.from("gbp_snapshots").select("rating, review_count").eq("workspace_id", ws).order("day", { ascending: false }).limit(1).maybeSingle(),
-    tenant.has("calendar")
-      ? supabase.from("events").select("id, title, starts_at").eq("workspace_id", ws).gte("starts_at", new Date().toISOString()).order("starts_at").limit(3)
-      : Promise.resolve({ data: [] as { id: string; title: string; starts_at: string }[] }),
+    Promise.resolve({ data: [] as { id: string; title: string; starts_at: string }[] }),
     supabase.from("requests").select("id, number, title, status, updated_at").eq("workspace_id", ws).order("updated_at", { ascending: false }).limit(5),
   ]);
 
@@ -157,11 +155,14 @@ export async function OverviewPage({ tenant }: { tenant: TenantContext }) {
 
 export function RequestStatus({ status }: { status: string }) {
   const map: Record<string, { label: string; tone: "neutral" | "accent" | "success" | "warning" | "danger" }> = {
-    open: { label: "Received", tone: "neutral" },
+    draft: { label: "Draft", tone: "neutral" },
+    submitted: { label: "Received", tone: "neutral" },
+    in_review: { label: "Being reviewed", tone: "neutral" },
     in_progress: { label: "We're on it", tone: "neutral" },
-    waiting_on_client: { label: "Waiting on you", tone: "accent" },
-    review: { label: "Ready for review", tone: "accent" },
-    done: { label: "Done", tone: "success" },
+    awaiting_client: { label: "Waiting on you", tone: "accent" },
+    delivered: { label: "Ready for review", tone: "accent" },
+    completed: { label: "Done", tone: "success" },
+    on_hold: { label: "On hold", tone: "warning" },
     cancelled: { label: "Cancelled", tone: "neutral" },
   };
   const s = map[status] ?? { label: status, tone: "neutral" as const };

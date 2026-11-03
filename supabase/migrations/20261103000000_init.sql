@@ -21,9 +21,6 @@ create type member_role as enum ('owner', 'admin', 'member');
 create type staff_role as enum ('owner', 'member', 'dev');
 create type module_status as enum ('included', 'active', 'trial', 'paused', 'cancelled');
 create type automation_status as enum ('included', 'active', 'paused', 'available');
-create type request_kind as enum ('work', 'change', 'bug', 'question');
-create type request_status as enum ('open', 'in_progress', 'waiting_on_client', 'review', 'done', 'cancelled');
-create type request_priority as enum ('low', 'normal', 'high', 'urgent');
 create type lead_stage as enum ('new', 'contacted', 'qualified', 'proposal', 'won', 'lost');
 create type invoice_status as enum ('draft', 'open', 'paid', 'overdue', 'void');
 create type sms_registration_status as enum ('draft', 'submitted', 'brand_approved', 'campaign_approved', 'live', 'rejected');
@@ -39,7 +36,8 @@ end $$;
 -- ------------------------------------------------------------- profiles ---
 -- One row per auth user, created by trigger so the app can always join it.
 create table profiles (
-  user_id    uuid primary key references auth.users on delete cascade,
+  id         uuid primary key references auth.users on delete cascade,
+  is_staff   boolean not null default false,
   full_name  text,
   avatar_url text,
   created_at timestamptz not null default now(),
@@ -50,13 +48,13 @@ create trigger profiles_updated before update on profiles for each row execute f
 create or replace function handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  insert into profiles (user_id, full_name, avatar_url)
+  insert into profiles (id, full_name, avatar_url)
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'full_name', split_part(new.email, '@', 1)),
     new.raw_user_meta_data ->> 'avatar_url'
   )
-  on conflict (user_id) do nothing;
+  on conflict (id) do nothing;
   return new;
 end $$;
 create trigger on_auth_user_created after insert on auth.users
@@ -69,6 +67,18 @@ create table staff (
   role       staff_role not null default 'member',
   created_at timestamptz not null default now()
 );
+
+create or replace function sync_profile_staff() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'DELETE' then
+    update profiles set is_staff = false where id = old.user_id;
+    return old;
+  end if;
+  update profiles set is_staff = true where id = new.user_id;
+  return new;
+end $$;
+create trigger staff_sync_profile after insert or delete on staff for each row execute function sync_profile_staff();
 
 create or replace function is_staff() returns boolean
 language sql stable security definer set search_path = public as $$
@@ -190,10 +200,10 @@ end $$;
 -- ------------------------------------------------- policies: core tables ---
 alter table profiles enable row level security;
 create policy profiles_self_select on profiles for select
-  using (user_id = auth.uid() or is_staff()
+  using (id = auth.uid() or is_staff()
          or exists (select 1 from memberships m join memberships me on me.workspace_id = m.workspace_id
-                    where m.user_id = profiles.user_id and me.user_id = auth.uid()));
-create policy profiles_self_update on profiles for update using (user_id = auth.uid());
+                    where m.user_id = profiles.id and me.user_id = auth.uid()));
+create policy profiles_self_update on profiles for update using (id = auth.uid()) with check (id = auth.uid() and is_staff = (select is_staff from profiles p where p.id = auth.uid()));
 
 alter table staff enable row level security;
 create policy staff_select on staff for select using (is_staff());
@@ -305,74 +315,6 @@ begin
   return v;
 end $$;
 
--- ------------------------------------------------------------ requests ---
--- Fulfillment: work and change requests from the client to ArkiTech.
-create table requests (
-  id              uuid primary key default gen_random_uuid(),
-  workspace_id    uuid not null references workspaces on delete cascade,
-  number          integer not null,
-  kind            request_kind not null default 'work',
-  title           text not null check (length(title) between 1 and 200),
-  description     text,
-  status          request_status not null default 'open',
-  priority        request_priority not null default 'normal',
-  due_date        date,
-  estimate_hours  numeric(6,2),
-  created_by      uuid references auth.users on delete set null,
-  assigned_staff  uuid references auth.users on delete set null,
-  completed_at    timestamptz,
-  created_at      timestamptz not null default now(),
-  updated_at      timestamptz not null default now(),
-  unique (workspace_id, number)
-);
-create index requests_ws_status on requests (workspace_id, status, updated_at desc);
-create trigger requests_updated before update on requests for each row execute function set_updated_at();
-
-create or replace function requests_number() returns trigger
-language plpgsql as $$
-begin
-  if new.number is null then new.number := next_counter(new.workspace_id, 'request'); end if;
-  return new;
-end $$;
-create trigger requests_number before insert on requests for each row execute function requests_number();
-alter table requests alter column number set default null;
-select apply_tenant_policies('requests', 'requests');
-
-create table request_comments (
-  id           uuid primary key default gen_random_uuid(),
-  workspace_id uuid not null references workspaces on delete cascade,
-  request_id   uuid not null references requests on delete cascade,
-  author_id    uuid references auth.users on delete set null,
-  body         text not null,
-  from_staff   boolean not null default false,
-  internal     boolean not null default false,   -- staff-only note
-  created_at   timestamptz not null default now()
-);
-create index request_comments_req on request_comments (request_id, created_at);
-alter table request_comments enable row level security;
-create policy comments_select on request_comments for select
-  using (is_staff() or (is_member(workspace_id) and not internal));
-create policy comments_insert on request_comments for insert
-  with check (is_staff() or (is_member(workspace_id) and not internal and not from_staff));
-create policy comments_delete on request_comments for delete using (is_staff() or author_id = auth.uid());
-
--- Files live in the private "workspace-files" bucket under <workspace_id>/...
-create table files (
-  id           uuid primary key default gen_random_uuid(),
-  workspace_id uuid not null references workspaces on delete cascade,
-  request_id   uuid references requests on delete set null,
-  bucket       text not null default 'workspace-files',
-  path         text not null,
-  name         text not null,
-  size         bigint not null default 0,
-  mime         text,
-  uploaded_by  uuid references auth.users on delete set null,
-  created_at   timestamptz not null default now(),
-  unique (bucket, path)
-);
-create index files_ws on files (workspace_id, created_at desc);
-select apply_tenant_policies('files', 'requests');
-
 -- ------------------------------------------------------------------ CRM ---
 -- The client's own customers and leads. Never ArkiTech's.
 create table contacts (
@@ -414,29 +356,6 @@ create table activities (
 );
 create index activities_contact on activities (contact_id, at desc);
 select apply_tenant_policies('activities', 'crm');
-
--- ------------------------------------------------------------- calendar ---
-create table events (
-  id           uuid primary key default gen_random_uuid(),
-  workspace_id uuid not null references workspaces on delete cascade,
-  title        text not null,
-  kind         text not null default 'meeting',
-  starts_at    timestamptz not null,
-  ends_at      timestamptz not null,
-  all_day      boolean not null default false,
-  location     text,
-  notes        text,
-  contact_id   uuid references contacts on delete set null,
-  source       text not null default 'portal',   -- portal | google | booking
-  external_id  text,
-  created_by   uuid references auth.users on delete set null,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now(),
-  check (ends_at >= starts_at)
-);
-create index events_ws_time on events (workspace_id, starts_at);
-create trigger events_updated before update on events for each row execute function set_updated_at();
-select apply_tenant_policies('events', 'calendar');
 
 -- ------------------------------------------- Google Business Profile ---
 create table gbp_snapshots (
@@ -776,4 +695,4 @@ end $$;
 create trigger workspaces_provision after insert on workspaces for each row execute function provision_workspace();
 
 -- Realtime for the things people wait on.
-alter publication supabase_realtime add table requests, request_comments, notifications;
+alter publication supabase_realtime add table notifications;

@@ -64,21 +64,6 @@ values ('aaaaaaaa-0000-0000-0000-000000000002', 'greenline', 'Greenline Landscap
 insert into memberships (workspace_id, user_id, role) values
   ('aaaaaaaa-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333331', 'owner');
 
--- Requests
-insert into requests (workspace_id, kind, title, description, status, priority, due_date, created_by, created_at, updated_at) values
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'change', 'Update holiday hours on the website', 'We close at 1pm on Nov 26 and all day Nov 27.', 'done', 'normal', '2026-11-20', '22222222-2222-2222-2222-222222222221', now() - interval '12 days', now() - interval '9 days'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'work', 'New landing page for Invisalign', 'Something like the whitening page, with a before/after slider and the $99 consult offer.', 'review', 'high', '2026-11-14', '22222222-2222-2222-2222-222222222221', now() - interval '6 days', now() - interval '1 day'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'bug', 'Contact form sends to the old email', 'Submissions still go to frontdesk@ instead of hello@.', 'in_progress', 'urgent', null, '22222222-2222-2222-2222-222222222222', now() - interval '2 days', now() - interval '3 hours'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'question', 'Can we add online booking?', 'A few patients asked. What would it take?', 'waiting_on_client', 'normal', null, '22222222-2222-2222-2222-222222222221', now() - interval '4 days', now() - interval '20 hours'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'work', 'Photos from the new office', 'Uploading 14 photos for the gallery and Google profile.', 'open', 'low', null, '22222222-2222-2222-2222-222222222222', now() - interval '5 hours', now() - interval '5 hours');
-
-insert into request_comments (workspace_id, request_id, author_id, body, from_staff, created_at)
-select workspace_id, id, '11111111-1111-1111-1111-111111111112', 'Draft is up at harbordental.com/invisalign-preview. Can you check the pricing copy?', true, now() - interval '1 day'
-from requests where title = 'New landing page for Invisalign';
-insert into request_comments (workspace_id, request_id, author_id, body, from_staff, created_at)
-select workspace_id, id, '11111111-1111-1111-1111-111111111112', 'Booking is a one-time setup plus the Scheduling add-on. Want us to quote it, or start with the add-on first?', true, now() - interval '20 hours'
-from requests where title = 'Can we add online booking?';
-
 -- Contacts around Burlington
 insert into contacts (workspace_id, first_name, last_name, company, email, phone, source, stage, value_cents, lat, lng, address, created_at, last_activity_at, sms_opt_in) values
   ('aaaaaaaa-0000-0000-0000-000000000001', 'Jordan', 'Lee', null, 'jordan.lee@example.com', '+18025550101', 'Google', 'new', 45000, 44.4759, -73.2121, '{"city":"Burlington","state":"VT"}', now() - interval '1 day', now() - interval '1 day', false),
@@ -96,12 +81,6 @@ insert into activities (workspace_id, contact_id, kind, body, at, created_by)
 select workspace_id, id, 'call', 'Talked about an implant consult; sending the price sheet.', now() - interval '1 day', '22222222-2222-2222-2222-222222222222' from contacts where email = 'marcus.hill@example.com';
 insert into activities (workspace_id, contact_id, kind, body, at, created_by)
 select workspace_id, id, 'stage', 'Proposal sent for full smile makeover.', now() - interval '3 days', '22222222-2222-2222-2222-222222222221' from contacts where email = 'elena.rossi@example.com';
-
--- Calendar
-insert into events (workspace_id, title, kind, starts_at, ends_at, location, created_by) values
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'Consult: Marcus Hill', 'meeting', date_trunc('day', now()) + interval '1 day 10 hours', date_trunc('day', now()) + interval '1 day 10 hours 45 minutes', 'Office', '22222222-2222-2222-2222-222222222221'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'Monthly review with ArkiTech', 'meeting', date_trunc('day', now()) + interval '3 days 14 hours', date_trunc('day', now()) + interval '3 days 14 hours 30 minutes', 'Video call', '22222222-2222-2222-2222-222222222221'),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'Staff training: new booking flow', 'internal', date_trunc('day', now()) + interval '6 days 12 hours', date_trunc('day', now()) + interval '6 days 13 hours', 'Office', '22222222-2222-2222-2222-222222222221');
 
 -- Google Business Profile: 30 days of snapshots and some reviews
 insert into gbp_snapshots (workspace_id, day, rating, review_count, views, searches, calls, direction_requests, website_clicks, photo_count, post_count)
@@ -157,6 +136,16 @@ insert into sms_registrations (workspace_id, status, business, contact, campaign
    '{"useCase":"CUSTOMER_CARE","description":"Review requests to patients after their visit, with opt-out.","optInFlow":"Patients opt in at the front desk on the intake form.","sampleMessages":["Hi {first}, thanks for visiting Harbor Dental today! Would you leave us a quick review? {link} Reply STOP to opt out."],"privacyUrl":"https://harbordental.com/privacy","termsUrl":"https://harbordental.com/sms-terms"}',
    '{"authorized":true,"name":"Maya Chen","title":"Owner","at":"2026-10-02T15:04:00Z","ip":"203.0.113.9","text":"I authorize ArkiTech Solutions to register Harbor Dental Group LLC for business text messaging with carriers through Twilio and to send review requests on our behalf."}',
    '2026-10-02T15:04:00Z');
+
+-- Requests (fulfillment)
+insert into requests (workspace_id, type_id, title, description, status, requested_by, created_at, updated_at)
+select 'aaaaaaaa-0000-0000-0000-000000000001', (select id from request_types order by sort_order limit 1), t.title, t.descr, t.st::request_status, '22222222-2222-2222-2222-222222222221', now() - t.age, now() - t.age
+from (values
+  ('Invisalign landing page', 'New page for the Invisalign campaign.', 'delivered', interval '1 day'),
+  ('Update holiday hours', 'Closed Nov 27-28, short day Nov 26.', 'in_progress', interval '2 days'),
+  ('Need your new team photos', 'We need the new hygienist photos to finish the About page.', 'awaiting_client', interval '3 days'),
+  ('Fix broken booking button', 'Button on mobile goes nowhere.', 'completed', interval '9 days')
+) as t(title, descr, st, age);
 
 -- Notifications
 insert into notifications (workspace_id, user_id, kind, title, body, href, created_at) values

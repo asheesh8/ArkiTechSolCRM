@@ -12,3 +12,4 @@ export function supabaseBrowser() {
   );
   return browser;
 }
+export { supabaseBrowser as createClient };

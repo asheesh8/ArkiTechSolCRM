@@ -221,58 +221,6 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"events": {
-                  Row: {
-                    "all_day": boolean,"contact_id": string | null,"created_at": string,"created_by": string | null,"ends_at": string,"external_id": string | null,"id": string,"kind": string,"location": string | null,"notes": string | null,"source": string,"starts_at": string,"title": string,"updated_at": string,"workspace_id": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "all_day"?: boolean,"contact_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"ends_at": string,"external_id"?: string | null,"id"?: string,"kind"?: string,"location"?: string | null,"notes"?: string | null,"source"?: string,"starts_at": string,"title": string,"updated_at"?: string,"workspace_id": string
-                  }
-                  Update: {
-                    "all_day"?: boolean,"contact_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"ends_at"?: string,"external_id"?: string | null,"id"?: string,"kind"?: string,"location"?: string | null,"notes"?: string | null,"source"?: string,"starts_at"?: string,"title"?: string,"updated_at"?: string,"workspace_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "events_contact_id_fkey"
-      columns: ["contact_id"]
-isOneToOne: false
-      referencedRelation: "contacts"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "events_workspace_id_fkey"
-      columns: ["workspace_id"]
-isOneToOne: false
-      referencedRelation: "workspaces"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"files": {
-                  Row: {
-                    "bucket": string,"created_at": string,"id": string,"mime": string | null,"name": string,"path": string,"request_id": string | null,"size": number,"uploaded_by": string | null,"workspace_id": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "bucket"?: string,"created_at"?: string,"id"?: string,"mime"?: string | null,"name": string,"path": string,"request_id"?: string | null,"size"?: number,"uploaded_by"?: string | null,"workspace_id": string
-                  }
-                  Update: {
-                    "bucket"?: string,"created_at"?: string,"id"?: string,"mime"?: string | null,"name"?: string,"path"?: string,"request_id"?: string | null,"size"?: number,"uploaded_by"?: string | null,"workspace_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "files_request_id_fkey"
-      columns: ["request_id"]
-isOneToOne: false
-      referencedRelation: "requests"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "files_workspace_id_fkey"
-      columns: ["workspace_id"]
-isOneToOne: false
-      referencedRelation: "workspaces"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"gbp_snapshots": {
                   Row: {
                     "calls": number | null,"day": string,"direction_requests": number | null,"photo_count": number | null,"post_count": number | null,"rating": number | null,"review_count": number | null,"searches": number | null,"views": number | null,"website_clicks": number | null,"workspace_id": string
@@ -427,6 +375,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"notification_outbox": {
+                  Row: {
+                    "audience": string,"channel_hint": string,"created_at": string,"dedupe_key": string,"id": number,"payload": NonNullable<Json>,"recipient_id": string | null,"sent_at": string | null,"template": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "audience": string,"channel_hint"?: string,"created_at"?: string,"dedupe_key": string,"id"?: never,"payload"?: NonNullable<Json>,"recipient_id"?: string | null,"sent_at"?: string | null,"template": string,"workspace_id": string
+                  }
+                  Update: {
+                    "audience"?: string,"channel_hint"?: string,"created_at"?: string,"dedupe_key"?: string,"id"?: never,"payload"?: NonNullable<Json>,"recipient_id"?: string | null,"sent_at"?: string | null,"template"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notification_outbox_recipient_id_fkey"
+      columns: ["recipient_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notification_outbox_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"notifications": {
                   Row: {
                     "body": string | null,"created_at": string,"href": string | null,"id": string,"kind": string,"read_at": string | null,"title": string,"user_id": string | null,"workspace_id": string
@@ -449,14 +423,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"full_name": string | null,"is_staff": boolean,"updated_at": string,"user_id": string
+                    "avatar_url": string | null,"created_at": string,"full_name": string | null,"id": string,"is_staff": boolean,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"full_name"?: string | null,"is_staff"?: boolean,"updated_at"?: string,"user_id": string
+                    "avatar_url"?: string | null,"created_at"?: string,"full_name"?: string | null,"id": string,"is_staff"?: boolean,"updated_at"?: string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"full_name"?: string | null,"is_staff"?: boolean,"updated_at"?: string,"user_id"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"full_name"?: string | null,"id"?: string,"is_staff"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -487,19 +461,63 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"request_comments": {
+                },"request_attachments": {
                   Row: {
-                    "author_id": string | null,"body": string,"created_at": string,"from_staff": boolean,"id": string,"internal": boolean,"request_id": string,"workspace_id": string
+                    "created_at": string,"deliverable_id": string | null,"file_name": string,"id": string,"mime_type": string,"request_id": string,"size_bytes": number,"storage_path": string,"uploaded_by": string | null,"uploaded_by_kind": Database["public"]['Enums']["request_actor"],"workspace_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id"?: string | null,"body": string,"created_at"?: string,"from_staff"?: boolean,"id"?: string,"internal"?: boolean,"request_id": string,"workspace_id": string
+                    "created_at"?: string,"deliverable_id"?: string | null,"file_name": string,"id"?: string,"mime_type": string,"request_id": string,"size_bytes": number,"storage_path": string,"uploaded_by"?: string | null,"uploaded_by_kind"?: Database["public"]['Enums']["request_actor"],"workspace_id": string
                   }
                   Update: {
-                    "author_id"?: string | null,"body"?: string,"created_at"?: string,"from_staff"?: boolean,"id"?: string,"internal"?: boolean,"request_id"?: string,"workspace_id"?: string
+                    "created_at"?: string,"deliverable_id"?: string | null,"file_name"?: string,"id"?: string,"mime_type"?: string,"request_id"?: string,"size_bytes"?: number,"storage_path"?: string,"uploaded_by"?: string | null,"uploaded_by_kind"?: Database["public"]['Enums']["request_actor"],"workspace_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "request_attachments_deliverable_fk"
+      columns: ["deliverable_id"]
+isOneToOne: false
+      referencedRelation: "request_deliverables"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_attachments_request_id_fkey"
+      columns: ["request_id"]
+isOneToOne: false
+      referencedRelation: "requests"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_attachments_uploaded_by_fkey"
+      columns: ["uploaded_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_attachments_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"request_comments": {
+                  Row: {
+                    "author_id": string | null,"author_kind": Database["public"]['Enums']["request_actor"],"body": string,"created_at": string,"id": string,"internal": boolean,"request_id": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_id"?: string | null,"author_kind"?: Database["public"]['Enums']["request_actor"],"body": string,"created_at"?: string,"id"?: string,"internal"?: boolean,"request_id": string,"workspace_id": string
+                  }
+                  Update: {
+                    "author_id"?: string | null,"author_kind"?: Database["public"]['Enums']["request_actor"],"body"?: string,"created_at"?: string,"id"?: string,"internal"?: boolean,"request_id"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "request_comments_author_id_fkey"
+      columns: ["author_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "request_comments_request_id_fkey"
       columns: ["request_id"]
 isOneToOne: false
@@ -513,19 +531,147 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"requests": {
+                },"request_counters": {
                   Row: {
-                    "assigned_staff": string | null,"completed_at": string | null,"created_at": string,"created_by": string | null,"description": string | null,"due_date": string | null,"estimate_hours": number | null,"id": string,"kind": Database["public"]['Enums']["request_kind"],"number": number,"priority": Database["public"]['Enums']["request_priority"],"status": Database["public"]['Enums']["request_status"],"title": string,"updated_at": string,"workspace_id": string
+                    "last_number": number,"workspace_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "assigned_staff"?: string | null,"completed_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"due_date"?: string | null,"estimate_hours"?: number | null,"id"?: string,"kind"?: Database["public"]['Enums']["request_kind"],"number": number,"priority"?: Database["public"]['Enums']["request_priority"],"status"?: Database["public"]['Enums']["request_status"],"title": string,"updated_at"?: string,"workspace_id": string
+                    "last_number"?: number,"workspace_id": string
                   }
                   Update: {
-                    "assigned_staff"?: string | null,"completed_at"?: string | null,"created_at"?: string,"created_by"?: string | null,"description"?: string | null,"due_date"?: string | null,"estimate_hours"?: number | null,"id"?: string,"kind"?: Database["public"]['Enums']["request_kind"],"number"?: number,"priority"?: Database["public"]['Enums']["request_priority"],"status"?: Database["public"]['Enums']["request_status"],"title"?: string,"updated_at"?: string,"workspace_id"?: string
+                    "last_number"?: number,"workspace_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "request_counters_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: true
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"request_deliverables": {
+                  Row: {
+                    "created_at": string,"decided_at": string | null,"decided_by": string | null,"decision_note": string | null,"id": string,"posted_by": string | null,"request_id": string,"status": Database["public"]['Enums']["deliverable_status"],"summary": string,"title": string,"updated_at": string,"url": string | null,"version": number,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_note"?: string | null,"id"?: string,"posted_by"?: string | null,"request_id": string,"status"?: Database["public"]['Enums']["deliverable_status"],"summary"?: string,"title": string,"updated_at"?: string,"url"?: string | null,"version"?: number,"workspace_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_note"?: string | null,"id"?: string,"posted_by"?: string | null,"request_id"?: string,"status"?: Database["public"]['Enums']["deliverable_status"],"summary"?: string,"title"?: string,"updated_at"?: string,"url"?: string | null,"version"?: number,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "request_deliverables_decided_by_fkey"
+      columns: ["decided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_deliverables_posted_by_fkey"
+      columns: ["posted_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_deliverables_request_id_fkey"
+      columns: ["request_id"]
+isOneToOne: false
+      referencedRelation: "requests"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_deliverables_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"request_events": {
+                  Row: {
+                    "actor_id": string | null,"actor_kind": Database["public"]['Enums']["request_actor"],"created_at": string,"data": NonNullable<Json>,"id": number,"kind": string,"request_id": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_id"?: string | null,"actor_kind"?: Database["public"]['Enums']["request_actor"],"created_at"?: string,"data"?: NonNullable<Json>,"id"?: never,"kind": string,"request_id": string,"workspace_id": string
+                  }
+                  Update: {
+                    "actor_id"?: string | null,"actor_kind"?: Database["public"]['Enums']["request_actor"],"created_at"?: string,"data"?: NonNullable<Json>,"id"?: never,"kind"?: string,"request_id"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "request_events_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_events_request_id_fkey"
+      columns: ["request_id"]
+isOneToOne: false
+      referencedRelation: "requests"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "request_events_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"request_types": {
+                  Row: {
+                    "created_at": string,"description": string,"fields": NonNullable<Json>,"icon": string,"id": string,"included_in_plan": boolean,"is_active": boolean,"key": string,"name": string,"requires_approval": boolean,"sla_hours": number,"sort_order": number,"updated_at": string,"workspace_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"description"?: string,"fields"?: NonNullable<Json>,"icon"?: string,"id"?: string,"included_in_plan"?: boolean,"is_active"?: boolean,"key": string,"name": string,"requires_approval"?: boolean,"sla_hours"?: number,"sort_order"?: number,"updated_at"?: string,"workspace_id"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"description"?: string,"fields"?: NonNullable<Json>,"icon"?: string,"id"?: string,"included_in_plan"?: boolean,"is_active"?: boolean,"key"?: string,"name"?: string,"requires_approval"?: boolean,"sla_hours"?: number,"sort_order"?: number,"updated_at"?: string,"workspace_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "request_types_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"requests": {
+                  Row: {
+                    "assigned_to": string | null,"completed_at": string | null,"created_at": string,"delivered_at": string | null,"description": string,"due_at": string | null,"fields": NonNullable<Json>,"id": string,"idempotency_key": string | null,"number": number,"priority": Database["public"]['Enums']["request_priority"],"requested_by": string | null,"started_at": string | null,"status": Database["public"]['Enums']["request_status"],"submitted_at": string | null,"title": string,"type_id": string,"updated_at": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "assigned_to"?: string | null,"completed_at"?: string | null,"created_at"?: string,"delivered_at"?: string | null,"description"?: string,"due_at"?: string | null,"fields"?: NonNullable<Json>,"id"?: string,"idempotency_key"?: string | null,"number": number,"priority"?: Database["public"]['Enums']["request_priority"],"requested_by"?: string | null,"started_at"?: string | null,"status"?: Database["public"]['Enums']["request_status"],"submitted_at"?: string | null,"title": string,"type_id": string,"updated_at"?: string,"workspace_id": string
+                  }
+                  Update: {
+                    "assigned_to"?: string | null,"completed_at"?: string | null,"created_at"?: string,"delivered_at"?: string | null,"description"?: string,"due_at"?: string | null,"fields"?: NonNullable<Json>,"id"?: string,"idempotency_key"?: string | null,"number"?: number,"priority"?: Database["public"]['Enums']["request_priority"],"requested_by"?: string | null,"started_at"?: string | null,"status"?: Database["public"]['Enums']["request_status"],"submitted_at"?: string | null,"title"?: string,"type_id"?: string,"updated_at"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "requests_assigned_to_fkey"
+      columns: ["assigned_to"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "requests_requested_by_fkey"
+      columns: ["requested_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "requests_type_id_fkey"
+      columns: ["type_id"]
+isOneToOne: false
+      referencedRelation: "request_types"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "requests_workspace_id_fkey"
       columns: ["workspace_id"]
 isOneToOne: false
@@ -738,14 +884,14 @@ isOneToOne: false
           Views: {
             "workspace_members": {
                   Row: {
-                    "created_at": string,"permissions": NonNullable<Json>,"role": Database["public"]['Enums']["member_role"],"user_id": string,"workspace_id": string
+                    "created_at": string,"permissions": NonNullable<Json>,"role": string | null,"user_id": string,"workspace_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                           "created_at"?: string | null,"permissions"?: Json | null,"role"?: Database["public"]['Enums']["member_role"] | null,"user_id"?: string | null,"workspace_id"?: string | null
+                           "created_at"?: string | null,"permissions"?: Json | null,"role"?: never,"user_id"?: string | null,"workspace_id"?: string | null
                          }
                         Update: {
-                           "created_at"?: string | null,"permissions"?: Json | null,"role"?: Database["public"]['Enums']["member_role"] | null,"user_id"?: string | null,"workspace_id"?: string | null
+                           "created_at"?: string | null,"permissions"?: Json | null,"role"?: never,"user_id"?: string | null,"workspace_id"?: string | null
                          }
                         Relationships: [
                     {
@@ -786,12 +932,18 @@ isOneToOne: false
 "next_counter":
 { Args: { "counter": string,"ws": string }; Returns: number
                            },
+"next_request_number":
+{ Args: { "ws": string }; Returns: number
+                           },
+"storage_workspace_id":
+{ Args: { "object_name": string }; Returns: string
+                           },
 "workspace_role":
 { Args: { "ws": string }; Returns: string
                            }
           }
           Enums: {
-            "automation_status": "included"|"active"|"paused"|"available","invoice_status": "draft"|"open"|"paid"|"overdue"|"void","lead_stage": "new"|"contacted"|"qualified"|"proposal"|"won"|"lost","member_role": "owner"|"admin"|"member","module_status": "included"|"active"|"trial"|"paused"|"cancelled","request_kind": "work"|"change"|"bug"|"question","request_priority": "low"|"normal"|"high"|"urgent","request_status": "open"|"in_progress"|"waiting_on_client"|"review"|"done"|"cancelled","sms_registration_status": "draft"|"submitted"|"brand_approved"|"campaign_approved"|"live"|"rejected","staff_role": "owner"|"member"|"dev"
+            "automation_status": "included"|"active"|"paused"|"available","deliverable_status": "pending"|"approved"|"changes_requested","invoice_status": "draft"|"open"|"paid"|"overdue"|"void","lead_stage": "new"|"contacted"|"qualified"|"proposal"|"won"|"lost","member_role": "owner"|"admin"|"member","module_status": "included"|"active"|"trial"|"paused"|"cancelled","request_actor": "client"|"team"|"system","request_priority": "low"|"normal"|"high"|"urgent","request_status": "draft"|"submitted"|"in_review"|"in_progress"|"awaiting_client"|"delivered"|"completed"|"on_hold"|"cancelled","sms_registration_status": "draft"|"submitted"|"brand_approved"|"campaign_approved"|"live"|"rejected","staff_role": "owner"|"member"|"dev"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -911,7 +1063,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "automation_status": ["included", "active", "paused", "available"],"invoice_status": ["draft", "open", "paid", "overdue", "void"],"lead_stage": ["new", "contacted", "qualified", "proposal", "won", "lost"],"member_role": ["owner", "admin", "member"],"module_status": ["included", "active", "trial", "paused", "cancelled"],"request_kind": ["work", "change", "bug", "question"],"request_priority": ["low", "normal", "high", "urgent"],"request_status": ["open", "in_progress", "waiting_on_client", "review", "done", "cancelled"],"sms_registration_status": ["draft", "submitted", "brand_approved", "campaign_approved", "live", "rejected"],"staff_role": ["owner", "member", "dev"]
+            "automation_status": ["included", "active", "paused", "available"],"deliverable_status": ["pending", "approved", "changes_requested"],"invoice_status": ["draft", "open", "paid", "overdue", "void"],"lead_stage": ["new", "contacted", "qualified", "proposal", "won", "lost"],"member_role": ["owner", "admin", "member"],"module_status": ["included", "active", "trial", "paused", "cancelled"],"request_actor": ["client", "team", "system"],"request_priority": ["low", "normal", "high", "urgent"],"request_status": ["draft", "submitted", "in_review", "in_progress", "awaiting_client", "delivered", "completed", "on_hold", "cancelled"],"sms_registration_status": ["draft", "submitted", "brand_approved", "campaign_approved", "live", "rejected"],"staff_role": ["owner", "member", "dev"]
           }
         }
 } as const

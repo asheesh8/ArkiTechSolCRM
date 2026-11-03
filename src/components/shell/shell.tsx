@@ -58,7 +58,10 @@ export function Shell({ slug, workspace, user, modules, role, unread, switcher, 
 
   // Phone tab bar: first four by nav order, the rest behind More.
   const tabs = nav.slice(0, 4);
-  const moreItems = nav.slice(4);
+  // On phones the dock shows the active module even if it lives under More.
+  const activeExtra = nav.slice(4).find((m) => isActive(m.path));
+  if (activeExtra) tabs[3] = activeExtra;
+  const moreItems = nav.filter((m) => !tabs.includes(m));
 
   const NavLink = ({ m, dense }: { m: (typeof MODULES)[number]; dense?: boolean }) => (
     <Link
@@ -172,21 +175,38 @@ export function Shell({ slug, workspace, user, modules, role, unread, switcher, 
           <UserMenu user={user} role={role} />
         </header>
 
-        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+16px)] pt-5 sm:px-6 md:pb-10 md:pt-6">{children}</main>
+        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+28px)] pt-5 sm:px-6 md:pb-10 md:pt-6">{children}</main>
       </div>
 
-      {/* Phone tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex h-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] border-t border-border bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden" aria-label="Primary">
-        {tabs.map((m) => (
-          <Link key={m.key} href={base + m.path} aria-current={isActive(m.path) ? "page" : undefined} className={cn("flex flex-1 flex-col items-center justify-center gap-1 text-[11px]", isActive(m.path) ? "text-text font-medium" : "text-text-muted")}>
-            <m.icon className="size-5" strokeWidth={isActive(m.path) ? 2 : 1.6} />
-            {m.label.split(" ")[0]}
-          </Link>
-        ))}
-        <button onClick={() => setMore(true)} className={cn("flex flex-1 flex-col items-center justify-center gap-1 text-[11px]", more ? "text-text" : "text-text-muted")}>
-          <MoreHorizontal className="size-5" strokeWidth={1.6} />
-          More
-        </button>
+      {/* Phone dock: a floating pill. Active module fills with the accent and shows its name. */}
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom)+10px)] md:hidden" aria-label="Primary">
+        <div className="pointer-events-auto flex max-w-full items-center gap-1 rounded-full border border-border bg-surface/90 p-1.5 shadow-lg backdrop-blur-md">
+          {tabs.map((m) => {
+            const on = isActive(m.path);
+            return (
+              <Link
+                key={m.key}
+                href={base + m.path}
+                aria-label={m.label}
+                aria-current={on ? "page" : undefined}
+                className={cn(
+                  "flex h-11 items-center justify-center gap-2 rounded-full text-sm font-medium transition-[background-color,color,transform,padding] duration-200 active:scale-95",
+                  on ? "bg-accent px-4 text-on-accent" : "w-11 bg-control text-text-muted hover:text-text",
+                )}
+              >
+                <m.icon className="size-5 shrink-0" strokeWidth={on ? 2 : 1.7} />
+                {on ? <span>{m.label.split(" ")[0]}</span> : null}
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setMore(true)}
+            aria-label="More"
+            className={cn("flex size-11 items-center justify-center rounded-full bg-control text-text-muted transition-transform duration-200 active:scale-95", more && "text-text")}
+          >
+            <MoreHorizontal className="size-5" strokeWidth={1.7} />
+          </button>
+        </div>
       </nav>
       {more ? (
         <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal>

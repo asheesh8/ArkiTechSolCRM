@@ -56,7 +56,7 @@ export const getTenant = cache(async (slug: string): Promise<TenantContext> => {
   const [{ data: membership }, { data: moduleRows }, { data: profile }] = await Promise.all([
     supabase.from("memberships").select("*").eq("workspace_id", workspace.id).eq("user_id", user.id).maybeSingle(),
     supabase.from("workspace_modules").select("*").eq("workspace_id", workspace.id),
-    supabase.from("profiles").select("full_name, avatar_url").eq("user_id", user.id).maybeSingle(),
+    supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle(),
   ]);
 
   const isStaff = Boolean(staff);
