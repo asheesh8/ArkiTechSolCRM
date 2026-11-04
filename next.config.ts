@@ -24,16 +24,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // The 3-minute VSL for meetings booked over the phone: /vsl?name=Jose greets them by name.
-  // The page and video live in the sale funnel (terrijambo/arkitechwebsitesale, its /watch page),
-  // so it's served from there and stays in step with any change to the video.
-  async rewrites() {
-    const funnel = "https://arkitechwebsitesale.vercel.app";
-    return [
-      { source: "/vsl", destination: `${funnel}/watch` },
-      { source: "/vsl/:file(ArkiTech-VSL\\.mp4|poster\\.jpg)", destination: `${funnel}/vsl/:file` },
-    ];
-  },
 };
 
 export default nextConfig;

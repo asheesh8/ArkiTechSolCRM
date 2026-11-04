@@ -80,7 +80,7 @@ export const WORK: Work[] = [
     slug: "joe",
     mobileH: 5400,
     fullH: 5600,
-    name: "Joe The Cleaner",
+    name: "CallJoe",
     kind: "client",
     what: "House and office cleaning",
     where: "Saint Albans",
