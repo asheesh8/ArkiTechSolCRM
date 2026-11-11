@@ -3,7 +3,8 @@ import { ContactButton } from "@/components/marketing/site/contact-context";
 import { Team } from "@/components/marketing/home/team";
 import { Closing } from "@/components/marketing/site/closing";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
-import { breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketing/seo";
+import { breadcrumbJsonLd, ORG_ID, pageMetadata, personJsonLd, SITE_URL } from "@/lib/marketing/seo";
+import { PEOPLE } from "@/lib/marketing/site";
 
 export const metadata = pageMetadata({
   title: "About ArkiTech Solutions | Burlington, VT Web Studio",
@@ -28,6 +29,7 @@ export default function AboutPage() {
             mainEntity: { "@id": ORG_ID },
           },
           breadcrumbJsonLd([{ name: "About", path: "/about" }]),
+          ...PEOPLE.map((p) => ({ "@context": "https://schema.org", ...personJsonLd(p) })),
         ]}
       />
       <PageHeader

@@ -14,6 +14,7 @@ import { SERVICE_PLATE } from "@/lib/marketing/art";
 import { loadPlans } from "@/lib/marketing/plans";
 import { money, planFor, plansIn, startingPrice } from "@/lib/marketing/plan-display";
 import { getService, services } from "@/lib/services-content";
+import { SERVICE_OFFERS } from "@/lib/marketing/offers";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { breadcrumbJsonLd, pageMetadata, serviceJsonLd } from "@/lib/marketing/seo";
 
@@ -57,7 +58,9 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
             name: service.name,
             description: service.summary,
             path,
-            price: price.amount ? `${price.lead} ${price.amount} ${price.tail ?? ""}`.trim() : undefined,
+            offers: (SERVICE_OFFERS[service.slug] ?? [])
+              .map((slug) => plansAll.find((p) => p.slug === slug && p.active !== false))
+              .filter((p) => p != null),
           }),
           breadcrumbJsonLd([
             { name: "Services", path: "/services" },

@@ -8,7 +8,7 @@ import { Closing } from "@/components/marketing/site/closing";
 import { PLATES, SERVICE_PLATE } from "@/lib/marketing/art";
 import { getPost, servicesWithPosts } from "@/lib/services-content";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
-import { AUTHOR, breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketing/seo";
+import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/marketing/seo";
 
 const longDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -38,19 +38,15 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const others = servicesWithPosts.filter((s) => s.post.slug !== post.slug);
 
   const path = `/blog/${post.slug}`;
-  const article = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
+  const article = articleJsonLd({
+    type: "BlogPosting",
     headline: post.title,
     description: post.description,
-    datePublished: post.published,
-    dateModified: post.updated,
-    author: AUTHOR,
-    publisher: { "@id": ORG_ID },
-    image: `${SITE_URL}/media/burlington-night.jpg`,
-    mainEntityOfPage: `${SITE_URL}${path}`,
-    about: { "@type": "Service", name: service.name, url: `${SITE_URL}/services/${service.slug}` },
-  };
+    path,
+    published: post.published,
+    updated: post.updated,
+    about: post.about ?? service.name,
+  });
   const crumbs = breadcrumbJsonLd([
     { name: "Blog", path: "/blog" },
     { name: post.title, path },

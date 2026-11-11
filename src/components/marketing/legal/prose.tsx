@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { SITE } from "@/lib/marketing/site";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/marketing/seo";
 
 /**
  * Building blocks for the legal pages. Same API as the CRM repo's version so
@@ -14,8 +16,10 @@ const DOCS = [
 export type LegalDoc = (typeof DOCS)[number]["key"];
 
 export function DocHeader({ title, updated, active }: { title: string; updated: string; active: LegalDoc }) {
+  const doc = DOCS.find((d) => d.key === active)!;
   return (
     <header className="border-b border-[var(--rule)] pb-10">
+      <JsonLd data={breadcrumbJsonLd([{ name: doc.label, path: doc.href }])} />
       <h1 className="ak-display h-xl">{title}</h1>
       <p className="mt-4 text-sm text-[var(--dim)]">Last updated {updated}</p>
       <nav aria-label="Legal documents" className="mt-8 flex flex-wrap gap-2">

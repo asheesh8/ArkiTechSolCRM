@@ -8,7 +8,8 @@ import { SERVICE_PLATE } from "@/lib/marketing/art";
 import { services } from "@/lib/services-content";
 import { loadPlans } from "@/lib/marketing/plans";
 import { startingPrice } from "@/lib/marketing/plan-display";
-import { pageMetadata } from "@/lib/marketing/seo";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/marketing/seo";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
 
 export const metadata = pageMetadata({
   title: "Web Design, Dashboards & AEO/GEO Services in VT | ArkiTech",
@@ -24,6 +25,7 @@ export default async function ServicesIndex() {
   const plans = await loadPlans();
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: "Services", path: "/services" }])} />
       <PageHeader
         kicker="Custom websites, dashboards & AI search"
         title="What we build."

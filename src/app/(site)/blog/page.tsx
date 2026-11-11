@@ -6,7 +6,8 @@ import { Reveal } from "@/components/marketing/site/reveal";
 import { Closing } from "@/components/marketing/site/closing";
 import { SERVICE_PLATE } from "@/lib/marketing/art";
 import { servicesWithPosts } from "@/lib/services-content";
-import { pageMetadata } from "@/lib/marketing/seo";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/marketing/seo";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
 
 export const metadata = pageMetadata({
   title: "Local Business Website & Marketing Blog | ArkiTech",
@@ -19,6 +20,7 @@ export default function BlogIndex() {
   const [lead, ...rest] = servicesWithPosts;
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: "Blog", path: "/blog" }])} />
       <PageHeader kicker="Local business website & marketing blog" title="Things we keep having to explain." lede="Plain writing about websites, reviews, and keeping track of the leads they bring in." />
 
       <section className="band pb-24 sm:pb-32">

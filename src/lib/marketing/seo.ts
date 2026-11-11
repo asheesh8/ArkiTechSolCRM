@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { SITE, SAME_AS } from "@/lib/marketing/site";
+import { AREA_SERVED, PEOPLE, SITE, SAME_AS } from "@/lib/marketing/site";
+import { OFFER_TERMS } from "@/lib/marketing/offers";
+import type { PricingPlan } from "@/lib/pricing";
 
 export { SAME_AS };
 
@@ -58,44 +60,120 @@ export function pageMetadata({
 
 export const ORG_ID = `${SITE_URL}/#organization`;
 
-export const AUTHOR = {
-  "@type": "Person",
-  name: "Ashish Subedi",
-  jobTitle: "CEO & Fullstack Designer",
-  url: `${SITE_URL}/about`,
-  worksFor: { "@id": ORG_ID },
-} as const;
+type Person = (typeof PEOPLE)[number];
+const personId = (p: Person) => `${SITE_URL}/about#${p.id}`;
+
+/** A founder as schema.org Person, with the profiles that are them. */
+export function personJsonLd(p: Person) {
+  return {
+    "@type": "Person",
+    "@id": personId(p),
+    name: p.name,
+    ...("alternateName" in p ? { alternateName: p.alternateName } : {}),
+    jobTitle: p.jobTitle,
+    url: `${SITE_URL}/about`,
+    worksFor: { "@id": ORG_ID },
+    ...("alumniOf" in p ? { alumniOf: { "@type": "CollegeOrUniversity", name: p.alumniOf } } : {}),
+    ...(p.sameAs.length ? { sameAs: [...p.sameAs] } : {}),
+  };
+}
+
+/** Ashish writes the posts. */
+export const AUTHOR = personJsonLd(PEOPLE[0]);
+
+/** The towns, then the state, then the country, as one areaServed list. */
+export const AREA_SERVED_LD = [
+  ...AREA_SERVED.towns.map((t) => ({
+    "@type": "City",
+    name: `${t.name}, Vermont`,
+    containedInPlace: { "@type": "State", name: AREA_SERVED.state },
+  })),
+  { "@type": "State", name: AREA_SERVED.state },
+  { "@type": "Country", name: "United States" },
+];
+
+/**
+ * One plan as an Offer. `price` is always numeric; monthly prices carry a
+ * UnitPriceSpecification per month, and a fixed term adds billingDuration.
+ * A plan with a build fee and a monthly fee gets both specifications.
+ */
+export function offerJsonLd(plan: PricingPlan) {
+  const terms = OFFER_TERMS[plan.slug] ?? {};
+  const specs: object[] = [];
+  if (plan.onceCents != null) {
+    specs.push({ "@type": "PriceSpecification", name: "Build", price: plan.onceCents / 100, priceCurrency: "USD" });
+  }
+  if (plan.monthlyCents != null) {
+    specs.push({
+      "@type": "UnitPriceSpecification",
+      name: plan.onceCents != null ? "Monthly plan" : "Monthly",
+      price: plan.monthlyCents / 100,
+      priceCurrency: "USD",
+      unitCode: "MON",
+      ...(terms.termMonths ? { billingDuration: { "@type": "QuantitativeValue", value: terms.termMonths, unitCode: "MON" } } : {}),
+    });
+  }
+  const price = plan.onceCents ?? plan.monthlyCents;
+  return {
+    "@type": "Offer",
+    "@id": `${SITE_URL}/pricing#${plan.slug}`,
+    name: plan.name,
+    description: plan.blurb,
+    url: `${SITE_URL}/pricing`,
+    ...(price != null ? { price: price / 100 } : {}),
+    priceCurrency: "USD",
+    ...(specs.length ? { priceSpecification: specs.length === 1 ? specs[0] : specs } : {}),
+    seller: { "@id": ORG_ID },
+  };
+}
 
 /** The business itself. Matches the footer: Burlington, the main line, weekday hours. */
-export function organizationJsonLd() {
+export function organizationJsonLd(plans: PricingPlan[] = []) {
+  const catalog = plans.filter((p) => p.group === "plans" && p.active !== false);
   return {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
     "@id": ORG_ID,
     name: SITE.name,
     legalName: SITE.legalName,
+    alternateName: [...SITE.alternateNames],
     url: SITE_URL,
     logo: `${SITE_URL}/icon.png`,
     image: `${SITE_URL}${DEFAULT_IMAGE}`,
     description:
-      "Burlington, Vermont studio building custom websites, business dashboards and CRM, and AI search optimization for businesses anywhere in the US.",
-    telephone: "+1-802-557-8828",
+      "Burlington, Vermont web design studio: custom websites, Google Business Profile and review management, business dashboards, and AEO & GEO website builds.",
+    telephone: SITE.phoneE164,
     email: SITE.email,
-    address: { "@type": "PostalAddress", addressLocality: "Burlington", addressRegion: "VT", addressCountry: "US" },
-    // The studio is in Burlington; the work is remote, so the area is the country.
-    areaServed: { "@type": "Country", name: "United States" },
+    // City only until the owner settles the public address (see site.ts).
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: SITE.locality.city,
+      addressRegion: SITE.locality.region,
+      addressCountry: SITE.locality.country,
+    },
+    areaServed: AREA_SERVED_LD,
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      opens: "08:00",
-      closes: "19:00",
+      dayOfWeek: [...SITE.openingHours.days],
+      opens: SITE.openingHours.opens,
+      closes: SITE.openingHours.closes,
     },
-    founder: [
-      { "@type": "Person", name: "Ashish Subedi", jobTitle: "CEO & Fullstack Designer" },
-      { "@type": "Person", name: "Terri Ambo", jobTitle: "CEO & Director of Client Relations" },
+    priceRange: "$150-$3,000",
+    founder: PEOPLE.map(personJsonLd),
+    knowsAbout: [
+      "Web design",
+      "Answer engine optimization (AEO)",
+      "Generative engine optimization (GEO)",
+      "Local SEO",
+      "Google Business Profile management",
+      "Review management",
+      "Business dashboards",
+      "CRM",
     ],
-    knowsAbout: ["Web design", "Business dashboards", "CRM", "AI search optimization", "Google Business Profile management"],
-    sameAs: SAME_AS,
+    ...(SAME_AS.length ? { sameAs: SAME_AS } : {}),
+    ...(catalog.length
+      ? { hasOfferCatalog: { "@type": "OfferCatalog", name: "ArkiTech Solutions plans", itemListElement: catalog.map(offerJsonLd) } }
+      : {}),
   };
 }
 
@@ -130,13 +208,16 @@ export function serviceJsonLd({
   name,
   description,
   path,
-  price,
+  offers = [],
+  areaServed = AREA_SERVED_LD,
 }: {
   name: string;
   description: string;
   path: string;
-  /** The page's own "from" line, e.g. "From $99 a month". */
-  price?: string;
+  /** The plans this service is sold as. */
+  offers?: PricingPlan[];
+  /** Defaults to the organization's area; a town page narrows it to its city. */
+  areaServed?: object | object[];
 }) {
   return {
     "@context": "https://schema.org",
@@ -145,7 +226,50 @@ export function serviceJsonLd({
     description,
     url: `${SITE_URL}${path}`,
     provider: { "@id": ORG_ID },
-    areaServed: { "@type": "Country", name: "United States" },
-    ...(price ? { offers: { "@type": "Offer", priceCurrency: "USD", description: price, url: `${SITE_URL}/pricing` } } : {}),
+    areaServed,
+    ...(offers.length ? { offers: offers.map(offerJsonLd) } : {}),
+  };
+}
+
+/** FAQPage from the same items the page renders. Answers must be plain text. */
+export function faqJsonLd(items: { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((i) => ({ "@type": "Question", name: i.q, acceptedAnswer: { "@type": "Answer", text: i.a } })),
+  };
+}
+
+/** A guide or post, written by a founder, with real dates. */
+export function articleJsonLd({
+  type = "Article",
+  headline,
+  description,
+  path,
+  published,
+  updated,
+  about,
+}: {
+  type?: "Article" | "BlogPosting";
+  headline: string;
+  description: string;
+  path: string;
+  published: string;
+  updated: string;
+  about?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": type,
+    headline,
+    description,
+    url: `${SITE_URL}${path}`,
+    mainEntityOfPage: `${SITE_URL}${path}`,
+    datePublished: published,
+    dateModified: updated,
+    author: AUTHOR,
+    publisher: { "@id": ORG_ID },
+    image: `${SITE_URL}${DEFAULT_IMAGE}`,
+    ...(about ? { about: { "@type": "Thing", name: about } } : {}),
   };
 }

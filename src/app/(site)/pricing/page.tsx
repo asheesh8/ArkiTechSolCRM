@@ -7,7 +7,8 @@ import { Closing } from "@/components/marketing/site/closing";
 import { ContactButton } from "@/components/marketing/site/contact-context";
 import { GROUPS, loadPlans } from "@/lib/marketing/plans";
 import { plansIn } from "@/lib/marketing/plan-display";
-import { pageMetadata } from "@/lib/marketing/seo";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/marketing/seo";
+import { JsonLd } from "@/components/marketing/seo/json-ld";
 
 export const metadata = pageMetadata({
   title: "Website, Google Business Profile & AEO Pricing | ArkiTech",
@@ -33,6 +34,7 @@ export default async function PricingPage() {
   const [planGroup] = GROUPS;
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: "Pricing", path: "/pricing" }])} />
       <PageHeader
         kicker="Website, reviews and AI search pricing"
         title="What it costs."
