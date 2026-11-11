@@ -22,7 +22,7 @@ export function SiteFooter() {
           <div>
             <FooterLogo />
             <p className="mt-7 max-w-[32ch] text-[var(--dim)]">
-              Custom websites, Google Business Profiles and reviews, dashboards, and AEO &amp; GEO builds. Built in Burlington, Vermont.
+              Custom websites, Google Business Profiles and reviews, dashboards, and AEO &amp; GEO builds. Built in Essex Junction, Vermont.
             </p>
           </div>
 
@@ -64,7 +64,7 @@ export function SiteFooter() {
                   {SITE.email}
                 </a>
               </Row>
-              <Row term="Studio">{SITE.studio}</Row>
+              <Row term="Studio">{SITE.address}</Row>
               <Row term="Clients">{SITE.reach}</Row>
               <Row term="Hours">{SITE.hours}</Row>
             </dl>

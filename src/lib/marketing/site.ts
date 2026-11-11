@@ -20,13 +20,14 @@ export const SITE = {
   // TODO(owner): confirm the public email. It may move to @arkitech-sol.com; change it here only.
   email: "studio@sol-arkitech.com",
   /**
-   * Public location: the city only. TODO(owner): BBB lists 122 West St, Essex
-   * Junction, VT 05452 and LinkedIn says Essex Junction. Pick one public
-   * city/address, make Google Business Profile, BBB, this file and the schema
-   * match, and add `street`/`postalCode` here only once it is decided.
+   * The public address, the same as Google Business Profile and BBB. Burlington
+   * and Chittenden County are the market the copy leads with; this is where the
+   * studio is.
    */
-  locality: { city: "Burlington", region: "VT", regionName: "Vermont", country: "US" },
-  studio: "Burlington, Vermont",
+  locality: { street: "122 West St", city: "Essex Junction", region: "VT", regionName: "Vermont", postalCode: "05452", country: "US" },
+  /** One-line address for contact blocks. */
+  address: "122 West St, Essex Junction, VT 05452",
+  studio: "Essex Junction, Vermont",
   hours: "Mon-Fri, 8am-7pm",
   openingHours: { days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "08:00", closes: "19:00" },
   /** Where clients can be: Chittenden County first, remote anywhere in the US second. */

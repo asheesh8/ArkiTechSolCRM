@@ -17,11 +17,11 @@ export const TOWNS: TownPageData[] = [
     town: "Burlington",
     title: "Website Design in Burlington, Vermont | ArkiTech Solutions",
     description:
-      "ArkiTech Solutions is a Burlington, Vermont web design studio: fast custom websites, Google Business Profile and review management, and AEO & GEO builds.",
+      "Web design for Burlington, Vermont businesses from a studio next door in Essex Junction: fast custom websites, Google profile and review care, AEO & GEO builds.",
     kicker: "Burlington, Vermont",
     h1: "Website design in Burlington, Vermont",
     quickAnswer:
-      "ArkiTech Solutions is a Burlington web design studio. We build fast custom websites, run Google Business Profiles and reviews, and build AEO & GEO pages for answer engines. Burlington is Vermont's most competitive local search market, so speed, a complete profile and recent reviews decide who gets the call.",
+      "ArkiTech Solutions builds websites for Burlington businesses from next door in Essex Junction. We build fast custom websites, run Google Business Profiles and reviews, and build AEO & GEO pages for answer engines. Burlington is Vermont's most competitive local search market, so speed, a complete profile and recent reviews decide who gets the call.",
     local: [
       {
         term: "You're ranking against franchises",
@@ -40,7 +40,7 @@ export const TOWNS: TownPageData[] = [
       },
     ],
     proof:
-      "We're based here, and Ashish studied at Champlain College, a few blocks from Church Street. In Burlington we built the site for [Inspire Campaigns](/work/inspire-campaigns), a video and visual marketing studio.",
+      "We're next door in Essex Junction, and Ashish studied at Champlain College, a few blocks from Church Street. In Burlington we built the site for [Inspire Campaigns](/work/inspire-campaigns), a video and visual marketing studio.",
     todo: "add a photo of Burlington you took yourselves (Church Street, the waterfront), with descriptive alt text.",
     sections: [
       {
@@ -54,8 +54,8 @@ export const TOWNS: TownPageData[] = [
     ],
     faqs: [
       {
-        q: "Are you actually based in Burlington?",
-        a: "Yes. ArkiTech Solutions is a two-person studio in Burlington, Vermont, and the people you talk to are the people who build your site. We work with businesses across Chittenden County and remotely with clients anywhere in the US.",
+        q: "Where are you based?",
+        a: "At 122 West St in Essex Junction, ten minutes from downtown Burlington. ArkiTech Solutions is a two-person studio, and the people you talk to are the people who build your site. We work across Chittenden County and remotely anywhere in the US.",
       },
       {
         q: "How do Burlington businesses show up in Google's map results?",
@@ -83,7 +83,7 @@ export const TOWNS: TownPageData[] = [
     kicker: "South Burlington, Vermont",
     h1: "Website design in South Burlington, Vermont",
     quickAnswer:
-      "South Burlington is where much of Chittenden County's professional work happens: medical and dental practices, law and accounting offices, the Dorset Street corridor. ArkiTech Solutions builds their websites from nearby Burlington, where credibility, accessibility and easy contact matter more than flash. Plans start at a $1,000 custom website.",
+      "South Burlington is where much of Chittenden County's professional work happens: medical and dental practices, law and accounting offices, the Dorset Street corridor. ArkiTech Solutions builds their websites from nearby Essex Junction, where credibility, accessibility and easy contact matter more than flash. Plans start at a $1,000 custom website.",
     local: [
       {
         term: "Trust is the conversion",
@@ -114,7 +114,7 @@ export const TOWNS: TownPageData[] = [
         h2: "Which plan suits a South Burlington practice?",
         blocks: [
           {
-            p: "A practice that relies on Google to bring in new patients or clients usually fits the [Growth Partnership](/pricing): the website plus Google Business Profile management, review requests and replies. A firm that only needs a credible, fast site can start with the [Custom Website](/services/websites), and add dashboards such as Scheduling for $50/month each.",
+            p: "A practice that relies on Google to bring in new patients or clients usually fits the [Growth Partnership](/pricing): the website plus Google Business Profile management, review requests and replies. A firm that only needs a credible, fast site can start with the [Custom Website](/services/websites), and add dashboards such as Scheduling when you need them.",
           },
         ],
       },
@@ -126,7 +126,7 @@ export const TOWNS: TownPageData[] = [
       },
       {
         q: "Can you help with scheduling?",
-        a: "The Scheduling dashboard is an add-on at $50/month that syncs every calendar you use into one view, so appointments booked in different places show up together. It's available on both website plans.",
+        a: "The Scheduling dashboard is an add-on that syncs every calendar you use into one view, so appointments booked in different places show up together. You can add it to either website plan; ask us about it on the call.",
         todo: "confirm which booking tools you connect, and whether online booking is part of the build.",
       },
     ],
@@ -149,7 +149,7 @@ export const TOWNS: TownPageData[] = [
     kicker: "Winooski, Vermont",
     h1: "Website design in Winooski, Vermont",
     quickAnswer:
-      "Winooski packs independent businesses around the Circle and the riverfront: restaurants, studios, salons and shops, mostly owner-run. ArkiTech Solutions builds their websites from next door in Burlington, with pages that name Winooski plainly so they aren't buried under Burlington results. Plans start at a $1,000 custom website.",
+      "Winooski packs independent businesses around the Circle and the riverfront: restaurants, studios, salons and shops, mostly owner-run. ArkiTech Solutions builds their websites from nearby Essex Junction, with pages that name Winooski plainly so they aren't buried under Burlington results. Plans start at a $1,000 custom website.",
     local: [
       {
         term: "You get absorbed into Burlington",
@@ -209,11 +209,11 @@ export const TOWNS: TownPageData[] = [
     town: "Essex",
     title: "Website Design in Essex & Essex Junction, VT | ArkiTech",
     description:
-      "Custom websites, Google Business Profile management and AEO & GEO pages for Essex and Essex Junction, Vermont businesses, from a studio in nearby Burlington.",
+      "Custom websites, Google Business Profile management and AEO & GEO pages for Essex and Essex Junction, Vermont businesses, from our studio on West St.",
     kicker: "Essex & Essex Junction, Vermont",
     h1: "Website design in Essex and Essex Junction, Vermont",
     quickAnswer:
-      "ArkiTech Solutions builds websites for Essex and Essex Junction businesses, most of which book work by phone: trades, home services and contractors. Plans run from a $1,000 custom website to a $300/month Growth Partnership that adds Google Business Profile and review management. We're based in nearby Burlington.",
+      "ArkiTech Solutions builds websites for Essex and Essex Junction businesses, most of which book work by phone: trades, home services and contractors. Plans run from a $1,000 custom website to a $300/month Growth Partnership that adds Google Business Profile and review management. Our studio is on West St in Essex Junction.",
     local: [
       {
         term: "The call starts with a search",

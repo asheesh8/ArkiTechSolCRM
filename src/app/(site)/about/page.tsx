@@ -7,8 +7,8 @@ import { breadcrumbJsonLd, ORG_ID, pageMetadata, personJsonLd, SITE_URL } from "
 import { PEOPLE } from "@/lib/marketing/site";
 
 export const metadata = pageMetadata({
-  title: "About ArkiTech Solutions | Burlington, VT Web Studio",
-  description: "ArkiTech Solutions is Ashish Subedi and Terri Ambo, a web design studio in Burlington, Vermont, serving Chittenden County and remote clients across the US.",
+  title: "About ArkiTech Solutions | Essex Junction, VT Web Studio",
+  description: "ArkiTech Solutions is Ashish Subedi and Terri Ambo, a web design studio in Essex Junction, Vermont, serving Chittenden County and remote clients in the US.",
   path: "/about",
 });
 
@@ -33,8 +33,8 @@ export default function AboutPage() {
         ]}
       />
       <PageHeader
-        kicker="About ArkiTech Solutions · Burlington, Vermont"
-        title="From Nepal and Kiribati to Burlington."
+        kicker="About ArkiTech Solutions · Essex Junction, Vermont"
+        title="From Nepal and Kiribati to Vermont."
         wide
         backdrop
         lede={
@@ -43,7 +43,7 @@ export default function AboutPage() {
               ArkiTech Solutions is two founders who came to Vermont from opposite sides of the world. Ashish builds
               everything we ship. Terri looks after every client. Nobody else sits between you and the people doing the work.
             </p>
-            <p>The studio is in Burlington, and we work remotely with businesses anywhere in the US.</p>
+            <p>The studio is at 122 West St in Essex Junction, next door to Burlington. We work with businesses across Chittenden County and remotely anywhere in the US.</p>
           </div>
         }
       >

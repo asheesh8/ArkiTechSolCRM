@@ -14,7 +14,7 @@ import { JsonLd } from "@/components/marketing/seo/json-ld";
 export const metadata = pageMetadata({
   title: "Website, Google Business Profile & AEO Pricing | ArkiTech",
   description:
-    "ArkiTech pricing: a $300/month Growth Partnership for 12 months, a $1,000 website plus $150/month, and a $3,000 AEO & GEO build. Dashboards are $50/month.",
+    "ArkiTech pricing: a $300/month Growth Partnership for 12 months, a $1,000 website plus $150/month, and a $3,000 AEO & GEO build, with dashboards to add on.",
   path: "/pricing",
 });
 
@@ -37,9 +37,10 @@ export default async function PricingPage() {
           {
             "@context": "https://schema.org",
             "@type": "OfferCatalog",
-            name: "ArkiTech Solutions plans and dashboard add-ons",
+            name: "ArkiTech Solutions plans",
             url: `${SITE_URL}/pricing`,
-            itemListElement: all.filter((p) => p.active !== false).map(offerJsonLd),
+            // Dashboards have no published price, so only the plans are offers.
+            itemListElement: plans.map(offerJsonLd),
           },
           faqJsonLd(questions),
         ]}
@@ -51,7 +52,7 @@ export default async function PricingPage() {
           <p>
             ArkiTech has three plans: {w.partner} for 12 months (website, Google Business Profile, reviews), a {w.siteBuild} website with{" "}
             {w.siteMonthly} you can cancel anytime, and a {w.aeo}{" "}AEO (answer engine optimization) &amp; GEO (generative engine optimization)
-            build. Dashboards are {w.addon} each.
+            build. More dashboards can be added to either website plan.
           </p>
         }
       >

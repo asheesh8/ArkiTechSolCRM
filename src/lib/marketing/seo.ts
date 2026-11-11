@@ -141,13 +141,15 @@ export function organizationJsonLd(plans: PricingPlan[] = []) {
     logo: `${SITE_URL}/icon.png`,
     image: `${SITE_URL}${DEFAULT_IMAGE}`,
     description:
-      "Burlington, Vermont web design studio: custom websites, Google Business Profile and review management, business dashboards, and AEO & GEO website builds.",
+      "Essex Junction, Vermont web design studio serving Burlington and Chittenden County: custom websites, Google Business Profile and review management, business dashboards, and AEO & GEO website builds.",
     telephone: SITE.phoneE164,
     email: SITE.email,
-    // City only until the owner settles the public address (see site.ts).
+    // The same public address as Google Business Profile and BBB.
     address: {
       "@type": "PostalAddress",
+      streetAddress: SITE.locality.street,
       addressLocality: SITE.locality.city,
+      postalCode: SITE.locality.postalCode,
       addressRegion: SITE.locality.region,
       addressCountry: SITE.locality.country,
     },

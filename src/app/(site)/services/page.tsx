@@ -14,7 +14,7 @@ import { JsonLd } from "@/components/marketing/seo/json-ld";
 export const metadata = pageMetadata({
   title: "Web Design, Dashboards & AEO/GEO Services in VT | ArkiTech",
   description:
-    "Three services from a Burlington, Vermont studio: custom websites, business dashboards and CRM, and AEO & GEO builds for answer engines like ChatGPT.",
+    "Three services from an Essex Junction, Vermont studio: custom websites, business dashboards and CRM, and AEO & GEO builds for answer engines like ChatGPT.",
   path: "/services",
 });
 
@@ -27,7 +27,7 @@ export default async function ServicesIndex() {
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: "Services", path: "/services" }])} />
       <PageHeader
-        kicker="Web design, dashboards & AEO/GEO in Burlington, Vermont"
+        kicker="Web design, dashboards & AEO/GEO in Chittenden County, Vermont"
         title="What we build."
         lede="Three services, each on its own page: custom websites, dashboards and CRM, and an AEO (answer engine optimization) and GEO (generative engine optimization) website build. Take one, or bundle the website and dashboards with Google Business Profile management in the Growth Partnership."
       />

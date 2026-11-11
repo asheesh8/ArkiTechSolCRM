@@ -121,7 +121,9 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
 
       <section id="cost" className="band section scroll-mt-24">
         <div className="shell">
-          <h2 className="ak-display h-lg max-w-[18ch]">What it costs</h2>
+          <h2 className="ak-display h-lg max-w-[18ch]">
+            {service.slug === "dashboards" ? "Which dashboards can I add?" : "What it costs"}
+          </h2>
           {service.slug === "dashboards" ? (
             <div className="mt-10">
               <DashboardAddons plans={plansAll} />

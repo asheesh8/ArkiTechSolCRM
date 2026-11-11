@@ -18,7 +18,7 @@ export default function ServiceAreasHub() {
       name="Service areas"
       kicker="Service areas · Chittenden County, Vermont"
       title="Where we work."
-      lede={`ArkiTech Solutions is based in Burlington and builds websites for businesses across Chittenden County and Vermont: ${towns.slice(0, -1).join(", ")} and ${towns[towns.length - 1]}. We also work remotely with businesses anywhere in the US. Each town page below covers what local businesses there need from a website.`}
+      lede={`ArkiTech Solutions is based in Essex Junction and builds websites for businesses across Chittenden County and Vermont: ${towns.slice(0, -1).join(", ")} and ${towns[towns.length - 1]}. We also work remotely with businesses anywhere in the US. Each town page below covers what local businesses there need from a website.`}
       items={TOWNS.filter((t) => !t.noindex).map((t) => ({ href: t.path, title: t.h1, summary: t.description }))}
       related={[
         { href: "/work", label: "Client work across Vermont" },

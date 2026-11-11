@@ -20,7 +20,7 @@ export default function TermsOfServicePage() {
       </P>
       <P>
         The Site is operated by ArkiTech Solutions LLC, operating as ArkiTech Solutions (&ldquo;ArkiTech,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), a digital product
-        studio based in Burlington, Vermont. You can contact us at{" "}
+        studio based in Essex Junction, Vermont. You can contact us at{" "}
         <StudioEmail />.
       </P>
       <P>

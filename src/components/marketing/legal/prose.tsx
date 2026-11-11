@@ -85,7 +85,7 @@ export function ContactBlock() {
     <address className="mt-6 not-italic text-[1rem] leading-[1.75] text-[var(--fg-2)]">
       {SITE.legalName}, operating as {SITE.name}
       <br />
-      Burlington, Vermont
+      {SITE.address}
       <br />
       <a href={SITE.phoneHref} className="text-link text-[var(--fg)]">
         {SITE.phone}

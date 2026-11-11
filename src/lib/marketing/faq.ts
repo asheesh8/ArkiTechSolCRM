@@ -17,13 +17,11 @@ export function priceWords(plans: Plan[]) {
   const partner = find(plans, "growth-partnership");
   const site = find(plans, "custom-website");
   const aeo = find(plans, "ai-search");
-  const addon = plansIn(plans, "addons").find((p) => p.monthlyCents != null);
   return {
     partner: partner?.monthlyCents != null ? `${money(partner.monthlyCents)}/month` : "the Growth Partnership price",
     siteBuild: site?.onceCents != null ? money(site.onceCents) : "the Custom Website price",
     siteMonthly: site?.monthlyCents != null ? `${money(site.monthlyCents)}/month` : "the monthly plan",
     aeo: aeo?.onceCents != null ? money(aeo.onceCents) : "the AEO & GEO build price",
-    addon: addon?.monthlyCents != null ? `${money(addon.monthlyCents)}/month` : "the add-on price",
     addonNames: plansIn(plans, "addons").map((p) => p.name),
   };
 }
@@ -53,7 +51,7 @@ export function pricingQuestions(plans: Plan[]): Faq[] {
     },
     {
       q: "Are there setup fees or hidden costs?",
-      a: `No. Every price is on the pricing page. The only extras are dashboard add-ons${w.addonNames.length ? ` (${w.addonNames.join(", ")})` : ""} at ${w.addon} each, and you choose whether to add them. Each plan's price is the whole price for what it lists.`,
+      a: `No. Every plan's price is on the pricing page, and it's the whole price for what that plan lists. The only optional extras are dashboard add-ons${w.addonNames.length ? ` (${w.addonNames.join(", ")})` : ""}, which you choose whether to add; ask us about them on the call.`,
     },
     {
       q: "What does the PageSpeed guarantee mean?",
@@ -84,7 +82,7 @@ export function faqGroups(plans: Plan[]): FaqGroup[] {
       items: [
         {
           q: "What does it cost?",
-          a: `There are three plans. The Growth Partnership is ${w.partner} for 12 months: website, Google Business Profile management, review requests and replies, and the Overview and CRM dashboards. The Custom Website is ${w.siteBuild} to build plus ${w.siteMonthly}, cancel anytime. The AEO & GEO Website Build is ${w.aeo} one time. Dashboard add-ons are ${w.addon} each.`,
+          a: `There are three plans. The Growth Partnership is ${w.partner} for 12 months: website, Google Business Profile management, review requests and replies, and the Overview and CRM dashboards. The Custom Website is ${w.siteBuild} to build plus ${w.siteMonthly}, cancel anytime. The AEO & GEO Website Build is ${w.aeo} one time. More dashboards can be added to either website plan.`,
           link: { href: "/pricing", label: "See every plan" },
         },
         { ...pick(pricing, "Which plan is right for my business?"), link: { href: "/pricing", label: "Compare the plans" } },
@@ -157,7 +155,7 @@ export function faqGroups(plans: Plan[]): FaqGroup[] {
         },
         {
           q: "What are the dashboards?",
-          a: `The Overview and CRM dashboards come with the Growth Partnership and the Custom Website's monthly plan: every lead and client in one place, and the business at a glance. You can add Analytics, Finance, an AI Assistant and Scheduling for ${w.addon} each.`,
+          a: `The Overview and CRM dashboards come with the Growth Partnership and the Custom Website's monthly plan: every lead and client in one place, and the business at a glance. You can also add Analytics, Finance, an AI Assistant and Scheduling to either website plan.`,
           link: { href: "/services/dashboards", label: "Dashboards & CRM" },
         },
       ],
@@ -172,7 +170,7 @@ export function faqGroups(plans: Plan[]): FaqGroup[] {
         },
         {
           q: "Do you only work with Vermont businesses?",
-          a: "No. We're based in Burlington and most of our clients are in Chittenden County and across Vermont, which helps with local search because we know the towns. We also work remotely with businesses anywhere in the US. Calls, reviews and launches all happen online.",
+          a: "No. We're based in Essex Junction, next to Burlington, and most of our clients are in Chittenden County and across Vermont, which helps with local search because we know the towns. We also work remotely with businesses anywhere in the US. Calls, reviews and launches all happen online.",
           link: { href: "/service-areas", label: "Where we work" },
         },
         {

@@ -78,7 +78,8 @@ export async function GET() {
       return [
         `### ${g.label}`,
         "",
-        ...(g.key === "plans" ? rows.flatMap(planLines) : rows.map((p) => `- ${p.name}: ${price(p)}. ${tidy(p.blurb)}`)),
+        // Dashboards are listed without prices.
+        ...(g.key === "plans" ? rows.flatMap(planLines) : rows.map((p) => `- ${p.name}: ${tidy(p.blurb)}`)),
         "",
       ];
     }),

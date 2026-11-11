@@ -32,5 +32,6 @@ export const OFFER_TERMS: Record<string, OfferTerms> = {
 export const SERVICE_OFFERS: Record<string, string[]> = {
   websites: ["custom-website", "growth-partnership"],
   "ai-search": ["ai-search"],
-  dashboards: ["dashboard-analytics", "dashboard-finance", "dashboard-ai-assistant", "dashboard-scheduling"],
+  // Dashboards are listed without prices, so the page carries no Offer for them.
+  dashboards: [],
 };

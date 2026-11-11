@@ -36,9 +36,9 @@ export const PRICING_GROUPS = [
   {
     key: "addons",
     label: "Dashboard add-ons",
-    // TODO(owner): confirm the final add-on list. The brief named CRM, Marketing, Analytics and Scheduling.
+    // Every dashboard is listed without a price, by the owner's decision (2026-11-11).
     blurb:
-      "Dashboard add-ons are $50 a month each, available on both website plans. The Overview and CRM dashboards come with the monthly plans.",
+      "The Overview and CRM dashboards come with the monthly plans. Add any of these to either website plan when you need them.",
   },
 ] as const;
 
@@ -81,7 +81,7 @@ export const DEFAULT_PLANS: PricingPlan[] = [
       "Custom website design and build",
       "$150/month plan, cancel anytime",
       "Monthly plan includes the Overview and CRM dashboards",
-      "Dashboard add-ons: $50/month each",
+      "More dashboards available when you need them",
       "No requirement to host with us",
     ],
     featured: false,
@@ -115,7 +115,7 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     group: "addons",
     name: "Analytics",
     blurb: "Google Analytics, Meta and your other social accounts, connected in one view.",
-    monthlyCents: 5000,
+    monthlyCents: null,
     onceCents: null,
     priceNote: null,
     features: [],
@@ -128,7 +128,7 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     group: "addons",
     name: "Finance",
     blurb: "Quote generation, and the money coming in and going out.",
-    monthlyCents: 5000,
+    monthlyCents: null,
     onceCents: null,
     priceNote: null,
     features: [],
@@ -141,7 +141,7 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     group: "addons",
     name: "AI Assistant",
     blurb: "Reads all your centralized data and gives you clear answers about your business.",
-    monthlyCents: 5000,
+    monthlyCents: null,
     onceCents: null,
     priceNote: null,
     features: [],
@@ -154,7 +154,7 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     group: "addons",
     name: "Scheduling",
     blurb: "Every calendar you use, synced into one.",
-    monthlyCents: 5000,
+    monthlyCents: null,
     onceCents: null,
     priceNote: null,
     features: [],

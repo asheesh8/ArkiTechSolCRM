@@ -140,9 +140,9 @@ export function Hero() {
         </p>
 
         <p className="ak-lede mx-auto mt-7 max-w-[40ch]" style={{ color: "rgba(237,233,224,0.86)" }}>
-          A Burlington studio building fast websites, running Google Business Profiles and reviews, and
-          building AEO (answer engine optimization) and GEO (generative engine optimization) pages. We also
-          work remotely with businesses anywhere in the US.
+          An Essex Junction studio building fast websites for Burlington and Chittenden County businesses,
+          running Google Business Profiles and reviews, and building AEO (answer engine optimization) and GEO
+          (generative engine optimization) pages. We also work remotely with businesses anywhere in the US.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">

@@ -50,9 +50,8 @@ export function planFor(serviceSlug: string, plans: Plan[]) {
 export function startingPrice(serviceSlug: string, plans: Plan[]): { lead: string; amount?: string; tail?: string } {
   const p = planFor(serviceSlug, plans);
   if (!p) return { lead: "See pricing" };
-  if (p.group === "addons" && p.monthlyCents != null) {
-    return { lead: "Overview and CRM included, add-ons", amount: money(p.monthlyCents), tail: "a month each" };
-  }
+  // Dashboards are listed without prices.
+  if (p.group === "addons") return { lead: "Overview and CRM included, more dashboards available" };
   if (p.onceCents != null) {
     return { lead: "", amount: money(p.onceCents), tail: p.monthlyCents != null ? "one time, monthly plan optional" : "one time" };
   }

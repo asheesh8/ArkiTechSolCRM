@@ -21,7 +21,7 @@ export default function PrivacyPolicyPage() {
         otherwise interact with us online or in connection with our business.
       </P>
       <P>
-        ArkiTech is a Burlington, Vermont digital product studio. You can contact us at{" "}
+        ArkiTech is a digital product studio at 122 West St, Essex Junction, Vermont. You can contact us at{" "}
         <StudioEmail />.
       </P>
       <P>

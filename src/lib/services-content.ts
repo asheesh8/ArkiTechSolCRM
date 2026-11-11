@@ -52,7 +52,7 @@ export const services: Service[] = [
       title: "Custom Small Business Website Design in Vermont | ArkiTech",
       h1: "Custom small business website design",
       description:
-        "A hand-built website for a $1,000 build and a $150/month plan you can cancel anytime. Fast on phones, built in Burlington, Vermont. No need to host with us.",
+        "A hand-built website for a $1,000 build and a $150/month plan you can cancel anytime. Fast on phones, built in Essex Junction, Vermont. No need to host with us.",
     },
     tagline: "Built to bring in leads",
     summary:
@@ -91,7 +91,7 @@ export const services: Service[] = [
       title: "Business Dashboards & CRM for Small Businesses | ArkiTech",
       h1: "Business dashboards and CRM for small businesses",
       description:
-        "Overview and CRM dashboards for your leads and clients, plus Analytics, Finance, an AI Assistant and Scheduling at $50 a month each, when you need them.",
+        "Overview and CRM dashboards for your leads and clients, plus Analytics, Finance, an AI Assistant and Scheduling dashboards you can add to your website plan."
     },
     tagline: "Your whole business in one place",
     summary:

@@ -67,14 +67,12 @@ The AEO page keeps its URL, `/services/ai-search`, now titled "AEO & GEO Website
 ## Every TODO(owner)
 
 In `src/lib/marketing/site.ts`, `src/lib/pricing.ts` and `src/lib/marketing/work.ts`:
-- Pick the public address: Burlington city only is shown; BBB lists 122 West St, Essex Junction, VT 05452 and LinkedIn says Essex Junction.
 - Confirm the public email; it may move to @arkitech-sol.com.
 - Confirm the founding month (BBB: Jul 23, 2026).
 - Confirm which founder name is public ("Terri Ambo" shown, "Teibiroa Ambo" as alternateName).
 - Claim the LinkedIn company page, Bing Places, Yelp, Clutch and Apple Business Connect, then paste the URLs. `linkedin.com/company/arkitech-solutions` is a different company.
 - Confirm the Overview and CRM dashboards are still in the Growth Partnership.
 - Confirm whether the Custom Website's $150/month plan is optional or required (the site says optional).
-- Confirm the final dashboard add-on list (the site has Analytics, Finance, AI Assistant, Scheduling; the brief named CRM, Marketing, Analytics, Scheduling).
 - Define what "kept optimized" means for the AEO & GEO build, and for how long.
 - Confirm blacksheepvt.com is live (503 DEPLOYMENT_PAUSED on Nov 4, 2026).
 - Ask villageservers.org for a linked credit.
@@ -106,7 +104,7 @@ On the drafts: every section is an owner note until written.
 
 ## Owner actions outside the code
 
-- **Public address:** choose Burlington or 122 West St, Essex Junction, and make Google Business Profile, BBB, the site and the schema match.
+- **Public address:** the site and schema now say 122 West St, Essex Junction, VT 05452. Make sure Google Business Profile and BBB show exactly the same.
 - **Squarespace:** forward `sol-arkitech.com` and `www.sol-arkitech.com` with a 301 to `https://arkitech-sol.com`, without changing the MX records (email keeps working).
 - **Vercel:** make the `www.arkitech-sol.com` to apex redirect permanent in the domain settings (it currently answers 307; the code redirect only applies when the app handles the request).
 - **Search Console and Bing Webmaster Tools:** submit `https://arkitech-sol.com/sitemap.xml`.
@@ -115,6 +113,11 @@ On the drafts: every section is an owner note until written.
 - **blacksheepvt.com:** confirm it's live again.
 - **Directory profiles:** claim Bing Places, Apple Business Connect, Clutch, and a LinkedIn company page (`arkitech-solutions-vt` or similar).
 - **CRM pricing settings:** the plan text on the live site comes from the pricing table in the CRM, with the code only as the default. If anyone has saved plans in CRM settings, the old names and features stay live until they're updated there (Settings → Pricing).
+
+## Decisions made after the first pass (2026-11-11)
+
+- **Public address:** 122 West St, Essex Junction, VT 05452, in the footer, contact blocks, About page, legal pages and the organization schema (`streetAddress` and `postalCode` added). The copy says the studio is in Essex Junction and serves Burlington and Chittenden County; Burlington stays the market the home page leads with.
+- **Dashboards:** all six stay listed (Overview and CRM included with the monthly plans; Analytics, Finance, AI Assistant and Scheduling as add-ons), with no prices anywhere: pages, FAQ answers, llms.txt and schema. The add-ons have no Offer nodes. If the CRM pricing table still holds add-on prices, the site ignores them.
 
 ## Things that differ from earlier instructions
 

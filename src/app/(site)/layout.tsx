@@ -7,10 +7,10 @@ import { loadPlans } from "@/lib/marketing/plans";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   description:
-    "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Burlington, Vermont.",
+    "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Essex Junction, Vermont.",
   openGraph: {
     title: "ArkiTech Solutions",
-    description: "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Burlington, Vermont.",
+    description: "Websites, Google reviews, AI search pages, and the dashboards behind them. Built in Essex Junction, Vermont.",
     siteName: "ArkiTech Solutions",
     images: [SHARE_IMAGE],
   },
