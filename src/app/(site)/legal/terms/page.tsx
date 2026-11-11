@@ -2,9 +2,9 @@ import { Bullet, Bullets, Callout, ContactBlock, DocHeader, InlineLink, P, Studi
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
-  title: "Terms of Service | ArkiTech Solutions",
+  title: "Terms of Service | ArkiTech Solutions Web Design, Vermont",
   description:
-    "The terms that govern your access to and use of the ArkiTech Solutions website.",
+    "The terms that govern your access to and use of the ArkiTech Solutions website, arkitech-sol.com, including its forms, content and booking tools.",
   path: "/legal/terms",
 });
 

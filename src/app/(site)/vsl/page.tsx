@@ -6,9 +6,9 @@ import { WORK, workImage } from "@/lib/marketing/work";
 
 export const metadata = {
   ...pageMetadata({
-    title: "A Website With the Business Behind It, Done for You | ArkiTech",
+    title: "A Website With the Business Behind It, Done for You",
     description:
-      "Five minutes on what a website should do for your business, and the website, client portal, CRM and automations we build and run for you.",
+      "Five minutes on what a website should do for your business, and the website, client portal, CRM and automations we build and run for you. Watch it here.",
     path: "/vsl",
   }),
   // Sent one-to-one and from ads; it repeats the home page, so keep it out of search.

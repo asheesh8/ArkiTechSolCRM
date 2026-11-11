@@ -17,6 +17,10 @@ export type DemoPost = {
   updated: string;
   readingTime: string;
   body: string[];
+  /** The <title> when the post title alone is too short for search. */
+  seoTitle?: string;
+  /** What the post is about, for BlogPosting `about`, when it isn't the service it sits under. */
+  about?: string;
 };
 
 export type Service = {
@@ -36,10 +40,10 @@ export const services: Service[] = [
     slug: "websites",
     name: "Custom Websites",
     seo: {
-      title: "Custom Small Business Website Design | ArkiTech",
+      title: "Custom Small Business Website Design in Vermont | ArkiTech",
       h1: "Custom small business website design",
       description:
-        "A hand-built website for a one-time fee, for businesses anywhere in the US, with an optional monthly plan that adds the Overview and CRM dashboards.",
+        "A hand-built website for a $1,000 build and a $150/month plan you can cancel anytime. Fast on phones, built in Burlington, Vermont. No need to host with us.",
     },
     tagline: "Built to bring in leads",
     summary:
@@ -78,7 +82,7 @@ export const services: Service[] = [
       title: "Business Dashboards & CRM for Small Businesses | ArkiTech",
       h1: "Business dashboards and CRM for small businesses",
       description:
-        "Overview and CRM dashboards for your leads and clients, plus Analytics, Finance, an AI Assistant and Scheduling when you need them.",
+        "Overview and CRM dashboards for your leads and clients, plus Analytics, Finance, an AI Assistant and Scheduling at $50 a month each, when you need them.",
     },
     tagline: "Your whole business in one place",
     summary:
@@ -96,7 +100,7 @@ export const services: Service[] = [
       title: "Your CRM is a notebook and that's the problem",
       excerpt: "Nothing wrong with a notebook. The problem is it only exists in one van.",
       description:
-        "When the customer list lives in one notebook in one van, leads get lost. Why small businesses outgrow paper, and what a simple CRM changes.",
+        "When the customer list lives in one notebook in one van, leads get lost. Why local small businesses outgrow paper, and what a simple CRM changes.",
       published: "2026-08-19",
       updated: "2026-10-21",
       readingTime: "4 min read",
@@ -113,10 +117,10 @@ export const services: Service[] = [
     slug: "ai-search",
     name: "AI Search Optimization",
     seo: {
-      title: "AI Search Optimization for Local Businesses | ArkiTech",
-      h1: "AI search optimization for local businesses",
+      title: "AEO & GEO Website Build for Local Businesses | ArkiTech",
+      h1: "AEO & GEO website build for local businesses",
       description:
-        "200 unique keyword-driven pages, built so ChatGPT, Claude and other AI answer engines recommend your business when customers ask who to hire.",
+        "A $3,000 AEO & GEO website build: 200 unique, value-packed pages written to be found and cited by answer engines like ChatGPT, Perplexity and Gemini.",
     },
     tagline: "Get recommended when people ask AI",
     summary:
@@ -130,6 +134,8 @@ export const services: Service[] = [
     post: {
       slug: "reviews-are-the-storefront",
       title: "Reviews are the storefront now",
+      seoTitle: "Why Google Reviews Are Your Storefront Now | ArkiTech",
+      about: "Google reviews and Google Business Profile",
       excerpt:
         "Customers walk past your business in the search results. What they see there is your window display.",
       description:

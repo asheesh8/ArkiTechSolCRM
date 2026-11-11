@@ -11,9 +11,9 @@ import { startingPrice } from "@/lib/marketing/plan-display";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
-  title: "Custom Websites, Dashboards & AI Search Services | ArkiTech",
+  title: "Web Design, Dashboards & AEO/GEO Services in VT | ArkiTech",
   description:
-    "Custom websites, business dashboards and CRM, and AI search optimization, for businesses anywhere in the US. Every price is published.",
+    "Three services from a Burlington, Vermont studio: custom websites, business dashboards and CRM, and AEO & GEO builds for answer engines like ChatGPT.",
   path: "/services",
 });
 

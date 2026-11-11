@@ -10,9 +10,9 @@ import { plansIn } from "@/lib/marketing/plan-display";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
-  title: "Website, Google Reviews & AI Search Pricing | ArkiTech",
+  title: "Website, Google Business Profile & AEO Pricing | ArkiTech",
   description:
-    "What the Growth Partnership, a custom website, AI search optimization and each business dashboard cost, published in full. No hidden fees.",
+    "ArkiTech pricing: a $300/month Growth Partnership for 12 months, a $1,000 website plus $150/month, and a $3,000 AEO & GEO build. Dashboards are $50/month.",
   path: "/pricing",
 });
 

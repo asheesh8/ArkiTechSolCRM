@@ -11,7 +11,7 @@ import { pageMetadata } from "@/lib/marketing/seo";
 export const metadata = pageMetadata({
   title: "Local Business Website & Marketing Blog | ArkiTech",
   description:
-    "Plain writing about websites, page speed, Google reviews and keeping track of leads and clients, from a Burlington studio.",
+    "Plain writing for Vermont business owners about websites, page speed, Google reviews and AI search, and keeping track of the leads a website brings in.",
   path: "/blog",
 });
 

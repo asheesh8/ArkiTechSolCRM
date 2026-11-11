@@ -6,9 +6,9 @@ import { PageView } from "@/components/marketing/site/page-view";
 import { pageMetadata } from "@/lib/marketing/seo";
 
 export const metadata = pageMetadata({
-  title: "Custom Websites, Dashboards & AI Search | ArkiTech",
+  title: "Burlington, VT Web Design, Local SEO & AEO/GEO | ArkiTech",
   description:
-    "Custom websites, business dashboards and CRM, and AI search optimization. A Burlington, Vermont studio working with businesses anywhere in the US.",
+    "ArkiTech Solutions builds fast custom websites, manages Google Business Profiles and reviews, and builds AEO & GEO pages for Burlington, Vermont businesses.",
   path: "/",
 });
 

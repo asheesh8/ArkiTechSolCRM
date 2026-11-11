@@ -4,11 +4,10 @@ import { Team } from "@/components/marketing/home/team";
 import { Closing } from "@/components/marketing/site/closing";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
 import { breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketing/seo";
-import { SITE } from "@/lib/marketing/site";
 
 export const metadata = pageMetadata({
   title: "About ArkiTech Solutions | Burlington, VT Web Studio",
-  description: `ArkiTech Solutions is Ashish Subedi (from Nepal) and Terri Ambo (from Kiribati), a web studio in Burlington, Vermont working remotely with businesses anywhere. Call ${SITE.phone}.`,
+  description: "ArkiTech Solutions is Ashish Subedi and Terri Ambo, a web design studio in Burlington, Vermont, serving Chittenden County and remote clients across the US.",
   path: "/about",
 });
 

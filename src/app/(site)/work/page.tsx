@@ -6,9 +6,9 @@ import { breadcrumbJsonLd, ORG_ID, pageMetadata, SITE_URL } from "@/lib/marketin
 import { WORK } from "@/lib/marketing/work";
 
 export const metadata = pageMetadata({
-  title: "Website Design Portfolio: Client Sites | ArkiTech",
+  title: "Website Design Portfolio: Vermont Client Sites | ArkiTech",
   description:
-    "Live websites we designed and built for Vermont businesses: a brokerage, a landscaper, a seafood restaurant, a cleaning company and more.",
+    "Live websites we designed and built for Vermont businesses: a real estate brokerage, a landscaper, a seafood restaurant, a cleaning company and a nonprofit.",
   path: "/work",
 });
 

@@ -3,9 +3,9 @@ import { pageMetadata } from "@/lib/marketing/seo";
 import { SMS_PROGRAM, SMS_SENDER } from "@/lib/sms-program";
 
 export const metadata = pageMetadata({
-  title: "Privacy Policy | ArkiTech Solutions",
+  title: "Privacy Policy | ArkiTech Solutions Web Design, Vermont",
   description:
-    "How ArkiTech Solutions collects, uses, discloses, and protects personal information when you visit our site or contact us.",
+    "How ArkiTech Solutions LLC collects, uses, discloses, and protects personal information when you visit arkitech-sol.com, contact us, or become a client.",
   path: "/legal/privacy",
 });
 

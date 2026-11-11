@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const found = getPost(slug);
   if (!found) return {};
   return pageMetadata({
-    title: `${found.post.title} | ArkiTech`,
+    title: found.post.seoTitle ?? `${found.post.title} | ArkiTech`,
     description: found.post.description,
     path: `/blog/${found.post.slug}`,
     type: "article",

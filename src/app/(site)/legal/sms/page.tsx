@@ -4,7 +4,7 @@ import { SITE } from "@/lib/marketing/site";
 import { SMS_CONSENT, SMS_ENROLLMENT, SMS_KEYWORD_REPLIES, SMS_PROGRAM, SMS_SENDER } from "@/lib/sms-program";
 
 export const metadata = pageMetadata({
-  title: "SMS Terms | ArkiTech Solutions",
+  title: "SMS Terms for Command Center Alerts | ArkiTech Solutions",
   description:
     "The ArkiTech Solutions SMS program: Command Center internal notifications for team members who opt in. Consent, frequency, STOP and HELP replies, and privacy.",
   path: "/legal/sms",
