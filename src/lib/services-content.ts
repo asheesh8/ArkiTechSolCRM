@@ -124,21 +124,99 @@ export const services: Service[] = [
   },
   {
     slug: "ai-search",
-    name: "AI Search Optimization",
+    name: "AEO & GEO Website Build",
     seo: {
       title: "AEO & GEO Website Build for Local Businesses | ArkiTech",
       h1: "AEO & GEO website build for local businesses",
       description:
         "A $3,000 AEO & GEO website build: 200 unique, value-packed pages written to be found and cited by answer engines like ChatGPT, Perplexity and Gemini.",
     },
-    tagline: "Get recommended when people ask AI",
+    tagline: "Pages written to be found and cited by answer engines",
     summary:
-      "People increasingly ask ChatGPT or Claude who to hire, not just Google. We build 200 unique, keyword-driven pages so AI answer engines have something specific to recommend you for.",
+      "An AEO (answer engine optimization) and GEO (generative engine optimization) build: 200 unique, value-packed pages, each answering a real question your customers ask, written so answer engines like ChatGPT, Perplexity, Google AI Overviews, Gemini and Claude can find and cite them. $3,000 one time.",
     includes: [
-      "200 unique pages",
-      "Each one built around a keyword your customers use",
-      "Written to be recommended by ChatGPT, Claude and other AI answer engines",
+      "200 unique, value-packed pages",
+      "Each one answers a real question your customers ask",
+      "Written to be found and cited by AI answer engines",
+      "Kept optimized after launch",
+      "Then pick a hosting plan, or own it outright",
       "One-time build",
+    ],
+    sections: [
+      {
+        h2: "What is AEO and GEO?",
+        blocks: [
+          {
+            p: "AEO (answer engine optimization) is shaping pages so an answer engine can lift a clear answer from them. GEO (generative engine optimization) is being cited when an AI tool writes an answer. Both start where good SEO does: useful pages, written plainly, that crawlers can read. [SEO vs AEO vs GEO](/aeo-geo/seo-vs-aeo-vs-geo) explains the difference.",
+          },
+        ],
+      },
+      {
+        h2: "What's in the 200 pages?",
+        blocks: [
+          {
+            p: "Each page answers one question your customers actually ask, with the answer first and the detail after, in your own facts: your services, the towns you serve, your prices and how you work. No two pages are the same text with a keyword swapped.",
+          },
+          { todo: "confirm the mix of the 200 pages (for example services, towns, questions, comparisons) so this section can list it." },
+        ],
+      },
+      {
+        h2: "Which AI tools does it target?",
+        blocks: [
+          {
+            p: "The answer engines people use to ask who to hire: ChatGPT, Perplexity, Google AI Overviews and AI Mode, Gemini and Claude. The pages are also ordinary, well-built web pages, so they work in Google and Bing search too.",
+          },
+        ],
+      },
+      {
+        h2: "How do you keep it optimized?",
+        blocks: [
+          { p: "The build is kept optimized after launch." },
+          { todo: "define what \"kept optimized\" includes (updates, new pages, checks) and for how long, then say it here." },
+        ],
+      },
+      {
+        h2: "Do I own it?",
+        blocks: [
+          {
+            p: "Yes, if you want to. After the build you choose: one of our hosting plans, or take the site and own it outright.",
+          },
+        ],
+      },
+      {
+        h2: "What can't you promise?",
+        blocks: [
+          {
+            p: "That any AI tool will mention your business. ChatGPT, Google and the others decide what they show and change how they decide, so no one can guarantee a place in their answers. What we can do is give them 200 clear, accurate, well-built pages to find and cite.",
+          },
+        ],
+      },
+      {
+        h2: "What does it cost?",
+        blocks: [{ p: "$3,000, one time. See it next to the other plans on the [pricing page](/pricing)." }],
+      },
+    ],
+    faqs: [
+      {
+        q: "Will this get my business recommended by ChatGPT?",
+        a: "We can't promise that, and neither can anyone else: the AI tools decide what they show. The build gives answer engines 200 clear, specific pages about your business to find and cite, which is the part within anyone's control.",
+        link: { href: "/aeo-geo/how-to-get-recommended-by-chatgpt", label: "How to get recommended by ChatGPT" },
+      },
+      {
+        q: "How is this different from a normal website?",
+        a: "A normal small business site has a handful of pages. This build is 200 unique pages, each answering one real question a customer asks, written answer-first so an answer engine can quote it and a person can act on it.",
+      },
+      {
+        q: "Do I need the Growth Partnership as well?",
+        a: "No. The AEO & GEO Website Build is a one-time project on its own. Afterwards you can choose a hosting plan or own the site outright. The Growth Partnership is a separate plan for the website plus Google Business Profile and reviews.",
+        link: { href: "/pricing", label: "Compare the plans" },
+      },
+    ],
+    related: [
+      { href: "/aeo-geo/does-a-small-business-need-aeo-geo", label: "Does a small business need AEO and GEO?" },
+      { href: "/aeo-geo/seo-vs-aeo-vs-geo", label: "SEO vs AEO vs GEO: what's the difference?" },
+      { href: "/aeo-geo/how-to-get-recommended-by-chatgpt", label: "How to get recommended by ChatGPT" },
+      { href: "/pricing", label: "Plans and pricing" },
     ],
     post: {
       slug: "reviews-are-the-storefront",

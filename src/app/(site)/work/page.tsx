@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
+import { caseStudyPath } from "@/lib/content/clients";
 import { WorkShowcase } from "@/components/marketing/home/work-showcase";
 import { Closing } from "@/components/marketing/site/closing";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
@@ -45,21 +47,24 @@ export default function WorkPage() {
 
       <section className="band pb-24 sm:pb-32">
         <div className="shell">
-          <h2 className="ak-display h-md">Client sites</h2>
+          <h2 className="ak-display h-md">Client sites and case studies</h2>
           <ul className="mt-6 grid border-t border-[var(--rule)] md:grid-cols-2 md:gap-x-12">
             {clients.map((w) => (
-              <li key={w.slug} className="border-b border-[var(--rule)]">
-                <a href={w.url} target="_blank" rel="noopener noreferrer" className="group flex items-baseline justify-between gap-5 py-4">
-                  <span>
-                    <span className="font-medium group-hover:text-[var(--accent-text)]">{w.name}</span>
-                    <span className="block text-sm text-[var(--dim)]">
-                      {w.what}
-                      {w.where ? ` · ${w.where}` : ""}
-                    </span>
+              <li key={w.slug} className="flex items-baseline justify-between gap-5 border-b border-[var(--rule)] py-4">
+                <Link href={caseStudyPath(w)} className="group">
+                  <span className="font-medium group-hover:text-[var(--accent-text)]">{w.name}</span>
+                  <span className="block text-sm text-[var(--dim)]">
+                    {w.what}
+                    {w.where ? ` · ${w.where}` : ""} · <span className="text-link">Case study</span>
                   </span>
-                  <span className="inline-flex shrink-0 items-center gap-1 text-sm text-[var(--dim)]">
-                    {w.host} <ArrowUpRight size={13} aria-hidden="true" />
-                  </span>
+                </Link>
+                <a
+                  href={w.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 text-sm text-[var(--dim)] hover:text-[var(--fg)]"
+                >
+                  {w.host} <ArrowUpRight size={13} aria-hidden="true" />
                 </a>
               </li>
             ))}
