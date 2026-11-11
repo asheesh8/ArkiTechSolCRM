@@ -221,7 +221,7 @@ export function ContactDialog() {
                   Thanks, {firstName}.
                 </p>
                 <p className="mt-3 max-w-[36ch] text-[var(--dim)]">
-                  We&apos;ll reply to {form.email} within one business day to set a time. If it&apos;s urgent, ring{" "}
+                  We&apos;ll reply to {form.email}{" "}within one business day to set a time. If it&apos;s urgent, ring{" "}
                   <a href={SITE.phoneHref} className="text-link text-[var(--fg)]">{SITE.phone}</a>.
                 </p>
                 <button type="button" onClick={close} className="ak-btn ak-btn-ghost mt-8">Close</button>
