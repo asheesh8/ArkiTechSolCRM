@@ -113,9 +113,9 @@ export function Hero() {
         {/* The H1 says what search needs to read; the display line below
             keeps the voice. */}
         <h1 className="meta mt-8 uppercase tracking-[0.18em]" style={{ color: "rgba(237,233,224,0.72)" }}>
-          Custom websites, dashboards &amp; AI search
-          <span className="hidden sm:inline"> · </span>
-          <span className="block sm:inline">Burlington, Vermont</span>
+          Web design in Burlington
+          <span className="hidden sm:inline"> &amp; </span>
+          <span className="block sm:inline">Chittenden County, Vermont</span>
         </h1>
 
         <p className="ak-display h-hero mt-5 max-w-[14ch]">
@@ -138,8 +138,9 @@ export function Hero() {
         </p>
 
         <p className="ak-lede mx-auto mt-7 max-w-[40ch]" style={{ color: "rgba(237,233,224,0.86)" }}>
-          A Burlington, Vermont studio building websites that bring in leads, the dashboards to
-          run them, and pages that get you recommended by AI. For businesses anywhere.
+          A Burlington studio building fast websites, running Google Business Profiles and reviews, and
+          building AEO (answer engine optimization) and GEO (generative engine optimization) pages. We also
+          work remotely with businesses anywhere in the US.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">

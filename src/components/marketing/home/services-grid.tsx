@@ -39,10 +39,11 @@ export async function ServicesGrid() {
     <section id="services" className="band section">
       <div className="shell">
         <div className="max-w-3xl">
-          <h2 className="ak-display h-xl">What we build.</h2>
+          <h2 className="ak-display h-xl">Websites, dashboards and AEO &amp; GEO builds.</h2>
           <p className="ak-lede mt-6 max-w-[52ch]">
-            A website that brings in leads, the dashboards to keep track of them, and pages that get
-            your business recommended by AI.
+            A website that brings in leads, the dashboards to keep track of them, and an AEO (answer engine
+            optimization) and GEO (generative engine optimization) build written to be found and cited by
+            answer engines like ChatGPT.
           </p>
         </div>
 

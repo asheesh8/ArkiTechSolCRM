@@ -27,9 +27,9 @@ export default async function ServicesIndex() {
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: "Services", path: "/services" }])} />
       <PageHeader
-        kicker="Custom websites, dashboards & AI search"
+        kicker="Web design, dashboards & AEO/GEO in Burlington, Vermont"
         title="What we build."
-        lede="Three services, each on its own page. Take one, or bundle the website and dashboards with Google Business Profile management in the Growth Partnership."
+        lede="Three services, each on its own page: custom websites, dashboards and CRM, and an AEO (answer engine optimization) and GEO (generative engine optimization) website build. Take one, or bundle the website and dashboards with Google Business Profile management in the Growth Partnership."
       />
 
       <section className="band pb-24 sm:pb-32">

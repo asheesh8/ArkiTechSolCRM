@@ -106,7 +106,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </aside>
 
           <div className="mt-16">
-            <h2 className="text-sm text-[var(--dim)]">Keep reading</h2>
+            <h2 className="text-sm text-[var(--dim)]">More posts on websites and local search</h2>
             <ul className="mt-3 border-t border-[var(--rule)]">
               {others.map((o) => (
                 <li key={o.post.slug} className="border-b border-[var(--rule)]">

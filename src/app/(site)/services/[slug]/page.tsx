@@ -151,7 +151,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         <section className="band section-tight">
           <div className="shell grid max-w-[48rem] gap-14">
             {service.faqs?.length ? <FaqBlock items={service.faqs} /> : null}
-            {service.related?.length ? <Related links={service.related} title="Read next" /> : null}
+            {service.related?.length ? <Related links={service.related} title={`Guides related to ${service.name}`} /> : null}
           </div>
         </section>
       ) : null}

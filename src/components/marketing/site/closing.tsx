@@ -9,7 +9,7 @@ import { CTA_LABEL, SITE } from "@/lib/marketing/site";
  * on. The page opens at dusk and closes at night.
  */
 export function Closing({
-  title = "Ready when you are.",
+  title = "Talk to us about your website.",
   body = "Answer a few quick questions and pick a time that suits you. We'll come to the call with ideas for your business.",
 }: {
   title?: string;

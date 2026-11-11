@@ -105,7 +105,7 @@ export function WorkShowcase({ page = false }: { page?: boolean }) {
             </>
           ) : (
             <>
-              <h2 className="ak-display h-xl">Every pixel, built here.</h2>
+              <h2 className="ak-display h-xl">Client websites we built in Vermont.</h2>
               <p className="ak-lede mt-6 max-w-[54ch]">
                 Six client sites that are live today, and two builds we made so you can judge the work before you ever
                 book a call. Pick one to scroll through it.
