@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FooterLogo } from "@/components/marketing/site/footer-logo";
 import { Plate } from "@/components/marketing/art/plate";
 import { services } from "@/lib/services-content";
-import { PAGE_LINKS, SITE } from "@/lib/marketing/site";
+import { GUIDE_LINKS, PAGE_LINKS, SITE } from "@/lib/marketing/site";
 
 /**
  * Night band. The 1874 Coast Survey chart of the lake sits behind the
@@ -18,11 +18,11 @@ export function SiteFooter() {
       />
 
       <div className="shell pb-10 pt-20 sm:pt-24">
-        <div className="grid gap-14 lg:grid-cols-[1.3fr_1fr_1fr_1.15fr]">
+        <div className="grid gap-14 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1.15fr]">
           <div>
             <FooterLogo />
             <p className="mt-7 max-w-[32ch] text-[var(--dim)]">
-              Custom websites, dashboards and AI search pages. Built in Burlington, Vermont, for businesses anywhere.
+              Custom websites, Google Business Profiles and reviews, dashboards, and AEO &amp; GEO builds. Built in Burlington, Vermont.
             </p>
           </div>
 
@@ -34,8 +34,17 @@ export function SiteFooter() {
             ))}
           </FooterColumn>
 
+          <FooterColumn title="Guides & local">
+            {GUIDE_LINKS.map((l) => (
+              <FooterLink key={l.href + l.label} href={l.href}>
+                {l.label}
+              </FooterLink>
+            ))}
+          </FooterColumn>
+
           <FooterColumn title="Company">
-            {PAGE_LINKS.map((l) => (
+            {/* Work is already in the guides column. */}
+            {PAGE_LINKS.filter((l) => l.href !== "/work").map((l) => (
               <FooterLink key={l.href + l.label} href={l.href}>
                 {l.label}
               </FooterLink>
