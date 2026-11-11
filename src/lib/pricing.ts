@@ -31,13 +31,14 @@ export const PRICING_GROUPS = [
     key: "plans",
     label: "Plans",
     blurb:
-      "Three ways to work with us: a year-long growth partnership, a custom website on its own, or a build for AI search.",
+      "Three plans: a 12-month Growth Partnership, a custom website on its own, or an AEO & GEO website build.",
   },
   {
     key: "addons",
     label: "Dashboard add-ons",
+    // TODO(owner): confirm the final add-on list. The brief named CRM, Marketing, Analytics and Scheduling.
     blurb:
-      "The Overview and CRM dashboards come with the Growth Partnership and with the Custom Website's monthly plan. Add any of these on top.",
+      "Dashboard add-ons are $50 a month each, available on both website plans. The Overview and CRM dashboards come with the monthly plans.",
   },
 ] as const;
 
@@ -48,16 +49,19 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     group: "plans",
     name: "Growth Partnership",
     blurb:
-      "A year-long partnership. We build your website, manage your Google Business Profile, and send 30 review requests a month.",
+      "A 12-month partnership: we build your website, keep it fast, make your edits, and manage your Google Business Profile and reviews.",
     monthlyCents: 30000,
     onceCents: null,
-    priceNote: "12-month partnership",
+    priceNote: "12-month contract",
     features: [
-      "Your website, designed and built by us",
+      "Custom website, designed and built by us",
+      "PageSpeed 90+ mobile guarantee, so the site is fast on phones",
+      "Unlimited edits",
       "Google Business Profile management",
+      "Replies to your Google reviews",
       "30 review requests a month",
+      // TODO(owner): confirm the Overview and CRM dashboards are still included.
       "Overview and CRM dashboards included",
-      "Analytics, Finance, AI Assistant and Scheduling: $50/month each",
     ],
     featured: true,
     active: true,
@@ -68,15 +72,17 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     group: "plans",
     name: "Custom Website",
     blurb:
-      "A custom website for a one-time fee. Google Business Profile management and review requests are not included.",
+      "A custom website for a $1,000 build, with a $150/month plan you can cancel anytime. You don't have to host with us.",
     monthlyCents: 15000,
     onceCents: 100000,
+    // TODO(owner): confirm whether the $150/month plan is optional or required. The site has said optional.
     priceNote: "Monthly plan optional, cancel anytime",
     features: [
       "Custom website design and build",
-      "Optional $150/month plan, cancel anytime",
+      "$150/month plan, cancel anytime",
       "Monthly plan includes the Overview and CRM dashboards",
-      "More dashboards: $50/month each, on the monthly plan",
+      "Dashboard add-ons: $50/month each",
+      "No requirement to host with us",
     ],
     featured: false,
     active: true,
@@ -85,16 +91,18 @@ export const DEFAULT_PLANS: PricingPlan[] = [
   {
     slug: "ai-search",
     group: "plans",
-    name: "AI Search Optimization",
+    name: "AEO & GEO Website Build",
     blurb:
-      "200 unique, keyword-driven pages that help your business get recommended by ChatGPT, Claude and other AI answer engines.",
+      "200 unique, value-packed pages built to be found and cited by answer engines like ChatGPT, Perplexity, Google AI Overviews, Gemini and Claude.",
     monthlyCents: null,
     onceCents: 300000,
     priceNote: null,
     features: [
-      "200 unique keyword-driven pages",
-      "Written to be recommended by AI answer engines",
-      "One-time build",
+      "200 unique, value-packed pages",
+      "Built to be found and cited by AI answer engines",
+      // TODO(owner): define what "kept optimized" includes and for how long.
+      "Kept optimized after launch",
+      "Then pick a hosting plan, or own it outright",
     ],
     featured: false,
     active: true,

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { SITE } from "@/lib/marketing/site";
+import { SITE, SAME_AS } from "@/lib/marketing/site";
+
+export { SAME_AS };
 
 /**
  * Search and AI-facing facts for the public site: canonical URLs, social
@@ -9,14 +11,8 @@ import { SITE } from "@/lib/marketing/site";
  */
 
 /** The one origin every canonical, Open Graph URL, sitemap entry and schema id hangs off. */
-export const SITE_URL = "https://arkitech-sol.com";
+export const SITE_URL = SITE.url;
 
-/**
- * The Google Business Profile, by its stable CID link. Listed in `sameAs` so
- * search engines and AI tie the site to the map listing. Add LinkedIn, Clutch
- * and the rest here as each profile is claimed.
- */
-export const SAME_AS = ["https://maps.google.com/?cid=16353977033327328632"];
 
 /**
  * The 1200x630 share card: lockup and headline over Burlington at night.

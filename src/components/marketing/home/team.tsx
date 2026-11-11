@@ -1,52 +1,41 @@
 import { Reveal } from "@/components/marketing/site/reveal";
+import { PEOPLE } from "@/lib/marketing/site";
 import { TeamFlag, type Country } from "./flags";
 
 /**
- * The founders, told as stories rather than cards. Each `story` paragraph is
- * something the founder has said about themselves; add to it, but never fill
- * it with anything they haven't.
+ * The founders, told as stories rather than cards. Names, roles and phone
+ * numbers come from PEOPLE in site.ts. Each `story` paragraph is something
+ * the founder has said about themselves; add to it, but never fill it with
+ * anything they haven't.
  */
-const FOUNDERS: {
-  name: string;
-  role: string;
-  from: string;
-  initials: string;
-  country: Country;
-  story: string[];
-  does: string[];
-  /** Direct line. The site's main number (SITE.phone) is Terri's. */
-  phone: string;
-  phoneHref: string;
-}[] = [
-  {
-    name: "Ashish Subedi",
-    role: "CEO & Fullstack Designer",
-    from: "From Nepal",
-    initials: "AS",
+const STORY: Record<(typeof PEOPLE)[number]["id"], { country: Country; story: string[]; does: string[] }> = {
+  ashish: {
     country: "nepal",
     story: [
       "Ashish grew up in Nepal and came to Burlington to study at Champlain College.",
       "Ashish is the architect behind every build: product vision, engineering and design. Every site, dashboard and page we ship is built by Ashish, start to finish, with no agency layer and no junior handed the project after you sign.",
     ],
     does: ["Design", "Engineering", "Product"],
-    phone: "(802) 310-3749",
-    phoneHref: "tel:+18023103749",
   },
-  {
-    name: "Terri Ambo",
-    role: "CEO & Director of Client Relations",
-    from: "From Kiribati",
-    initials: "TA",
+  terri: {
     country: "kiribati",
     story: [
       "Terri is from Kiribati, an island nation in the middle of the Pacific.",
       "Terri is the voice of ArkiTech: building trust with every call, looking after every client long after launch, and making sure every business we work with feels like a priority. Call the main line and it's Terri who picks up.",
     ],
     does: ["Client success", "Sales", "Strategy"],
-    phone: "(802) 557-8828",
-    phoneHref: "tel:+18025578828",
   },
-];
+};
+
+const FOUNDERS = PEOPLE.map((p) => ({
+  name: p.name,
+  role: p.jobTitle,
+  from: `From ${p.from}`,
+  initials: p.initials,
+  phone: p.directPhone,
+  phoneHref: p.directPhoneHref,
+  ...STORY[p.id],
+}));
 
 /** One founder per row, alternating sides, initials over each home flag. */
 export function Team() {

@@ -19,6 +19,12 @@ export type Work = {
   fullH: number;
   /** Height of the 390px-wide phone capture. */
   mobileH: number;
+  /** The /industries page this client belongs to, if any. */
+  industry?: "landscapers" | "cleaning-companies" | "real-estate" | "restaurants" | "contractors" | "nonprofits";
+  /** The /service-areas page for the client's town, if we have one. */
+  townPage?: string;
+  /** Something the owner must check before this entry is relied on. Never rendered in production. */
+  ownerTodo?: string;
 };
 
 export const WORK: Work[] = [
@@ -31,6 +37,7 @@ export const WORK: Work[] = [
     what: "Real estate brokerage",
     where: "Vermont, border to border",
     url: "https://elitehomesvermont.com",
+    industry: "real-estate",
     host: "elitehomesvermont.com",
   },
   {
@@ -42,6 +49,7 @@ export const WORK: Work[] = [
     what: "Video and visual marketing studio",
     where: "Burlington",
     url: "https://inspirecampaigns.com",
+    townPage: "burlington",
     host: "inspirecampaigns.com",
   },
   {
@@ -53,6 +61,7 @@ export const WORK: Work[] = [
     what: "Seafood restaurant",
     where: "Saint Albans",
     url: "https://jeff-seafood-nine.vercel.app",
+    industry: "restaurants",
     host: "jeff-seafood-nine.vercel.app",
   },
   {
@@ -64,6 +73,9 @@ export const WORK: Work[] = [
     what: "Landscaping and seasonal property care",
     where: "Essex",
     url: "https://blacksheepvt.com",
+    industry: "landscapers",
+    townPage: "essex",
+    ownerTodo: "TODO(owner): confirm blacksheepvt.com is live. On Nov 4, 2026 it returned 503 DEPLOYMENT_PAUSED.",
     host: "blacksheepvt.com",
   },
   {
@@ -74,6 +86,8 @@ export const WORK: Work[] = [
     kind: "client",
     what: "Community and nonprofit outreach",
     url: "https://villageservers.org",
+    industry: "nonprofits",
+    ownerTodo: "TODO(owner): villageservers.org credits ArkiTech in text but doesn't link to us. Ask for a linked credit.",
     host: "villageservers.org",
   },
   {
@@ -85,6 +99,7 @@ export const WORK: Work[] = [
     what: "House and office cleaning",
     where: "Saint Albans",
     url: "https://www.joethecleaner.net",
+    industry: "cleaning-companies",
     host: "joethecleaner.net",
   },
   {
