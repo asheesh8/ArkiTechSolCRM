@@ -22,6 +22,8 @@ export function Closing({
       <img
         src="/media/burlington-night.jpg"
         alt=""
+        width={1920}
+        height={1080}
         aria-hidden="true"
         loading="lazy"
         className="absolute inset-0 -z-10 h-full w-full object-cover object-bottom"

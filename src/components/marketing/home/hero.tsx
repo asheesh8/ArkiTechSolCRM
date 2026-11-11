@@ -75,6 +75,8 @@ export function Hero() {
         <img
           src={reduce ? "/media/burlington-night.jpg" : "/media/burlington-dusk-first.jpg"}
           alt=""
+          width={1920}
+          height={1080}
           aria-hidden="true"
           fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
