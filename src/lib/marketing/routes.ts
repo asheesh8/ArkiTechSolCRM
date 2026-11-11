@@ -1,4 +1,5 @@
 import { services, servicesWithPosts } from "@/lib/services-content";
+import { CONTENT_PAGES } from "@/lib/content/registry";
 
 /**
  * Every public route the site serves, with the date its content last
@@ -26,6 +27,9 @@ const STATIC: SiteRoute[] = [
   { path: "/about", title: "About and contact", updated: "2026-11-11", section: "main" },
   { path: "/faq", title: "FAQ", updated: "2026-11-11", section: "main" },
   { path: "/blog", title: "Blog", updated: "2026-11-11", section: "main" },
+  { path: "/aeo-geo", title: "AEO & GEO guides", updated: "2026-11-11", section: "aeo-geo" },
+  { path: "/local-seo", title: "Local SEO guides", updated: "2026-11-11", section: "local-seo" },
+  { path: "/service-areas", title: "Service areas", updated: "2026-11-11", section: "areas" },
   { path: "/legal/privacy", title: "Privacy Policy", updated: "2026-10-30", section: "legal" },
   { path: "/legal/terms", title: "Terms of Service", updated: "2026-10-14", section: "legal" },
   { path: "/legal/sms", title: "SMS Terms", updated: "2026-10-30", section: "legal" },
@@ -36,6 +40,7 @@ const SOURCES: (() => SiteRoute[])[] = [
   () => services.map((s) => ({ path: `/services/${s.slug}`, title: s.name, updated: "2026-11-11", section: "services" as const })),
   () =>
     servicesWithPosts.map((s) => ({ path: `/blog/${s.post.slug}`, title: s.post.title, updated: s.post.updated, section: "blog" as const })),
+  () => CONTENT_PAGES.map(({ page, section }) => ({ path: page.path, title: page.h1, updated: page.updated, noindex: page.noindex, section })),
 ];
 
 export function siteRoutes(): SiteRoute[] {

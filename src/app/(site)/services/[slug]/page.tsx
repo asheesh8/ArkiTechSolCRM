@@ -16,7 +16,8 @@ import { money, planFor, plansIn, startingPrice } from "@/lib/marketing/plan-dis
 import { getService, services } from "@/lib/services-content";
 import { SERVICE_OFFERS } from "@/lib/marketing/offers";
 import { JsonLd } from "@/components/marketing/seo/json-ld";
-import { breadcrumbJsonLd, pageMetadata, serviceJsonLd } from "@/lib/marketing/seo";
+import { breadcrumbJsonLd, faqJsonLd, pageMetadata, serviceJsonLd } from "@/lib/marketing/seo";
+import { FaqBlock, plainText, Related, Sections } from "@/components/marketing/templates/blocks";
 
 // Prices are read from the database. Saving pricing in CRM settings also
 // revalidates these paths directly (api/settings/pricing).
@@ -66,6 +67,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
             { name: "Services", path: "/services" },
             { name: service.name, path },
           ]),
+          ...(service.faqs?.length ? [faqJsonLd(service.faqs.map((f) => ({ q: f.q, a: plainText(f.a) })))] : []),
         ]}
       />
       <PageHeader
@@ -107,6 +109,14 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
+      {service.sections?.length ? (
+        <section className="band pb-20 sm:pb-28">
+          <div className="shell max-w-[48rem]">
+            <Sections sections={service.sections} />
+          </div>
+        </section>
+      ) : null}
+
       {service.slug === "websites" ? <SpeedProof /> : null}
 
       <section id="cost" className="band section scroll-mt-24">
@@ -136,6 +146,15 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           ) : null}
         </div>
       </section>
+
+      {service.faqs?.length || service.related?.length ? (
+        <section className="band section-tight">
+          <div className="shell grid max-w-[48rem] gap-14">
+            {service.faqs?.length ? <FaqBlock items={service.faqs} /> : null}
+            {service.related?.length ? <Related links={service.related} title="Read next" /> : null}
+          </div>
+        </section>
+      ) : null}
 
       {post ? (
         <section className="band-2 section-tight">

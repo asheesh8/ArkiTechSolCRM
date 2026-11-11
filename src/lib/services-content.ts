@@ -6,6 +6,9 @@
  * Prices are not written here; they come from the pricing table.
  */
 
+import type { Link, Section } from "@/lib/content/types";
+import type { Faq } from "@/lib/marketing/faq";
+
 export type DemoPost = {
   slug: string;
   title: string;
@@ -31,6 +34,12 @@ export type Service = {
   tagline: string;
   summary: string;
   includes: string[];
+  /** Question H2s with answers, shown under "What's included". */
+  sections?: Section[];
+  /** Shown on the page and given as FAQPage schema, from the same array. */
+  faqs?: Faq[];
+  /** Guides and pages this service leads on to. */
+  related?: Link[];
   /** The blog post that goes with this service, if there is one. */
   post?: DemoPost;
 };

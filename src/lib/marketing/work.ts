@@ -19,6 +19,8 @@ export type Work = {
   fullH: number;
   /** Height of the 390px-wide phone capture. */
   mobileH: number;
+  /** The /work/[caseSlug] case study for a client. */
+  caseSlug?: string;
   /** The /industries page this client belongs to, if any. */
   industry?: "landscapers" | "cleaning-companies" | "real-estate" | "restaurants" | "contractors" | "nonprofits";
   /** The /service-areas page for the client's town, if we have one. */
@@ -30,6 +32,7 @@ export type Work = {
 export const WORK: Work[] = [
   {
     slug: "elite",
+    caseSlug: "elite-real-estate-partners",
     mobileH: 5400,
     fullH: 5600,
     name: "Elite Real Estate Partners",
@@ -42,6 +45,7 @@ export const WORK: Work[] = [
   },
   {
     slug: "inspire",
+    caseSlug: "inspire-campaigns",
     mobileH: 5400,
     fullH: 5568,
     name: "Inspire Campaigns",
@@ -54,6 +58,7 @@ export const WORK: Work[] = [
   },
   {
     slug: "jeffs",
+    caseSlug: "jeffs-seafood",
     mobileH: 5400,
     fullH: 5600,
     name: "Jeff's Seafood",
@@ -66,6 +71,7 @@ export const WORK: Work[] = [
   },
   {
     slug: "blacksheep",
+    caseSlug: "black-sheep-landscaping",
     mobileH: 5400,
     fullH: 5118,
     name: "Black Sheep Landscaping",
@@ -80,6 +86,7 @@ export const WORK: Work[] = [
   },
   {
     slug: "vsi",
+    caseSlug: "villageserver-initiative",
     mobileH: 5400,
     fullH: 5541,
     name: "VillageServer Initiative",
@@ -92,6 +99,7 @@ export const WORK: Work[] = [
   },
   {
     slug: "joe",
+    caseSlug: "calljoe",
     mobileH: 5400,
     fullH: 5600,
     name: "CallJoe",
