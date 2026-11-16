@@ -93,12 +93,12 @@ export const DEFAULT_PLANS: PricingPlan[] = [
     group: "plans",
     name: "AEO & GEO Website Build",
     blurb:
-      "200 unique, value-packed pages built to be found and cited by answer engines like ChatGPT, Perplexity, Google AI Overviews, Gemini and Claude.",
+      "Up to 200 unique, value-packed pages built to be found and cited by answer engines like ChatGPT, Perplexity, Google AI Overviews, Gemini and Claude.",
     monthlyCents: null,
     onceCents: 300000,
     priceNote: null,
     features: [
-      "200 unique, value-packed pages",
+      "Up to 200 unique, value-packed pages",
       "Built to be found and cited by AI answer engines",
       // TODO(owner): define what "kept optimized" includes and for how long.
       "Kept optimized after launch",

@@ -107,7 +107,7 @@ export function faqGroups(plans: Plan[]): FaqGroup[] {
         },
         {
           q: "What's in the AEO & GEO Website Build?",
-          a: `200 unique, value-packed pages, each answering a real question your customers ask, written so answer engines like ChatGPT, Perplexity, Google AI Overviews, Gemini and Claude can find and cite them. It's a ${w.aeo} one-time build; afterwards you choose a hosting plan or own the site outright.`,
+          a: `Up to 200 unique, value-packed pages, each answering a real question your customers ask, written so answer engines like ChatGPT, Perplexity, Google AI Overviews, Gemini and Claude can find and cite them. It's a ${w.aeo} one-time build; afterwards you choose a hosting plan or own the site outright.`,
           link: { href: "/services/ai-search", label: "The AEO & GEO Website Build" },
         },
         {
@@ -150,7 +150,7 @@ export function faqGroups(plans: Plan[]): FaqGroup[] {
         { ...pick(pricing, "What does the PageSpeed guarantee mean?"), link: { href: "/services/websites", label: "Custom website design" } },
         {
           q: "How long does a build take?",
-          a: "Two to four weeks for a standard site, from the first call to launch. The variable is almost never us. It's how quickly we get your photos, your service list, and your feedback on the first draft. Larger builds, like the 200-page AEO & GEO build, take longer.",
+          a: "Two to four weeks for a standard site, from the first call to launch. The variable is almost never us. It's how quickly we get your photos, your service list, and your feedback on the first draft. Larger builds, like the AEO & GEO build of up to 200 pages, take longer.",
           todo: "say how long the AEO & GEO Website Build usually takes.",
         },
         {

@@ -189,7 +189,7 @@ export const AEO_GEO_GUIDES: ContentPage[] = [
         h2: "When is a bigger AEO and GEO build worth it?",
         blocks: [
           {
-            p: "When the questions customers ask before buying outnumber the pages you have. A business with many services, many towns, or a purchase people research carefully can have dozens of questions worth a proper answer each. That's what our [AEO & GEO Website Build](/services/ai-search) is for: 200 unique pages, each written to answer a real question well.",
+            p: "When the questions customers ask before buying outnumber the pages you have. A business with many services, many towns, or a purchase people research carefully can have dozens of questions worth a proper answer each. That's what our [AEO & GEO Website Build](/services/ai-search) is for: up to 200 unique pages, each written to answer a real question well.",
           },
           {
             p: "What doesn't work is volume for its own sake. Pages that repeat the same text with a different keyword swapped in give an answer engine nothing new to cite.",
@@ -213,7 +213,7 @@ export const AEO_GEO_GUIDES: ContentPage[] = [
     faqs: [
       {
         q: "How much does AEO and GEO cost?",
-        a: "The basics in this guide you can do yourself for free. Our AEO & GEO Website Build is a $3,000 one-time project: 200 unique pages written to be found and cited by answer engines. After it, you choose a hosting plan or own the site outright.",
+        a: "The basics in this guide you can do yourself for free. Our AEO & GEO Website Build is a $3,000 one-time project: up to 200 unique pages written to be found and cited by answer engines. After it, you choose a hosting plan or own the site outright.",
         link: { href: "/pricing", label: "See every plan" },
       },
       {
@@ -343,11 +343,11 @@ export const AEO_GEO_GUIDES: ContentPage[] = [
     },
     {
       slug: "200-pages-vs-thin-content",
-      h1: "200 useful pages vs thin content: what's the difference?",
-      title: "200 Useful Pages vs Thin Content: What Counts? | ArkiTech",
+      h1: "Useful pages vs thin content: what's the difference?",
+      title: "Useful Pages vs Thin Content: What Counts for AI? | ArkiTech",
       description:
-        "Why 200 genuinely useful pages help a business get found and cited, while hundreds of near-identical keyword pages don't, and how to tell the two apart.",
-      questions: ["What is thin content?", "What makes a page worth citing?", "How are the 200 pages different from each other?", "How do you avoid doorway pages?"],
+        "Why genuinely useful pages help a business get found and cited, while hundreds of near-identical keyword pages don't, and how to tell the two apart.",
+      questions: ["What is thin content?", "What makes a page worth citing?", "How are the pages different from each other?", "How do you avoid doorway pages?"],
     },
   ].map(
     (d): ContentPage => ({
