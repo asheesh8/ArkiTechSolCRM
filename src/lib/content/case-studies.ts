@@ -239,4 +239,42 @@ export const CASE_STUDIES: CaseStudyData[] = [
     published: "2026-11-11",
     updated: "2026-11-11",
   },
+  {
+    slug: "vermont-comforts-of-home",
+    path: "/work/vermont-comforts-of-home",
+    work: client("vcoh"),
+    industryLabel: "Nonprofit adult family care",
+    title: "Vermont Comforts of Home Website | ArkiTech Case Study",
+    description:
+      "How ArkiTech Solutions designed and built the website for Vermont Comforts of Home, a nonprofit adult family care program, with a link to the live site.",
+    kicker: "Case study · Nonprofit",
+    h1: "Vermont Comforts of Home: a website for a nonprofit care program",
+    quickAnswer:
+      "ArkiTech Solutions designed and built the website for Vermont Comforts of Home, a nonprofit adult family care program that helps adults who need nursing-home level care live at home in their community. The site is live at vtcomfortsofhome.org, in English and Nepali.",
+    sections: [
+      {
+        h2: "What is Vermont Comforts of Home?",
+        blocks: [
+          {
+            p: "Vermont Comforts of Home is a nonprofit adult family care program run by Lincoln Street, Inc. and Upper Valley Services, Inc. It arranges shared living and care coordination so that adults who need nursing-home level care can live at home in the community instead.",
+          },
+        ],
+      },
+      {
+        h2: "What did we build?",
+        blocks: [
+          {
+            p: "A custom website for people looking for care and for families who want to become home care providers. It has pages for participants and providers, a county map of where each agency works, a contact form, and a full Nepali version of every page.",
+          },
+        ],
+      },
+    ],
+    related: [
+      { href: "/industries/nonprofits", label: "Websites for nonprofits" },
+      { href: "/services/websites", label: "Custom website design" },
+      { href: "/work", label: "All client work" },
+    ],
+    published: "2026-11-16",
+    updated: "2026-11-16",
+  },
 ];
