@@ -135,8 +135,8 @@ export const WORK: Work[] = [
   },
   {
     slug: "ashish",
-    mobileH: 5400,
-    fullH: 4874,
+    mobileH: 2702,
+    fullH: 1815,
     name: "Ashish Subedi",
     kind: "demo",
     what: "Personal portfolio",
