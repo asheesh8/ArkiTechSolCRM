@@ -49,8 +49,8 @@ export const services: Service[] = [
     slug: "websites",
     name: "Custom Websites",
     seo: {
-      title: "Custom Small Business Website Design in Vermont | ArkiTech",
-      h1: "Custom small business website design",
+      title: "Custom Website Design & Development in Vermont | ArkiTech",
+      h1: "Custom small business website design and development",
       description:
         "A hand-built website for a $1,000 build and a $150/month plan you can cancel anytime. Fast on phones, built in Essex Junction, Vermont. No need to host with us.",
     },
@@ -64,6 +64,22 @@ export const services: Service[] = [
       "Optional monthly plan, cancel anytime",
       "Monthly plan adds the Overview and CRM dashboards",
       "More dashboards can be added on the monthly plan",
+    ],
+    faqs: [
+      {
+        q: "Are you a web design company or a web development company?",
+        a: "Both. ArkiTech Solutions designs your website and writes the code by hand, with no page builder, so it loads fast on a phone. We also build custom software behind the site: the Overview and CRM dashboards that collect every enquiry. The people who design it are the people who build it.",
+      },
+      {
+        q: "Where are you based?",
+        a: "Our studio is at 122 West St in Essex Junction, Vermont, about ten minutes from downtown Burlington. We work with businesses across Chittenden County, Burlington, South Burlington, Winooski, Essex and Williston included, and remotely with businesses anywhere in the US.",
+        link: { href: "/service-areas", label: "See the towns we serve" },
+      },
+      {
+        q: "Why not use a website builder like Wix or Squarespace?",
+        a: "A builder is fine for a hobby page. It ships code for every feature it offers on every page, which makes it slow on phones, and slow sites lose callers to the next search result. We hand-build the site so it carries only what each page uses, and we guarantee a 90+ mobile PageSpeed score.",
+        link: { href: "/blog/speed-is-a-sales-number", label: "Why speed is a sales number" },
+      },
     ],
     post: {
       slug: "speed-is-a-sales-number",
