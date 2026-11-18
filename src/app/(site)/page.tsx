@@ -8,7 +8,7 @@ import { pageMetadata } from "@/lib/marketing/seo";
 export const metadata = pageMetadata({
   title: "Burlington, VT Web Design, Local SEO & AEO/GEO | ArkiTech",
   description:
-    "ArkiTech Solutions builds fast custom websites, manages Google Business Profiles and reviews, and builds AEO & GEO pages for Burlington, Vermont businesses.",
+    "Web design and development studio in Essex Junction, VT: fast custom websites, Google Business Profile and review care, and AEO & GEO pages for Burlington.",
   path: "/",
 });
 

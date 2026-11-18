@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AREA_SERVED, PEOPLE, SITE, SAME_AS } from "@/lib/marketing/site";
+import { AREA_SERVED, PEOPLE, PROFILES, SITE, SAME_AS } from "@/lib/marketing/site";
 import { OFFER_TERMS } from "@/lib/marketing/offers";
 import type { PricingPlan } from "@/lib/pricing";
 
@@ -141,7 +141,7 @@ export function organizationJsonLd(plans: PricingPlan[] = []) {
     logo: `${SITE_URL}/icon.png`,
     image: `${SITE_URL}${DEFAULT_IMAGE}`,
     description:
-      "Essex Junction, Vermont web design studio serving Burlington and Chittenden County: custom websites, Google Business Profile and review management, business dashboards, and AEO & GEO website builds.",
+      "Essex Junction, Vermont web design and development studio serving Burlington and Chittenden County: custom websites, Google Business Profile and review management, business dashboards, and AEO & GEO website builds.",
     telephone: SITE.phoneE164,
     email: SITE.email,
     // The same public address as Google Business Profile and BBB.
@@ -153,6 +153,8 @@ export function organizationJsonLd(plans: PricingPlan[] = []) {
       addressRegion: SITE.locality.region,
       addressCountry: SITE.locality.country,
     },
+    // The Google Maps listing for this exact business, so search engines tie the site to the map pin.
+    ...(PROFILES.googleBusinessProfile ? { hasMap: PROFILES.googleBusinessProfile } : {}),
     areaServed: AREA_SERVED_LD,
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
@@ -164,6 +166,9 @@ export function organizationJsonLd(plans: PricingPlan[] = []) {
     founder: PEOPLE.map(personJsonLd),
     knowsAbout: [
       "Web design",
+      "Website development",
+      "Web development",
+      "Custom software development",
       "Answer engine optimization (AEO)",
       "Generative engine optimization (GEO)",
       "Local SEO",
